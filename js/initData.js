@@ -29,7 +29,7 @@ async function initDataBlogList() {
     // 깃허브 설정이 되어 있고 로컬 데이터 강제 사용이 아니면 무조건 깃허브 API를 우선 사용하여 실시간 조회
     if (siteConfig.username && siteConfig.repositoryName && !localDataUsing) {
         // 탐색할 폴더 목록
-        const folders = ["blog", "security", "backend", "development", "data"];
+        const folders = ["blog", "security", "backend", "development", "data", "ios"];
         const fetchPromises = folders.map(async (folder) => {
             try {
                 const res = await fetch(

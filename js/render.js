@@ -84,10 +84,10 @@ async function renderMenu() {
         if (blogList.length === 0) {
           // 블로그 리스트 로딩
           initDataBlogList().then(() => {
-            renderBlogList();
+            search("blog", "folder");
           });
         } else {
-          renderBlogList();
+          search("blog", "folder");
         }
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
@@ -121,6 +121,17 @@ async function renderMenu() {
           });
         } else {
           search("backend", "folder");
+        }
+        const url = new URL(origin);
+        url.searchParams.set("menu", menu.name);
+        window.history.pushState({}, "", url);
+      } else if (menu.name === "iOS.md") {
+        if (blogList.length === 0) {
+          initDataBlogList().then(() => {
+            search("ios", "folder");
+          });
+        } else {
+          search("ios", "folder");
         }
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
@@ -416,6 +427,9 @@ function renderOtherContents(menu) {
   // main 영역에 blog.md를 제외한 다른 파일을 렌더링
   document.getElementById("blog-posts").style.display = "none";
   document.getElementById("contents").style.display = "block";
+  if (document.getElementById("pagination")) {
+    document.getElementById("pagination").style.display = "none";
+  }
 
   // 만약 menu가 string type 이라면 download_url, name을 menu로 설정
   if (typeof menu === "string") {
@@ -682,7 +696,7 @@ async function initialize() {
 
     // 블로그 리스트 로딩
     await initDataBlogList();
-    renderBlogList();
+    search("blog", "folder");
 
     // 블로그 카테고리 로딩
     renderBlogCategory();
@@ -694,7 +708,11 @@ async function initialize() {
     // 블로그 상세 정보 로딩
     if (url.search.split("=")[0] === "?menu") {
       const menuName = url.search.split("=")[1];
-      if (menuName === "Security.md") {
+      if (menuName === "iOS.md") {
+        document.getElementById("contents").style.display = "none";
+        await initDataBlogList();
+        search("ios", "folder");
+      } else if (menuName === "Security.md") {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
         search("security", "folder");
@@ -713,6 +731,9 @@ async function initialize() {
       } else {
         document.getElementById("blog-posts").style.display = "none";
         document.getElementById("contents").style.display = "block";
+        if (document.getElementById("pagination")) {
+          document.getElementById("pagination").style.display = "none";
+        }
         try {
           fetch(origin + "menu/" + menuName)
             .then((response) => response.text())
@@ -729,6 +750,9 @@ async function initialize() {
     } else if (url.search.split("=")[0] === "?post") {
       document.getElementById("contents").style.display = "block";
       document.getElementById("blog-posts").style.display = "none";
+      if (document.getElementById("pagination")) {
+        document.getElementById("pagination").style.display = "none";
+      }
       postNameDecode = decodeURI(url.search.split("=")[1]).replaceAll("+", " ");
       // console.log(postNameDecode);
       postInfo = extractFileInfo(postNameDecode);
