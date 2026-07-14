@@ -75,7 +75,7 @@ async function renderMenu() {
       // 메뉴 링크 클릭 시 이벤트 중지 후 menu 내용을 읽어와 contents 영역에 렌더링
       event.preventDefault();
 
-      if (menu.name === "blog.md") {
+      if (menu.name === "Diary.md") {
         if (blogList.length === 0) {
           // 블로그 리스트 로딩
           initDataBlogList().then(() => {
@@ -83,6 +83,39 @@ async function renderMenu() {
           });
         } else {
           renderBlogList();
+        }
+        const url = new URL(origin);
+        url.searchParams.set("menu", menu.name);
+        window.history.pushState({}, "", url);
+      } else if (menu.name === "Development.md") {
+        if (blogList.length === 0) {
+          initDataBlogList().then(() => {
+            search("development", "category");
+          });
+        } else {
+          search("development", "category");
+        }
+        const url = new URL(origin);
+        url.searchParams.set("menu", menu.name);
+        window.history.pushState({}, "", url);
+      } else if (menu.name === "Data.md") {
+        if (blogList.length === 0) {
+          initDataBlogList().then(() => {
+            search("data", "category");
+          });
+        } else {
+          search("data", "category");
+        }
+        const url = new URL(origin);
+        url.searchParams.set("menu", menu.name);
+        window.history.pushState({}, "", url);
+      } else if (menu.name === "Security.md") {
+        if (blogList.length === 0) {
+          initDataBlogList().then(() => {
+            search("security", "category");
+          });
+        } else {
+          search("security", "category");
         }
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
@@ -626,7 +659,7 @@ async function initialize() {
     
     TODO: URL 파싱 결과 상세 블로그나 메뉴상태이면 검색 버튼을 누르기 전까지는 initDataBlogList()를 실행시킬 필요 없음. 이를 통해 API 호출 한 번을 아낄 수 있음.
     */
-  if (!url.search.split("=")[1] || url.search.split("=")[1] === "blog.md") {
+  if (!url.search.split("=")[1] || url.search.split("=")[1] === "Diary.md") {
     // 메뉴 로딩
     await initDataBlogMenu();
     renderMenu();
@@ -644,19 +677,34 @@ async function initialize() {
 
     // 블로그 상세 정보 로딩
     if (url.search.split("=")[0] === "?menu") {
-      document.getElementById("blog-posts").style.display = "none";
-      document.getElementById("contents").style.display = "block";
-      try {
-        fetch(origin + "menu/" + url.search.split("=")[1])
-          .then((response) => response.text())
-          .then((text) => styleMarkdown("menu", text))
-          .then(() => {
-            // 렌더링 후에는 URL 변경(query string으로 블로그 포스트 이름 추가)
-            const url = new URL(window.location.href);
-            window.history.pushState({}, "", url);
-          });
-      } catch (error) {
-        styleMarkdown("menu", "# Error입니다. 파일명을 확인해주세요.");
+      const menuName = url.search.split("=")[1];
+      if (menuName === "Security.md") {
+        document.getElementById("contents").style.display = "none";
+        await initDataBlogList();
+        search("security", "category");
+      } else if (menuName === "Development.md") {
+        document.getElementById("contents").style.display = "none";
+        await initDataBlogList();
+        search("development", "category");
+      } else if (menuName === "Data.md") {
+        document.getElementById("contents").style.display = "none";
+        await initDataBlogList();
+        search("data", "category");
+      } else {
+        document.getElementById("blog-posts").style.display = "none";
+        document.getElementById("contents").style.display = "block";
+        try {
+          fetch(origin + "menu/" + menuName)
+            .then((response) => response.text())
+            .then((text) => styleMarkdown("menu", text))
+            .then(() => {
+              // 렌더링 후에는 URL 변경(query string으로 블로그 포스트 이름 추가)
+              const url = new URL(window.location.href);
+              window.history.pushState({}, "", url);
+            });
+        } catch (error) {
+          styleMarkdown("menu", "# Error입니다. 파일명을 확인해주세요.");
+        }
       }
     } else if (url.search.split("=")[0] === "?post") {
       document.getElementById("contents").style.display = "block";

@@ -4,8 +4,20 @@
         "download_url": "/menu/about.md"
     },
     {
-        "name": "blog.md",
-        "download_url": "/menu/blog.md"
+        "name": "Diary.md",
+        "download_url": "/menu/Diary.md"
+    },
+    {
+        "name": "Development.md",
+        "download_url": "/menu/Development.md"
+    },
+    {
+        "name": "Data.md",
+        "download_url": "/menu/Data.md"
+    },
+    {
+        "name": "Security.md",
+        "download_url": "/menu/Security.md"
     },
     {
         "name": "contact.md",
