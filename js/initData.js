@@ -19,49 +19,38 @@ async function initDataBlogList() {
     // 데이터 초기화를 한 번 했다는 것을 알리기 위한 변수
     isInitData = true;
 
-    if (isLocal) {
-        // 로컬 환경
+    if (!siteConfig.username || !siteConfig.repositoryName) {
+        const urlConfig = extractFromUrl();
+        siteConfig.username = siteConfig.username || urlConfig.username;
+        siteConfig.repositoryName =
+            siteConfig.repositoryName || urlConfig.repositoryName;
+    }
+
+    // 깃허브 설정이 되어 있고 로컬 데이터 강제 사용이 아니면 무조건 깃허브 API를 우선 사용하여 실시간 조회
+    if (siteConfig.username && siteConfig.repositoryName && !localDataUsing) {
+        // 탐색할 폴더 목록
+        const folders = ["blog", "security", "backend", "development", "data"];
+        const fetchPromises = folders.map(async (folder) => {
+            try {
+                const res = await fetch(
+                    `https://api.github.com/repos/${siteConfig.username}/${siteConfig.repositoryName}/contents/${folder}`
+                );
+                if (res.ok) {
+                    return await res.json();
+                }
+            } catch (e) {
+                console.error(`Failed to fetch folder: ${folder}`, e);
+            }
+            return [];
+        });
+        const results = await Promise.all(fetchPromises);
+        blogList = results.flat().filter(item => item && item.name);
+    } else {
+        // 깃허브 계정 정보가 없거나 localDataUsing인 경우 로컬 JSON 파일 참조
         const response = await fetch(
             url.origin + "/data/local_blogList.json"
         );
         blogList = await response.json();
-    } else {
-        // GitHub 배포 상태
-        // 만약 siteConfig.username이 비어있거나 siteConfig.repositoryName이 비어 있다면 해당 값을 지정하여 시작
-        // config에서 값이 없을 경우 URL에서 추출
-        if (!siteConfig.username || !siteConfig.repositoryName) {
-            const urlConfig = extractFromUrl();
-            siteConfig.username = siteConfig.username || urlConfig.username;
-            siteConfig.repositoryName =
-                siteConfig.repositoryName || urlConfig.repositoryName;
-        }
-
-        // 배포 상태에서 GitHub API를 사용(이용자가 적을 때)
-        if (!localDataUsing) {
-            // 탐색할 폴더 목록
-            const folders = ["blog", "security", "backend", "development", "data"];
-            const fetchPromises = folders.map(async (folder) => {
-                try {
-                    const res = await fetch(
-                        `https://api.github.com/repos/${siteConfig.username}/${siteConfig.repositoryName}/contents/${folder}`
-                    );
-                    if (res.ok) {
-                        return await res.json();
-                    }
-                } catch (e) {
-                    console.error(`Failed to fetch folder: ${folder}`, e);
-                }
-                return [];
-            });
-            const results = await Promise.all(fetchPromises);
-            blogList = results.flat().filter(item => item && item.name);
-        } else {
-            // 배포 상태에서 Local data를 사용(이용자가 많을 때)
-            const response = await fetch(
-                url.origin + `/${siteConfig.repositoryName}/data/local_blogList.json`
-            );
-            blogList = await response.json();
-        }
     }
 
     // console.log(blogList);
@@ -86,36 +75,22 @@ async function initDataBlogMenu() {
         return blogMenu;
     }
 
-    if (isLocal) {
-        // 로컬환경
+    if (!siteConfig.username || !siteConfig.repositoryName) {
+        const urlConfig = extractFromUrl();
+        siteConfig.username = siteConfig.username || urlConfig.username;
+        siteConfig.repositoryName =
+            siteConfig.repositoryName || urlConfig.repositoryName;
+    }
+
+    if (siteConfig.username && siteConfig.repositoryName && !localDataUsing) {
         const response = await fetch(
-            url.origin + "/data/local_blogMenu.json"
+            `https://api.github.com/repos/${siteConfig.username}/${siteConfig.repositoryName}/contents/menu`
         );
         blogMenu = await response.json();
     } else {
-        // GitHub 배포 상태
-        // 만약 siteConfig.username이 비어있거나 siteConfig.repositoryName이 비어 있다면 해당 값을 지정하여 시작
-        // config에서 값이 없을 경우 URL에서 추출
-        if (!siteConfig.username || !siteConfig.repositoryName) {
-            const urlConfig = extractFromUrl();
-            siteConfig.username = siteConfig.username || urlConfig.username;
-            siteConfig.repositoryName =
-                siteConfig.repositoryName || urlConfig.repositoryName;
-        }
-
-        let response;
-
-        // 배포 상태에서 GitHub API를 사용(이용자가 적을 때)
-        if (!localDataUsing) {
-            response = await fetch(
-                `https://api.github.com/repos/${siteConfig.username}/${siteConfig.repositoryName}/contents/menu`
-            );
-        } else {
-            // 배포 상태에서 Local data를 사용(이용자가 많을 때)
-            response = await fetch(
-                url.origin + `/${siteConfig.repositoryName}/data/local_blogMenu.json`
-            );
-        }
+        const response = await fetch(
+            url.origin + "/data/local_blogMenu.json"
+        );
         blogMenu = await response.json();
     }
     return blogMenu;

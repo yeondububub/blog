@@ -35,6 +35,11 @@ function search(keyword, kinds) {
             if (postInfo.category.toLowerCase() === keyword) {
               return post;
             }
+          } else if (kinds === "folder") {
+            // 폴더명(경로)으로 검색
+            if (post.download_url && post.download_url.toLowerCase().includes(`/${keyword}/`)) {
+              return post;
+            }
           }
         });
         renderBlogList(searchResult);
@@ -90,10 +95,10 @@ async function renderMenu() {
       } else if (menu.name === "Development.md") {
         if (blogList.length === 0) {
           initDataBlogList().then(() => {
-            search("development", "category");
+            search("development", "folder");
           });
         } else {
-          search("development", "category");
+          search("development", "folder");
         }
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
@@ -101,10 +106,10 @@ async function renderMenu() {
       } else if (menu.name === "Data.md") {
         if (blogList.length === 0) {
           initDataBlogList().then(() => {
-            search("data", "category");
+            search("data", "folder");
           });
         } else {
-          search("data", "category");
+          search("data", "folder");
         }
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
@@ -112,10 +117,10 @@ async function renderMenu() {
       } else if (menu.name === "Backend.md") {
         if (blogList.length === 0) {
           initDataBlogList().then(() => {
-            search("backend", "category");
+            search("backend", "folder");
           });
         } else {
-          search("backend", "category");
+          search("backend", "folder");
         }
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
@@ -123,10 +128,10 @@ async function renderMenu() {
       } else if (menu.name === "Security.md") {
         if (blogList.length === 0) {
           initDataBlogList().then(() => {
-            search("security", "category");
+            search("security", "folder");
           });
         } else {
-          search("security", "category");
+          search("security", "folder");
         }
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
@@ -692,19 +697,19 @@ async function initialize() {
       if (menuName === "Security.md") {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
-        search("security", "category");
+        search("security", "folder");
       } else if (menuName === "Backend.md") {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
-        search("backend", "category");
+        search("backend", "folder");
       } else if (menuName === "Development.md") {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
-        search("development", "category");
+        search("development", "folder");
       } else if (menuName === "Data.md") {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
-        search("data", "category");
+        search("data", "folder");
       } else {
         document.getElementById("blog-posts").style.display = "none";
         document.getElementById("contents").style.display = "block";
