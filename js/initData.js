@@ -36,21 +36,32 @@ async function initDataBlogList() {
                 siteConfig.repositoryName || urlConfig.repositoryName;
         }
 
-        let response;
-
         // 배포 상태에서 GitHub API를 사용(이용자가 적을 때)
         if (!localDataUsing) {
-            response = await fetch(
-                `https://api.github.com/repos/${siteConfig.username}/${siteConfig.repositoryName}/contents/blog`
-            );
+            // 탐색할 폴더 목록
+            const folders = ["blog", "security", "backend", "development", "data"];
+            const fetchPromises = folders.map(async (folder) => {
+                try {
+                    const res = await fetch(
+                        `https://api.github.com/repos/${siteConfig.username}/${siteConfig.repositoryName}/contents/${folder}`
+                    );
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch folder: ${folder}`, e);
+                }
+                return [];
+            });
+            const results = await Promise.all(fetchPromises);
+            blogList = results.flat().filter(item => item && item.name);
         } else {
             // 배포 상태에서 Local data를 사용(이용자가 많을 때)
-            response = await fetch(
+            const response = await fetch(
                 url.origin + `/${siteConfig.repositoryName}/data/local_blogList.json`
             );
+            blogList = await response.json();
         }
-        // 배포 상태에서 Local data를 사용(이용자가 많을 때)
-        blogList = await response.json();
     }
 
     // console.log(blogList);

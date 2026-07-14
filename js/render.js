@@ -109,6 +109,17 @@ async function renderMenu() {
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
         window.history.pushState({}, "", url);
+      } else if (menu.name === "Backend.md") {
+        if (blogList.length === 0) {
+          initDataBlogList().then(() => {
+            search("backend", "category");
+          });
+        } else {
+          search("backend", "category");
+        }
+        const url = new URL(origin);
+        url.searchParams.set("menu", menu.name);
+        window.history.pushState({}, "", url);
       } else if (menu.name === "Security.md") {
         if (blogList.length === 0) {
           initDataBlogList().then(() => {
@@ -682,6 +693,10 @@ async function initialize() {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
         search("security", "category");
+      } else if (menuName === "Backend.md") {
+        document.getElementById("contents").style.display = "none";
+        await initDataBlogList();
+        search("backend", "category");
       } else if (menuName === "Development.md") {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
