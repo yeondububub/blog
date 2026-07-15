@@ -1,7 +1,7 @@
 [
     {
-        "name": "about.md",
-        "download_url": "/menu/about.md"
+        "name": "About.md",
+        "download_url": "/menu/About.md"
     },
     {
         "name": "Diary.md",
@@ -26,9 +26,5 @@
     {
         "name": "iOS.md",
         "download_url": "/menu/iOS.md"
-    },
-    {
-        "name": "contact.md",
-        "download_url": "/menu/contact.md"
     }
 ]

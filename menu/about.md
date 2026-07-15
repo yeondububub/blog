@@ -16,11 +16,11 @@
 
 
 
-<div align="left" style="display: flex; gap: 8px; margin-top: 20px;">
-  <a href="https://github.com/yeondububub" target="_blank">
-    <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" />
+<div align="left" style="display: flex; gap: 15px; margin-top: 20px;">
+  <a href="https://github.com/yeondububub" target="_blank" style="background-color: transparent !important;">
+    <img src="https://cdn.simpleicons.org/github" width="35" height="35" alt="GitHub" />
   </a>
-  <a href="mailto:yeondububub@gmail.com">
-    <img src="https://img.shields.io/badge/email-EA4335?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" />
+  <a href="mailto:yeondububub@gmail.com" style="background-color: transparent !important;">
+    <img src="https://cdn.simpleicons.org/gmail/EA4335" width="35" height="35" alt="Email" />
   </a>
 </div>

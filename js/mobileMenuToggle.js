@@ -24,24 +24,28 @@ window.addEventListener("click", (event) => {
     } else if (event.target.parentNode === mobileMenu) {
         event.preventDefault();
 
-        if (event.target.innerText + ".md" === "blog.md") {
-            if (blogList.length === 0) {
-                // 블로그 리스트 로딩
-                initDataBlogList().then(() => {
-                    renderBlogList();
-                });
-            } else {
-                renderBlogList();
-            }
-            // console.log(origin)
-            const url = new URL(origin);
-            url.searchParams.set("menu", event.target.innerText + ".md");
-            window.history.pushState({}, "", url);
-            mobileMenu.innerHTML = "";
+        const menuName = event.target.innerText + ".md";
+        
+        if (menuName === "Diary.md") {
+            search("blog", "folder");
+        } else if (menuName === "Development.md") {
+            search("development", "folder");
+        } else if (menuName === "Data.md") {
+            search("data", "folder");
+        } else if (menuName === "Backend.md") {
+            search("backend", "folder");
+        } else if (menuName === "iOS.md") {
+            search("ios", "folder");
+        } else if (menuName === "Security.md") {
+            search("security", "folder");
         } else {
-            renderOtherContents(event.target.innerText + ".md");
-            mobileMenu.innerHTML = "";
+            renderOtherContents(menuName);
         }
+
+        const url = new URL(origin);
+        url.searchParams.set("menu", menuName);
+        window.history.pushState({}, "", url);
+        mobileMenu.innerHTML = "";
     } else {
         mobileMenu.innerHTML = "";
     }

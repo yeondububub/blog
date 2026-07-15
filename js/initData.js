@@ -86,12 +86,30 @@ async function initDataBlogMenu() {
         const response = await fetch(
             `https://api.github.com/repos/${siteConfig.username}/${siteConfig.repositoryName}/contents/menu`
         );
-        blogMenu = await response.json();
+        let data = await response.json();
+        if (Array.isArray(data)) {
+            blogMenu = data;
+        } else {
+            console.warn("GitHub API rate limit exceeded. Using local menu data instead.");
+            const res = await fetch(url.origin + "/data/local_blogMenu.json");
+            blogMenu = await res.json();
+        }
     } else {
         const response = await fetch(
             url.origin + "/data/local_blogMenu.json"
         );
         blogMenu = await response.json();
     }
+
+    if (siteConfig.menuOrder && siteConfig.menuOrder.length > 0) {
+        blogMenu.sort((a, b) => {
+            const indexA = siteConfig.menuOrder.indexOf(a.name);
+            const indexB = siteConfig.menuOrder.indexOf(b.name);
+            const posA = indexA === -1 ? 9999 : indexA;
+            const posB = indexB === -1 ? 9999 : indexB;
+            return posA - posB;
+        });
+    }
+
     return blogMenu;
 }

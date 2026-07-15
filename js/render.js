@@ -1,3 +1,5 @@
+let currentFolder = "";
+
 function search(keyword, kinds) {
   /*
     트러블슈팅: 실제 데이터가 없을 경우 API 호출을 한 번 실행.
@@ -6,16 +8,37 @@ function search(keyword, kinds) {
     */
   keyword = keyword ? keyword.toLowerCase().trim() : "";
 
+  // 카테고리 배너 노출 로직
+  if (kinds === "folder") {
+    const banner = document.getElementById("category-banner");
+    let bannerKey = keyword;
+    if (keyword === "blog") bannerKey = "diary";
+
+    if (banner && typeof categoryBanners !== "undefined" && categoryBanners[bannerKey]) {
+      document.getElementById("category-banner-desc").innerText = categoryBanners[bannerKey].description;
+      banner.classList.remove("hidden");
+    } else if (banner) {
+      banner.classList.add("hidden");
+    }
+  } else {
+    const banner = document.getElementById("category-banner");
+    if (banner) banner.classList.add("hidden");
+  }
+
   if (blogList.length === 0) {
     if (isInitData === false) {
       // 데이터 초기화가 되지 않은 경우에만 검색 허용. 이 작업을 하지 않으면 데이터가 없을 때 무한 루프에 빠지게 됨.
       initDataBlogList().then(() => {
-        search(keyword);
+        search(keyword, kinds);
       });
       return;
     }
   } else {
     if (!keyword) {
+      // 전체보기 (홈) 검색
+      currentFolder = ""; // 전체보기이므로 폴더 리셋
+      renderBlogCategory(blogList); // 전체 태그 재렌더링
+
       const searchInput = document.getElementById("search-input");
       const searchKeyword = searchInput.value.toLowerCase(); // 검색어를 소문자로 변환
       const searchResult = blogList.filter((post) => {
@@ -32,16 +55,35 @@ function search(keyword, kinds) {
           if (kinds === "category") {
             // post를 parsing하여 카테고리 내 검색
             const postInfo = extractFileInfo(post.name);
-            if (postInfo.category.toLowerCase() === keyword) {
+
+            // 만약 현재 폴더가 지정되어 있다면 그 폴더 내의 포스트인지 먼저 확인
+            if (currentFolder) {
+              const inCurrentFolder = (post.path && post.path.toLowerCase().startsWith(currentFolder.toLowerCase() + "/")) ||
+                (post.download_url && post.download_url.toLowerCase().includes(`/${currentFolder}/`));
+              if (!inCurrentFolder) return false;
+            }
+
+            if (postInfo && postInfo.category.toLowerCase() === keyword) {
               return post;
             }
           } else if (kinds === "folder") {
-            // 폴더명(경로)으로 검색
-            if (post.download_url && post.download_url.toLowerCase().includes(`/${keyword}/`)) {
+            // 폴더명(경로)으로 검색 (저장소 이름 등과 중복 매칭되는 버그 방지)
+            if (post.path) {
+              if (post.path.toLowerCase().startsWith(keyword.toLowerCase() + "/")) {
+                return post;
+              }
+            } else if (post.download_url && post.download_url.toLowerCase().includes(`/${keyword}/`)) {
               return post;
             }
           }
         });
+
+        // folder 검색이면 현재 폴더 상태 업데이트 및 태그 재렌더링
+        if (kinds === "folder") {
+          currentFolder = keyword;
+          renderBlogCategory(searchResult);
+        }
+
         renderBlogList(searchResult);
       } else {
         const searchKeyword = keyword.toLowerCase();
@@ -424,11 +466,16 @@ function renderOtherContents(menu) {
   /*
     menu에 다른 콘텐츠, 예를 들어 about이나 contect를 클릭했을 때 렌더링 하는 함수
     */
+  // 메뉴(게시판) 배너가 떠 있다면 숨김 처리
+  const banner = document.getElementById("category-banner");
+  if (banner) banner.classList.add("hidden");
+
   // main 영역에 blog.md를 제외한 다른 파일을 렌더링
   document.getElementById("blog-posts").style.display = "none";
   document.getElementById("contents").style.display = "block";
   if (document.getElementById("pagination")) {
     document.getElementById("pagination").style.display = "none";
+    document.getElementById("pagination").innerHTML = "";
   }
 
   // 만약 menu가 string type 이라면 download_url, name을 menu로 설정
@@ -462,12 +509,12 @@ function renderOtherContents(menu) {
   }
 }
 
-function renderBlogCategory() {
+function renderBlogCategory(targetList = blogList) {
   /*
-    blogList에서 카테고리를 소문자로 추출하여 카테고리 목록을 aside 항목으로 렌더링
+    targetList(기본값: 전체 blogList)에서 카테고리를 소문자로 추출하여 카테고리 목록을 aside 항목으로 렌더링
     */
   const categoryList = {};
-  blogList.forEach((post) => {
+  targetList.forEach((post) => {
     const postInfo = extractFileInfo(post.name);
     if (postInfo) {
       if (categoryList[postInfo.category.toLowerCase()]) {
@@ -483,24 +530,9 @@ function renderBlogCategory() {
   const categoryContainer = document.querySelector("aside");
   categoryContainer.classList.add(...categoryContainerStyle.split(" "));
 
-  const categoryWrapper = document.querySelector(".category-aside");
-  const categoryTitle = categoryWrapper.querySelector(".aside-tit");
-  const categoryButton = document.getElementById("aside-button");
-  window.addEventListener("click", (evt) => {
-    // categoryButton을 눌렀을 때
-    if (evt.target === categoryButton) {
-      categoryWrapper.classList.toggle("active");
-      categoryTitle.classList.toggle("sr-only");
-      categoryContainer.classList.toggle("md:flex");
-    } else if (
-      categoryWrapper.classList.contains("active") &&
-      !categoryWrapper.contains(evt.target)
-    ) {
-      categoryWrapper.classList.remove("active");
-      categoryTitle.classList.add("sr-only");
-      categoryContainer.classList.remove("md:flex");
-    }
-  });
+  // 기존 렌더링된 카테고리 아이템 지우기 (header 등은 유지하고, div로 된 태그 아이템들만 삭제)
+  const existingItems = categoryContainer.querySelectorAll("div");
+  existingItems.forEach(item => item.remove());
 
   categoryArray.unshift("All");
 
@@ -524,11 +556,16 @@ function renderBlogCategory() {
       categoryItem.classList.add(...categoryItemStyle.split(" "));
       categoryItem.textContent = category;
       categoryItem.onclick = (event) => {
-        search();
+        // "All" 버튼을 눌렀을 때 동작: 현재 폴더 안에서의 전체 검색
+        if (currentFolder) {
+          search(currentFolder, "folder");
+        } else {
+          search();
+        }
       };
 
       categoryCount.classList.add(...categoryItemCountStyle.split(" "));
-      categoryCount.textContent = `(${blogList.length})`;
+      categoryCount.textContent = `(${targetList.length})`;
     }
 
     categoryItem.appendChild(categoryCount);
@@ -697,9 +734,6 @@ async function initialize() {
     // 블로그 리스트 로딩
     await initDataBlogList();
     search("blog", "folder");
-
-    // 블로그 카테고리 로딩
-    renderBlogCategory();
   } else {
     // 메뉴 로딩
     await initDataBlogMenu();
@@ -733,6 +767,7 @@ async function initialize() {
         document.getElementById("contents").style.display = "block";
         if (document.getElementById("pagination")) {
           document.getElementById("pagination").style.display = "none";
+          document.getElementById("pagination").innerHTML = "";
         }
         try {
           fetch(origin + "menu/" + menuName)
@@ -752,6 +787,7 @@ async function initialize() {
       document.getElementById("blog-posts").style.display = "none";
       if (document.getElementById("pagination")) {
         document.getElementById("pagination").style.display = "none";
+        document.getElementById("pagination").innerHTML = "";
       }
       postNameDecode = decodeURI(url.search.split("=")[1]).replaceAll("+", " ");
       // console.log(postNameDecode);
@@ -777,3 +813,53 @@ async function initialize() {
 }
 
 initialize();
+
+// 카테고리 메뉴 모바일 토글 이벤트 (중복 등록 방지를 위해 글로벌 영역에 1번만 등록)
+const categoryWrapper = document.querySelector(".category-aside");
+const categoryTitle = categoryWrapper ? categoryWrapper.querySelector(".aside-tit") : null;
+const categoryButton = document.getElementById("aside-button");
+const categoryContainer = document.querySelector("aside");
+
+if (categoryWrapper && categoryButton) {
+  window.addEventListener("click", (evt) => {
+    if (evt.target === categoryButton) {
+      categoryWrapper.classList.toggle("active");
+      categoryTitle.classList.toggle("sr-only");
+      categoryContainer.classList.toggle("md:flex");
+    } else if (
+      categoryWrapper.classList.contains("active") &&
+      !categoryWrapper.contains(evt.target)
+    ) {
+      categoryWrapper.classList.remove("active");
+      categoryTitle.classList.add("sr-only");
+      categoryContainer.classList.remove("md:flex");
+    }
+  });
+}
+
+// 블로그 제목 클릭 시 홈으로 이동 (전체 게시글 목록 출력)
+const blogTitle = document.getElementById("blog-title");
+if (blogTitle) {
+  blogTitle.addEventListener("click", () => {
+    // 쿼리 파라미터 제거
+    const url = new URL(origin);
+    window.history.pushState({}, "", url);
+
+    // 내용 화면 숨기고 전체 목록 보여주기
+    document.getElementById("contents").style.display = "none";
+    document.getElementById("blog-posts").style.display = "grid";
+
+    // 전체 게시글 검색(인자 없으면 전체 렌더링)
+    search();
+  });
+}
+
+// 카테고리 배너 닫기 이벤트
+const categoryBanner = document.getElementById("category-banner");
+const categoryBannerClose = document.getElementById("category-banner-close");
+
+if (categoryBannerClose) {
+  categoryBannerClose.addEventListener("click", () => {
+    categoryBanner.classList.add("hidden");
+  });
+}
