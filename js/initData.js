@@ -16,6 +16,14 @@ async function initDataBlogList() {
         return blogList;
     }
 
+    // sessionStorage에서 캐시된 데이터 확인
+    const cachedBlogList = sessionStorage.getItem("blogList");
+    if (cachedBlogList) {
+        blogList = JSON.parse(cachedBlogList);
+        isInitData = true;
+        return blogList;
+    }
+
     // 데이터 초기화를 한 번 했다는 것을 알리기 위한 변수
     isInitData = true;
 
@@ -66,12 +74,23 @@ async function initDataBlogList() {
     blogList.sort(function (a, b) {
         return b.name.localeCompare(a.name);
     });
+
+    // 세션 스토리지에 데이터 캐싱
+    sessionStorage.setItem("blogList", JSON.stringify(blogList));
+
     return blogList;
 }
 
 async function initDataBlogMenu() {
     if (blogMenu.length > 0) {
         // blogMenu 데이터가 이미 있을 경우(API 호출 최소화)
+        return blogMenu;
+    }
+
+    // sessionStorage에서 캐시된 데이터 확인
+    const cachedBlogMenu = sessionStorage.getItem("blogMenu");
+    if (cachedBlogMenu) {
+        blogMenu = JSON.parse(cachedBlogMenu);
         return blogMenu;
     }
 
@@ -110,6 +129,9 @@ async function initDataBlogMenu() {
             return posA - posB;
         });
     }
+
+    // 세션 스토리지에 데이터 캐싱
+    sessionStorage.setItem("blogMenu", JSON.stringify(blogMenu));
 
     return blogMenu;
 }

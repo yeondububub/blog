@@ -733,7 +733,14 @@ async function initialize() {
 
     // 블로그 리스트 로딩
     await initDataBlogList();
-    search("blog", "folder");
+    
+    // 만약 쿼리스트링에 menu가 있고 그 값이 Diary.md 이면 Diary 카테고리 출력, 그렇지 않고 첫 접속이면 전체 게시물 출력
+    const menuParam = url.searchParams.get("menu");
+    if (menuParam === "Diary.md") {
+      search("blog", "folder");
+    } else {
+      search();
+    }
   } else {
     // 메뉴 로딩
     await initDataBlogMenu();
