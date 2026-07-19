@@ -18,5 +18,9 @@
     {
         "name": "[20260716]_[Apple의 container 도구 활용 가이드]_[Container]_[container.png]_[Apple의 container의 특징과 설치 및 사용법]_[].md",
         "download_url": "/development/[20260716]_[Apple의 container 도구 활용 가이드]_[Container]_[container.png]_[Apple의 container의 특징과 설치 및 사용법]_[].md"
+    },
+    {
+        "name": "[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제]_[].md",
+        "download_url": "/backend/[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제]_[].md"
     }
 ]
