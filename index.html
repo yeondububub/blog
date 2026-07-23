@@ -7,6 +7,12 @@
   <link rel="shortcut icon" href="img/icon/favicon.svg" type="image/x-icon" />
   <title>Weniv Blog</title>
 
+  <!-- google fonts (JetBrains Mono) & Pretendard -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
   <!-- marked -->
   <script src="./library/marked.min.js"></script>
 
@@ -24,6 +30,10 @@
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['"Pretendard"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', '"Helvetica Neue"', '"Segoe UI"', '"Apple SD Gothic Neo"', '"Noto Sans KR"', '"Malgun Gothic"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
           colors: {
             primary: "#2e6ff2",
             background: "#fff",
@@ -43,6 +53,20 @@
   <!-- // tailwind -->
 
   <style>
+    /* 본문 및 제목: Pretendard (국내 개발/기술 블로그 표준 산세리프 서체) */
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6, #blog-title {
+      font-family: 'Pretendard', sans-serif;
+    }
+
+    /* 코드 폰트: JetBrains Mono */
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
     @keyframes slideDown {
       from {
         transition: all 1s;
