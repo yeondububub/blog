@@ -22,5 +22,9 @@
     {
         "name": "[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제]_[].md",
         "download_url": "/backend/[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제]_[].md"
+    },
+    {
+        "name": "[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md",
+        "download_url": "/security/[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md"
     }
 ]
