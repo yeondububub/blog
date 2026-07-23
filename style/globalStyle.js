@@ -48,7 +48,7 @@ const postsectionStyle = `w-full mb-10 md:mb-[60px] max-w-full h-auto align-midd
 
 // notebook에 code cell을 표시하는 부분
 const notebookpreStyle = `relative bg-graylv1 p-8 rounded-[10px] mb-6 text-base font-medium overflow-auto whitespace-pre-wrap break-words text-justify max-w-full h-auto align-middle`;
-const notebookcodeStyle = `font-mono text-base bg-graylv1`;
+const notebookcodeStyle = `font-mono text-base bg-transparent`;
 const notebookcopyButtonStyle = `border border-lv2 copy-button bg-white rounded-[10px] opacity-70 absolute top-5 right-5 p-2 shadow-md`;
 const notebookdownloadButtonStyle = `download-button px-5 py-[11px] mb-4 text-sm font-medium text-white bg-primary rounded-[10px] hover:bg-primary`;
 

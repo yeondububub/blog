@@ -67,6 +67,25 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
+    /* 1. 단일 백틱(`) 인라인 코드 : 회색 배경 박스 적용 */
+    :not(pre) > code {
+      background-color: #f3f5fa;
+      color: #eb5757;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.875em;
+      border: 1px solid #d9dbe0;
+    }
+
+    /* 2. 백틱 3개(```) 코드 블록 : pre 컨테이너 배경은 유지하되 내부 code 요소의 인라인 회색 박스는 제거 */
+    pre > code {
+      background-color: transparent !important;
+      color: inherit;
+      padding: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+    }
+
     @keyframes slideDown {
       from {
         transition: all 1s;
