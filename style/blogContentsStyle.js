@@ -52,6 +52,26 @@ function styleMarkdown(kinds, text, title_info = null) {
     .forEach((blockquote) =>
       blockquote.classList.add(...postblockquoteStyle.split(" "))
     );
+
+  // mermaid 코드 블록 처리
+  tempDiv.querySelectorAll("code").forEach((codeEl) => {
+    if (
+      codeEl.classList.contains("language-mermaid") ||
+      codeEl.classList.contains("lang-mermaid") ||
+      codeEl.classList.contains("mermaid")
+    ) {
+      const pre = codeEl.parentElement;
+      const mermaidDiv = document.createElement("div");
+      mermaidDiv.className = "mermaid flex justify-center my-6 overflow-x-auto";
+      mermaidDiv.textContent = codeEl.textContent;
+      if (pre && pre.tagName.toLowerCase() === "pre") {
+        pre.replaceWith(mermaidDiv);
+      } else {
+        codeEl.replaceWith(mermaidDiv);
+      }
+    }
+  });
+
   tempDiv.querySelectorAll("pre").forEach((pre) => {
     pre.classList.add(...postpreStyle.split(" "));
 
@@ -197,6 +217,18 @@ function styleMarkdown(kinds, text, title_info = null) {
   contentsDiv.appendChild(tempDiv);
 
   hljs.highlightAll();
+
+  if (window.mermaid) {
+    try {
+      if (typeof mermaid.run === "function") {
+        mermaid.run({ querySelector: "#contents .mermaid" });
+      } else if (typeof mermaid.init === "function") {
+        mermaid.init(undefined, "#contents .mermaid");
+      }
+    } catch (e) {
+      console.error("Mermaid render error:", e);
+    }
+  }
 }
 
 function styleJupyter(kinds, text, title_info = null) {
@@ -285,6 +317,25 @@ function styleJupyter(kinds, text, title_info = null) {
     markdownCell
       .querySelectorAll("strong")
       .forEach((strong) => strong.classList.add(...poststrongStyle.split(" ")));
+  });
+
+  // mermaid 코드 블록 처리
+  tempDiv.querySelectorAll("code").forEach((codeEl) => {
+    if (
+      codeEl.classList.contains("language-mermaid") ||
+      codeEl.classList.contains("lang-mermaid") ||
+      codeEl.classList.contains("mermaid")
+    ) {
+      const pre = codeEl.parentElement;
+      const mermaidDiv = document.createElement("div");
+      mermaidDiv.className = "mermaid flex justify-center my-6 overflow-x-auto";
+      mermaidDiv.textContent = codeEl.textContent;
+      if (pre && pre.tagName.toLowerCase() === "pre") {
+        pre.replaceWith(mermaidDiv);
+      } else {
+        codeEl.replaceWith(mermaidDiv);
+      }
+    }
   });
 
   tempDiv.querySelectorAll("code").forEach((code) => {
@@ -406,4 +457,16 @@ function styleJupyter(kinds, text, title_info = null) {
   contentsDiv.appendChild(downloadButton);
   contentsDiv.appendChild(tempDiv);
   hljs.highlightAll();
+
+  if (window.mermaid) {
+    try {
+      if (typeof mermaid.run === "function") {
+        mermaid.run({ querySelector: "#contents .mermaid" });
+      } else if (typeof mermaid.init === "function") {
+        mermaid.init(undefined, "#contents .mermaid");
+      }
+    } catch (e) {
+      console.error("Mermaid render error:", e);
+    }
+  }
 }

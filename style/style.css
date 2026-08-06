@@ -1,3 +1,8 @@
+#contents {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 #menu-button {
   width: 1.75rem;
   height: 1.75rem;

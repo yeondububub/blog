@@ -21,6 +21,14 @@
   <script src="./library/highlight_highlight.min.js"></script>
   <link rel="stylesheet" href="./library/highlight_ally-light.min.css" />
 
+  <!-- mermaid -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    }
+  </script>
+
   <!-- custom css -->
   <link rel="stylesheet" href=" style/style.css" />
 
@@ -77,13 +85,21 @@
       border: 1px solid #d9dbe0;
     }
 
-    /* 2. 백틱 3개(```) 코드 블록 : pre 컨테이너 배경은 유지하되 내부 code 요소의 인라인 회색 박스는 제거 */
+    /* 2. 백틱 3개(```) 코드 블록 : pre 컨테이너 배경은 유지하되 내부 code 요소의 인라인 회색 박스는 제거 및 가로 스크롤 설정 */
+    pre {
+      white-space: pre !important;
+      overflow-x: auto !important;
+      word-break: normal !important;
+    }
+
     pre > code {
       background-color: transparent !important;
       color: inherit;
       padding: 0 !important;
       border: none !important;
       border-radius: 0 !important;
+      white-space: pre !important;
+      word-break: normal !important;
     }
 
     @keyframes slideDown {

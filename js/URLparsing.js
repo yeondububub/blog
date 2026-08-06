@@ -101,9 +101,21 @@ window.addEventListener("popstate", (event) => {
       document.getElementById("contents").style.display = "block";
       document.getElementById("blog-posts").style.display = "none";
       postNameDecode = decodeURI(url.search.split("=")[1]).replaceAll("+", " ");
-      // console.log(postNameDecode);
       postInfo = extractFileInfo(postNameDecode);
-      fetch(origin + "blog/" + postNameDecode)
+
+      const targetPost = typeof blogList !== "undefined" ? blogList.find((p) => p.name === postNameDecode) : null;
+      let fetchUrl;
+      if (targetPost && targetPost.download_url) {
+        if (!isLocal && localDataUsing) {
+          fetchUrl = `${url.origin}/${siteConfig.repositoryName}${targetPost.download_url}`;
+        } else {
+          fetchUrl = targetPost.download_url;
+        }
+      } else {
+        fetchUrl = origin + "blog/" + postNameDecode;
+      }
+
+      fetch(fetchUrl)
         .then((response) => response.text())
         .then((text) =>
           postInfo.fileType === "md"

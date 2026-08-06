@@ -796,11 +796,25 @@ async function initialize() {
         document.getElementById("pagination").style.display = "none";
         document.getElementById("pagination").innerHTML = "";
       }
+      await initDataBlogList();
+
       postNameDecode = decodeURI(url.search.split("=")[1]).replaceAll("+", " ");
-      // console.log(postNameDecode);
       postInfo = extractFileInfo(postNameDecode);
+      const targetPost = blogList.find((p) => p.name === postNameDecode);
+
+      let fetchUrl;
+      if (targetPost && targetPost.download_url) {
+        if (!isLocal && localDataUsing) {
+          fetchUrl = `${url.origin}/${siteConfig.repositoryName}${targetPost.download_url}`;
+        } else {
+          fetchUrl = targetPost.download_url;
+        }
+      } else {
+        fetchUrl = origin + "blog/" + postNameDecode;
+      }
+
       try {
-        fetch(origin + "blog/" + postNameDecode)
+        fetch(fetchUrl)
           .then((response) => response.text())
           .then((text) =>
             postInfo.fileType === "md"
