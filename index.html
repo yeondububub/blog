@@ -29,6 +29,9 @@
     }
   </script>
 
+  <!-- darkMode -->
+  <script src="js/darkMode.js"></script>
+
   <!-- custom css -->
   <link rel="stylesheet" href=" style/style.css" />
 
@@ -36,6 +39,7 @@
   <script src="./library/tailwind-3.4.1.js"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -85,6 +89,17 @@
       border: 1px solid #d9dbe0;
     }
 
+    html.dark :not(pre) > code {
+      background-color: #252830;
+      color: #f87171;
+      border-color: #374151;
+    }
+
+    html.dark body {
+      background-color: #121314;
+      color: #e2e8f0;
+    }
+
     /* 2. 백틱 3개(```) 코드 블록 : pre 컨테이너 배경은 유지하되 내부 code 요소의 인라인 회색 박스는 제거 및 가로 스크롤 설정 */
     pre {
       white-space: pre !important;
@@ -121,11 +136,11 @@
   </style>
 </head>
 
-<body class="font-sans w-full text-surface">
-  <header class="relative bg-white mx-auto border-b border-gray-300">
+<body class="font-sans w-full text-surface bg-white dark:bg-[#121314] dark:text-gray-100 transition-colors duration-200">
+  <header class="relative bg-white dark:bg-[#18191c] mx-auto border-b border-gray-300 dark:border-gray-800 transition-colors duration-200">
     <nav class="container max-w-[1190px] mx-auto md:p-[19px] p-4 flex items-center relative">
       <!-- 블로그 제목 영역 -->
-      <h1 id="blog-title" class="md:text-2xl text-lg leading-6 mr-auto font-semibold text-gray-900 cursor-pointer">
+      <h1 id="blog-title" class="md:text-2xl text-lg leading-6 mr-auto font-semibold text-gray-900 dark:text-white cursor-pointer">
         WENIVLOG
       </h1>
       <!-- // 블로그 제목 영역 -->
@@ -146,10 +161,10 @@
       </button>
 
       <div
-        class="search-cont w-80 hidden md:block md:relative absolute z-10 rounded-2xl p-4 border border-graylv2 bottom-[-12px] right-2 xl:right-0 translate-y-full bg-background w-96 max-w-full box-border md:p-0 md:top-0 md:right-0 md:border-0 md:translate-y-0 md:w-80 md:ml-10">
+        class="search-cont w-80 hidden md:block md:relative absolute z-10 rounded-2xl p-4 border border-graylv2 dark:border-gray-700 bottom-[-12px] right-2 xl:right-0 translate-y-full bg-background dark:bg-[#18191c] w-96 max-w-full box-border md:p-0 md:top-0 md:right-0 md:border-0 md:translate-y-0 md:w-80 md:ml-10">
         <label for="search-input">
           <input type="text" id="search-input"
-            class="search-input bg-graylv1 rounded-[10px] px-5 py-2.5 placeholder:font-normal placehoder:text-graylv3 focus:outline-0 shadow-sm w-full"
+            class="search-input bg-graylv1 dark:bg-[#252830] dark:text-white dark:placeholder-gray-400 rounded-[10px] px-5 py-2.5 placeholder:font-normal placehoder:text-graylv3 focus:outline-0 shadow-sm w-full"
             placeholder="Keyword" /></label>
         <div
           class="btn-cont flex gap-2 justify-cetner items-center absolute top-1/2 md:right-4 right-8 -translate-y-1/2">
@@ -162,20 +177,30 @@
         </div>
       </div>
       <!-- // 메뉴 영역 -->
+
+      <!-- 다크모드 토글 버튼 -->
+      <button id="dark-mode-toggle" onclick="toggleDarkMode()" class="ml-4 md:ml-6 p-2 rounded-lg bg-graylv1 dark:bg-gray-800 text-graylv4 dark:text-gray-200 hover:bg-graylv2 dark:hover:bg-gray-700 transition-colors duration-200 flex items-center justify-center shrink-0" aria-label="다크 모드로 변경">
+        <svg class="icon-sun w-5 h-5 hidden stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg class="icon-moon w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
     </nav>
     <!-- 모바일에서 메뉴 영역이 보이도록 하는 영역 -->
-    <div id="mobileMenu" class="absolute bg-background w-full max-w-[1190px] border-b border-graylv2 z-10 md:hidden">
+    <div id="mobileMenu" class="absolute bg-background dark:bg-[#18191c] w-full max-w-[1190px] border-b border-graylv2 dark:border-gray-800 z-10 md:hidden">
     </div>
     <!-- // 모바일에서 메뉴 영역이 보이도록 하는 영역 -->
   </header>
 
   <!-- 카테고리 배너 영역 -->
-  <div id="category-banner" class="hidden relative w-full bg-blue-50 border-b border-blue-100">
+  <div id="category-banner" class="hidden relative w-full bg-blue-50 dark:bg-blue-950/40 border-b border-blue-100 dark:border-blue-900">
     <div class="container mx-auto max-w-[1190px] px-8 py-5 flex justify-between items-center">
       <div>
-        <p id="category-banner-desc" class="text-base font-medium text-gray-500"></p>
+        <p id="category-banner-desc" class="text-base font-medium text-gray-500 dark:text-gray-300"></p>
       </div>
-      <button id="category-banner-close" class="text-gray-400 hover:text-gray-600 focus:outline-none transition-colors">
+      <button id="category-banner-close" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none transition-colors">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
@@ -199,7 +224,7 @@
 
   <!-- category 검색 영역 -->
   <section
-    class="category-aside hidden md:flex flex-col border border-graylv2 bg-white rounded-[10px] fixed top-24 right-8 overflow-y-auto w-fit h-fit">
+    class="category-aside hidden md:flex flex-col border border-graylv2 dark:border-gray-700 bg-white dark:bg-[#18191c] rounded-[10px] fixed top-24 right-8 overflow-y-auto w-fit h-fit">
     <header class="flex items-center">
       <h2 class="aside-tit sr-only text-sm font-semibold ml-5">content</h2>
       <button id="aside-button">

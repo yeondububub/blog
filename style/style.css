@@ -235,4 +235,120 @@
   mask-size: 100%;
   mask-repeat: no-repeat;
   mask-position: center center;
-}/*# sourceMappingURL=style.css.map */
+}
+
+/* Dark Mode Overrides for Mask Icons */
+html.dark #menu-button {
+  background-color: #d9dbe0;
+}
+html.dark #menu-button:hover, html.dark #menu-button.active {
+  background-color: #ffffff;
+}
+
+html.dark #search-button {
+  background-color: #d9dbe0;
+}
+html.dark #search-button:hover, html.dark #search-button.active {
+  background-color: #ffffff;
+}
+
+html.dark .search-inp-btn {
+  background-color: #9ca3af;
+}
+html.dark .search-inp-btn:hover, html.dark .search-inp-btn.active {
+  background-color: #ffffff;
+}
+
+html.dark #copy-button::after {
+  background-color: #9ca3af;
+}
+html.dark #copy-button:hover::after, html.dark #copy-button.active::after {
+  background-color: #ffffff;
+}
+
+html.dark #aside-button::after {
+  background-color: #9ca3af;
+}
+html.dark .active #aside-button::after {
+  background-color: #d9dbe0;
+}
+
+html.dark #page-prev::after,
+html.dark #page-next::after {
+  background-color: #9ca3af;
+}
+html.dark #page-prev:hover::after,
+html.dark #page-next:hover::after {
+  background-color: #ffffff;
+}
+html.dark #page-prev:disabled::after,
+html.dark #page-next:disabled::after {
+  background-color: #4b5563;
+}
+
+/* Dark Mode Overrides for Code Blocks & Syntax Highlighting (Highlight.js) */
+html.dark pre {
+  background-color: #1a1b1e !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #2d3139 !important;
+}
+
+html.dark code.hljs,
+html.dark pre code,
+html.dark pre > code {
+  background-color: transparent !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark .hljs-comment,
+html.dark .hljs-quote {
+  color: #94a3b8 !important;
+  font-style: italic;
+}
+
+html.dark .hljs-keyword,
+html.dark .hljs-selector-tag,
+html.dark .hljs-subst {
+  color: #c084fc !important;
+  font-weight: 600;
+}
+
+html.dark .hljs-string,
+html.dark .hljs-bullet,
+html.dark .hljs-symbol,
+html.dark .hljs-addition {
+  color: #4ade80 !important;
+}
+
+html.dark .hljs-title,
+html.dark .hljs-section,
+html.dark .hljs-attribute,
+html.dark .hljs-function,
+html.dark .hljs-title.function_,
+html.dark .hljs-title.class_ {
+  color: #60a5fa !important;
+}
+
+html.dark .hljs-number,
+html.dark .hljs-literal,
+html.dark .hljs-params,
+html.dark .hljs-type,
+html.dark .hljs-built_in,
+html.dark .hljs-template-tag,
+html.dark .hljs-template-variable {
+  color: #fb923c !important;
+}
+
+html.dark .hljs-name,
+html.dark .hljs-tag,
+html.dark .hljs-variable,
+html.dark .hljs-deletion,
+html.dark .hljs-regexp {
+  color: #f87171 !important;
+}
+
+html.dark .hljs-meta,
+html.dark .hljs-link {
+  color: #38bdf8 !important;
+}
+/*# sourceMappingURL=style.css.map */
