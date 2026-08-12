@@ -59,7 +59,7 @@ void StartGame() {
     catnip = 0;
     jump_cnt = 0;
 
-    puts("let the cat reach the roof! 🐈");
+    puts("let the cat reach the roof!");
 
     sleep(1);
 
@@ -77,27 +77,27 @@ void StartGame() {
         if (catnip) {
             catnip--;
             jump_cnt++;
-            puts("the cat powered up and is invincible! nothing cannot stop! 🐈");
+            puts("the cat powered up and is invincible! nothing cannot stop!");
         } else if ((input == 'h' && obstacle != OBSTACLE_LEFT) ||
                 (input == 'l' && obstacle != OBSTACLE_RIGHT)) {
             jump_cnt++;
-            puts("the cat jumped successfully! 🐱");
+            puts("the cat jumped successfully!");
         } else {
-            puts("the cat got stuck by obstacle! 😿 🪨 ");
+            puts("the cat got stuck by obstacle!");
             return;
         }
 
         // eat some catnip with a specific probability.
         p = (double)rand() / RAND_MAX;
         if (p < CATNIP_PROBABILITY) {
-            puts("the cat found and ate some catnip! 😽");
+            puts("the cat found and ate some catnip!");
             catnip = CATNIP_INVINCIBLE_TIMES;
         }
     } while (jump_cnt < CAT_JUMP_GOAL);
 
     puts("your cat has reached the roof!\n");
 
-    printf("let people know your cat's name 😼: ");
+    printf("let people know your cat's name: ");
     scanf("%31s", cat_name);
 
     snprintf(cmd, sizeof(cmd), cmd_fmt, cat_name);

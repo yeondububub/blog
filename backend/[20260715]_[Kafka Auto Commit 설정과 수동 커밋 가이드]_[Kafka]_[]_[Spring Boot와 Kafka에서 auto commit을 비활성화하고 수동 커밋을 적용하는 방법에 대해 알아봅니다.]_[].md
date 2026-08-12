@@ -12,7 +12,7 @@
 
 카프카 컨슈머의 기본 설정은 자동 커밋(`enable.auto.commit = true`)입니다. 이 설정이 활성화되어 있으면 컨슈머는 일정한 시간 간격(`auto.commit.interval.ms`, 기본값 5초)마다 최근 `poll()` 메서드로 읽어온 가장 마지막 오프셋을 카프카 브로커에 자동으로 커밋합니다.
 
-### 💡 자동 커밋의 위험성: 메시지 유실(Message Loss)과 중복 처리
+### 자동 커밋의 위험성: 메시지 유실(Message Loss)과 중복 처리
 
 자동 커밋은 구현이 매우 단순하다는 장점이 있지만, 실제 운영 환경에서는 다음과 같은 심각한 문제를 야기할 수 있습니다.
 
@@ -70,7 +70,7 @@ public class KafkaConfig {
 }
 ```
 
-### 🔍 Spring Kafka의 주요 AckMode 설정값
+### Spring Kafka의 주요 AckMode 설정값
 Spring Kafka는 다양한 레벨의 오프셋 커밋 모드를 제공합니다. 상황에 맞게 적절한 방식을 선택해야 합니다.
 
 | AckMode 설정값 | 설명 |
@@ -122,7 +122,7 @@ public class HotArticleEventConsumer {
 }
 ```
 
-### 💡 핵심 포인트 분석
+### 핵심 포인트 분석
 
 1. **`Acknowledgment` 파라미터 주입:** 
    * 리스너 메서드의 파라미터로 `org.springframework.kafka.support.Acknowledgment` 객체를 추가합니다.

@@ -21,7 +21,7 @@ dependencies {
 }
 ```
 
-### 💡 Spring Cache 추상화와 Redis의 역할
+### Spring Cache 추상화와 Redis의 역할
 Spring 프레임워크는 캐싱 서비스를 매우 편리하게 사용할 수 있도록 **캐시 추상화(Cache Abstraction)** 레이어를 제공합니다. 이것이 바로 `spring-boot-starter-cache` 의존성의 역할입니다.
 
 * **캐시 추상화 (`spring-boot-starter-cache`):** 
@@ -56,7 +56,7 @@ public class CacheConfig {
 }
 ```
 
-### 💡 핵심 포인트: TTL(Time-To-Live)을 1초로 설정한 이유
+### 핵심 포인트: TTL(Time-To-Live)을 1초로 설정한 이유
 조회수는 사용자 활동에 따라 실시간으로 계속해서 증가하는 성격을 가집니다. 따라서 캐시 만료 시간을 너무 길게 잡으면 사용자가 본인의 조회수가 제대로 반영되지 않는 것처럼 느낄 수 있습니다. 
 
 반면, **TTL을 단 1초**로만 설정하더라도 다음과 같은 극적인 효과를 얻을 수 있습니다.
@@ -69,7 +69,7 @@ public class CacheConfig {
 
 Spring이 제공하는 `@Cacheable` 어노테이션의 실제 코드를 들여다보면, 캐싱 동작을 상세히 제어할 수 있는 다양한 속성들이 정의되어 있습니다. 코드를 분석하여 유용하게 쓰이는 설정 값들을 살펴보겠습니다.
 
-### 🔍 `@Cacheable` 인터페이스 소스코드
+### `@Cacheable` 인터페이스 소스코드
 ```java
 package org.springframework.cache.annotation;
 
@@ -107,7 +107,7 @@ public @interface Cacheable {
 }
 ```
 
-### ⚙️ 주요 속성 분석 및 활용법
+### 주요 속성 분석 및 활용법
 
 #### ① `value` & `cacheNames`
 * **역할:** 데이터를 저장할 캐시의 **영역(그룹) 이름**을 지정합니다. (이 둘은 서로의 별칭입니다.)
@@ -178,7 +178,7 @@ public class ViewClient {
 }
 ```
 
-### 🔑 위 코드의 캐시 키 적용 설명
+### 위 코드의 캐시 키 적용 설명
 * **`value = "articleViewCount"`**에 의해 `CacheConfig`에 지정된 **1초 TTL** 설정 정책이 적용됩니다.
 * **`key = "#articleId"`**에 의해 메서드 파라미터 `Long articleId` 값을 동적으로 수집합니다. 
 * 최종적으로 Redis에는 **`articleViewCount::[articleId]`**의 키 형식으로 저장되며, 1초 동안은 외부 API를 추가 호출하지 않고 즉시 Redis에서 값을 반환하여 병목 현상을 방어합니다.
@@ -189,13 +189,13 @@ public class ViewClient {
 
 로컬 환경이나 서버 환경에서 Redis에 캐시가 적절한 수명으로 보관되어 있는지 확인하기 위해 **Redis CLI(Command Line Interface)**를 사용하여 직접 값을 조회하고 검증할 수 있습니다.
 
-### 🔌 1. Redis CLI 접속하기
+### 1. Redis CLI 접속하기
 터미널을 열고 다음 명령어를 실행하여 Redis 콘솔에 접속합니다.
 ```bash
 redis-cli
 ```
 
-### 🔍 2. 등록된 캐시 키 조회하기
+### 2. 등록된 캐시 키 조회하기
 조회수 캐시를 구성할 때 접두사를 `articleViewCount`로 잡았으므로, 관련된 키 목록을 찾기 위해 검색합니다.
 ```bash
 keys articleViewCount*
@@ -206,16 +206,16 @@ keys articleViewCount*
   2) "articleViewCount::124"
   ```
 
-### 📊 3. 특정 키의 값 조회하기
+### 3. 특정 키의 값 조회하기
 `get` 명령어를 사용하여 저장된 실제 조회수 데이터를 확인합니다.
 ```bash
 get articleViewCount::123
 ```
 
-> **⚠️ 주의: 값이 이상하게 깨져서 보여요!**
+> **주의: 값이 이상하게 깨져서 보여요!**
 > Spring Data Redis 캐시는 기본적으로 자바 직렬화 방식(`JdkSerializationRedisSerializer`)을 이용해 바이너리 데이터로 변환 후 Redis에 저장합니다. 따라서 CLI에서 단순히 `get`으로 확인하면 `\xac\xed\x00\x05...` 처럼 사람이 읽기 어려운 문자로 표현됩니다.
 >
-> 💡 **해결법 (JSON 직렬화 적용):**
+> **해결법 (JSON 직렬화 적용):**
 > 만약 CLI에서도 원본 데이터를 깔끔하게(예: JSON 또는 일반 텍스트) 보고 싶다면, `CacheConfig` 설정에 Jackson과 같은 JSON 직렬화 옵션을 수동으로 결합해 주어야 합니다.
 > ```java
 > // JSON 포맷으로 직렬화 설정을 결합한 예시
@@ -226,7 +226,7 @@ get articleViewCount::123
 >     );
 > ```
 
-### ⏳ 4. 캐시 만료 시간(TTL) 확인하기
+### 4. 캐시 만료 시간(TTL) 확인하기
 설정한 TTL이 실제로 1초로 잘 등록되어 만료 카운트다운이 돌아가고 있는지 검증합니다.
 ```bash
 ttl articleViewCount::123
