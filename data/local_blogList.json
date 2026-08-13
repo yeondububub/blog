@@ -38,5 +38,9 @@
     {
         "name": "[20260806]_[스프링 배치 사용법]_[Spring Batch]_[spring_batch.png]_[스프링 배치의 사용법에 대해 알아본다]_[].md",
         "download_url": "/backend/[20260806]_[스프링 배치 사용법]_[Spring Batch]_[spring_batch.png]_[스프링 배치의 사용법에 대해 알아본다]_[].md"
+    },
+    {
+        "name": "[20260813]_[Spring WebFlux 입문]_[WebFlux]_[spring.png]_[WebFlux와 R2DBC]_[].md",
+        "download_url": "/backend/[20260813]_[Spring WebFlux 입문]_[WebFlux]_[spring.png]_[WebFlux와 R2DBC]_[].md"
     }
 ]
