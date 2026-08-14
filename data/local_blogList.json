@@ -42,5 +42,9 @@
     {
         "name": "[20260813]_[Spring WebFlux 입문]_[WebFlux]_[spring.png]_[WebFlux와 R2DBC]_[].md",
         "download_url": "/backend/[20260813]_[Spring WebFlux 입문]_[WebFlux]_[spring.png]_[WebFlux와 R2DBC]_[].md"
+    },
+    {
+        "name": "[20260814]_[Spring Cloud Stream 입문]_[Spring Cloud]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현]_[].md",
+        "download_url": "/backend/[20260814]_[Spring Cloud Stream 입문]_[Spring Cloud]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현]_[].md"
     }
 ]

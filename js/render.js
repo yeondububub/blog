@@ -513,6 +513,16 @@ function renderBlogCategory(targetList = blogList) {
   /*
     targetList(기본값: 전체 blogList)에서 카테고리를 소문자로 추출하여 카테고리 목록을 aside 항목으로 렌더링
     */
+  if (typeof clearTOCScrollListener === "function") {
+    clearTOCScrollListener();
+  }
+
+  const categoryWrapper = document.querySelector(".category-aside");
+  const categoryTitle = categoryWrapper ? categoryWrapper.querySelector(".aside-tit") : null;
+  if (categoryTitle) {
+    categoryTitle.textContent = "Category";
+  }
+
   const categoryList = {};
   targetList.forEach((post) => {
     const postInfo = extractFileInfo(post.name);
@@ -528,11 +538,10 @@ function renderBlogCategory(targetList = blogList) {
   categoryArray.sort();
 
   const categoryContainer = document.querySelector("aside");
+  if (!categoryContainer) return;
+  categoryContainer.innerHTML = "";
+  categoryContainer.className = "";
   categoryContainer.classList.add(...categoryContainerStyle.split(" "));
-
-  // 기존 렌더링된 카테고리 아이템 지우기 (header 등은 유지하고, div로 된 태그 아이템들만 삭제)
-  const existingItems = categoryContainer.querySelectorAll("div");
-  existingItems.forEach(item => item.remove());
 
   categoryArray.unshift("All");
 
@@ -843,17 +852,17 @@ const categoryContainer = document.querySelector("aside");
 
 if (categoryWrapper && categoryButton) {
   window.addEventListener("click", (evt) => {
-    if (evt.target === categoryButton) {
+    if (categoryButton.contains(evt.target)) {
       categoryWrapper.classList.toggle("active");
-      categoryTitle.classList.toggle("sr-only");
-      categoryContainer.classList.toggle("md:flex");
+      if (categoryTitle) categoryTitle.classList.toggle("sr-only");
+      if (categoryContainer) categoryContainer.classList.toggle("md:flex");
     } else if (
       categoryWrapper.classList.contains("active") &&
       !categoryWrapper.contains(evt.target)
     ) {
       categoryWrapper.classList.remove("active");
-      categoryTitle.classList.add("sr-only");
-      categoryContainer.classList.remove("md:flex");
+      if (categoryTitle) categoryTitle.classList.add("sr-only");
+      if (categoryContainer) categoryContainer.classList.remove("md:flex");
     }
   });
 }

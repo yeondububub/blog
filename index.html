@@ -223,18 +223,18 @@
     <div id="pagination"></div>
   </main>
 
-  <!-- category 검색 영역 -->
+  <!-- category / TOC aside 영역 -->
   <section
-    class="category-aside hidden md:flex flex-col border border-graylv2 dark:border-gray-700 bg-white dark:bg-[#18191c] rounded-[10px] fixed top-24 right-8 overflow-y-auto w-fit h-fit">
-    <header class="flex items-center">
-      <h2 class="aside-tit sr-only text-sm font-semibold ml-5">content</h2>
-      <button id="aside-button">
-        <span class="sr-only">카테고리 열기</span>
+    class="category-aside hidden md:flex flex-col border border-graylv2 dark:border-gray-700 bg-white dark:bg-[#18191c] rounded-[10px] fixed top-24 right-8 overflow-y-auto w-fit h-fit max-h-[calc(100vh-120px)] shadow-md z-20 transition-all duration-200">
+    <header class="flex items-center justify-between">
+      <h2 class="aside-tit sr-only text-sm font-semibold ml-4 text-gray-900 dark:text-white">Content</h2>
+      <button id="aside-button" class="cursor-pointer" aria-label="카테고리 및 목차 토글">
+        <span class="sr-only">카테고리 및 목차 열기</span>
       </button>
     </header>
     <aside></aside>
   </section>
-  <!-- // category 검색 영역 -->
+  <!-- // category / TOC aside 영역 -->
 
   <!-- utils -->
   <script src="js/utils.js"></script>

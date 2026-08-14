@@ -124,7 +124,6 @@ $activation: #dee8ff;
     width: 24px;
     height: 24px;
     margin: 13px;
-    border: 1px solid red;
     @include mask-image("../img/icon/icon-chapter.svg", $graylv4);
   }
 }
@@ -132,6 +131,31 @@ $activation: #dee8ff;
 .active #aside-button {
   &::after {
     @include mask-image("../img/icon/icon-side-close-right.svg", $graylv3);
+  }
+}
+
+.category-aside {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: width 0.2s ease-in-out;
+
+  &.active {
+    width: 260px;
+  }
+}
+
+aside {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(141, 146, 153, 0.3);
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(141, 146, 153, 0.6);
   }
 }
 

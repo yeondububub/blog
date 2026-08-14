@@ -229,6 +229,9 @@ function styleMarkdown(kinds, text, title_info = null) {
       console.error("Mermaid render error:", e);
     }
   }
+
+  // 본문 렌더링 후 목차(TOC) 생성
+  renderTOC();
 }
 
 function styleJupyter(kinds, text, title_info = null) {
@@ -469,4 +472,152 @@ function styleJupyter(kinds, text, title_info = null) {
       console.error("Mermaid render error:", e);
     }
   }
+
+  // 본문 렌더링 후 목차(TOC) 생성
+  renderTOC();
 }
+
+// 목차(TOC) 스크롤 리스너 관리 변수
+let tocScrollHandler = null;
+
+function clearTOCScrollListener() {
+  if (tocScrollHandler) {
+    window.removeEventListener("scroll", tocScrollHandler);
+    tocScrollHandler = null;
+  }
+}
+
+function renderTOC() {
+  clearTOCScrollListener();
+
+  const asideWrapper = document.querySelector(".category-aside");
+  const asideContainer = document.querySelector("aside");
+  const asideTit = asideWrapper ? asideWrapper.querySelector(".aside-tit") : null;
+
+  if (!asideContainer) return;
+
+  // aside 타이틀을 'Content'로 변경
+  if (asideTit) {
+    asideTit.textContent = "Content";
+  }
+
+  // 기존 aside 내부 초기화 및 스타일 설정
+  asideContainer.innerHTML = "";
+  asideContainer.className = "";
+  asideContainer.classList.add(...tocContainerStyle.split(" "));
+
+  // 본문(#contents) 내의 모든 heading 추출 (#title_section의 타이틀은 제외)
+  const allHeadings = Array.from(
+    document.querySelectorAll(
+      "#contents h1, #contents h2, #contents h3, #contents h4, #contents h5, #contents h6"
+    )
+  ).filter((h) => !h.closest("#title_section"));
+
+  if (allHeadings.length === 0) {
+    const emptyMsg = document.createElement("div");
+    emptyMsg.className = "px-4 py-3 text-xs text-gray-400 dark:text-gray-500 text-center";
+    emptyMsg.textContent = "목차가 없습니다.";
+    asideContainer.appendChild(emptyMsg);
+    return;
+  }
+
+  // 최상위 depth 계산 (예: H1이 없으면 H2가 0레벨)
+  const depths = allHeadings.map((h) => parseInt(h.tagName.substring(1), 10));
+  const minDepth = Math.min(...depths);
+
+  const tocList = document.createElement("div");
+  tocList.className = "flex flex-col gap-0.5 w-full";
+
+  const tocItems = [];
+
+  allHeadings.forEach((heading, idx) => {
+    const depth = parseInt(heading.tagName.substring(1), 10);
+    const relativeLevel = depth - minDepth; // 0, 1, 2...
+    const headingId = `toc-heading-${idx}`;
+    heading.id = headingId;
+    heading.classList.add("scroll-mt-24");
+
+    const tocItem = document.createElement("a");
+    tocItem.href = `#${headingId}`;
+    tocItem.dataset.targetId = headingId;
+    tocItem.classList.add(...tocItemBaseStyle.split(" "));
+
+    const headingText = heading.textContent.trim();
+    tocItem.textContent = headingText;
+    tocItem.title = headingText; // hover 툴팁으로 전체 제목 확인 가능
+
+    // 계층별 들여쓰기 설정
+    if (relativeLevel === 0) {
+      tocItem.classList.add("font-medium", "text-gray-800", "dark:text-gray-200");
+    } else if (relativeLevel === 1) {
+      tocItem.classList.add("pl-6", "text-gray-600", "dark:text-gray-400");
+    } else if (relativeLevel === 2) {
+      tocItem.classList.add("pl-9", "text-[12px]", "text-gray-500", "dark:text-gray-500");
+    } else {
+      tocItem.classList.add("pl-12", "text-[12px]", "text-gray-400", "dark:text-gray-500");
+    }
+
+    tocItem.addEventListener("click", (e) => {
+      e.preventDefault();
+      heading.scrollIntoView({ behavior: "smooth", block: "start" });
+      history.replaceState(null, "", `#${headingId}`);
+      setActiveTOC(headingId);
+    });
+
+    tocList.appendChild(tocItem);
+    tocItems.push({ heading, item: tocItem });
+  });
+
+  asideContainer.appendChild(tocList);
+
+  function setActiveTOC(activeId) {
+    const activeClasses = tocItemActiveStyle.split(" ");
+    tocItems.forEach(({ item }) => {
+      if (item.dataset.targetId === activeId) {
+        item.classList.add(...activeClasses);
+        item.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      } else {
+        item.classList.remove(...activeClasses);
+      }
+    });
+  }
+
+  // 초기 활성화 (첫 번째 항목)
+  if (tocItems.length > 0) {
+    setActiveTOC(tocItems[0].heading.id);
+  }
+
+  // Scrollspy (스크롤 시 활성 헤딩 실시간 감지 및 하이라이트)
+  let isTicking = false;
+  tocScrollHandler = () => {
+    if (!isTicking) {
+      window.requestAnimationFrame(() => {
+        const topThreshold = 140; // 상단 헤더 여백 기준점
+        let currentHeading = allHeadings[0];
+
+        // 페이지 맨 아래 도달 시 마지막 헤딩 선택
+        if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50) {
+          currentHeading = allHeadings[allHeadings.length - 1];
+        } else {
+          for (let i = 0; i < allHeadings.length; i++) {
+            const rect = allHeadings[i].getBoundingClientRect();
+            if (rect.top <= topThreshold) {
+              currentHeading = allHeadings[i];
+            } else {
+              break;
+            }
+          }
+        }
+
+        if (currentHeading) {
+          setActiveTOC(currentHeading.id);
+        }
+        isTicking = false;
+      });
+      isTicking = true;
+    }
+  };
+
+  window.addEventListener("scroll", tocScrollHandler, { passive: true });
+}
+

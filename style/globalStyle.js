@@ -83,3 +83,9 @@ const pageMoveButtonStyle = `relative flex inline-flex items-center rounded-[10p
 const pageNumberListStyle = `flex items-center justify-center gap-1`;
 const pageNumberStyle = `relative inline-flex items-center w-10 h-10 px-4 py-2 text-md font-normal text-graylv3 dark:text-gray-400`;
 const pageNumberActiveStyle = `text-primary dark:text-blue-400 font-bold`;
+
+// toc (Table of Contents) 목차 스타일
+const tocContainerStyle = `hidden flex-col md:w-[260px] max-h-[70vh] overflow-y-auto rounded-md bg-white dark:bg-[#18191c] shadow-sm z-10 py-2 px-1 text-sm`;
+const tocItemBaseStyle = `block text-left px-3.5 py-1.5 text-[13px] leading-snug transition-all duration-150 cursor-pointer text-graylv4 dark:text-gray-300 hover:text-primary dark:hover:text-blue-400 hover:bg-graylv1 dark:hover:bg-gray-800/70 rounded-[6px] truncate`;
+const tocItemActiveStyle = `text-primary dark:text-blue-400 font-semibold bg-blue-50/80 dark:bg-blue-950/50 border-l-[3px] border-primary dark:border-blue-400 pl-2.5`;
+
