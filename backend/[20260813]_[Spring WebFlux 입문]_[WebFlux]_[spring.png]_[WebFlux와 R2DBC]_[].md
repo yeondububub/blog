@@ -1,28 +1,37 @@
-# Spring WebFlux 입문 — 결제 서비스로 배우는 리액티브 프로그래밍
+# Spring WebFlux 입문 — 결제 서비스 기반 리액티브 프로그래밍 분석
 
-## 1. 왜 WebFlux인가?
+대규모 트래픽과 높은 동시성 처리가 요구되는 환경에서 Spring MVC의 전통적인 Thread-per-request 모델은 스레드 풀 고갈 및 리소스 경합 문제에 직면할 수 있다. 특히 외부 PG사 연동이나 분산 I/O 대기가 빈번한 결제 도메인에서는 I/O 대기로 인한 스레드 점유 비용이 시스템 전체의 성능 병목으로 작용한다.
 
-Spring MVC를 써봤다면 이런 코드에 익숙할 것입니다.
+본 문서는 Spring WebFlux의 핵심 아키텍처 및 동작 메커니즘을 분석하고, 실제 결제 승인 시스템(WebFlux, R2DBC, Sinks, Schedulers)을 기반으로 리액티브 파이프라인의 설계 및 구현 방식을 정리한다.
+
+---
+
+## 1. 아키텍처 비교: Spring MVC vs Spring WebFlux
+
+### 1.1 Blocking I/O 모델 (Spring MVC)
+
+Spring MVC는 기본적으로 요청당 하나의 스레드를 할당하는 Thread-per-request 모델을 사용한다.
 
 ```java
-// Spring MVC 방식 (Blocking)
+// Spring MVC (Blocking I/O)
 @PostMapping("/confirm")
 public ResponseEntity<Result> confirm(@RequestBody Request req) {
-    Result result = paymentService.confirm(req); // 여기서 스레드가 블로킹됨
+    Result result = paymentService.confirm(req); // 외부 API 및 DB I/O 동안 스레드 대기(Blocking)
     return ResponseEntity.ok(result);
 }
 ```
 
-이 코드에서 `paymentService.confirm(req)` 가 실행되는 동안, 해당 **스레드는 그냥 대기**합니다. DB 쿼리를 날리고 응답을 기다리는 동안, 외부 PG사 API를 호출하고 응답을 기다리는 동안 — 스레드는 아무것도 하지 않습니다.
+- 클라이언트 요청 시 톰캣 스레드 풀에서 작업 스레드를 할당한다.
+- 데이터베이스 쿼리 실행 및 외부 PG사 API 연동 등 I/O 작업이 진행되는 동안 해당 스레드는 대기(Blocked) 상태를 유지한다.
+- 동시 요청 수가 스레드 풀의 상한에 도달하면 대기 큐잉 지연 및 컨텍스트 스위칭 오버헤드가 급증하며 메모리 자원(스레드당 스택 영역)이 소진된다.
 
-이를 **Blocking I/O** 라고 합니다.
 
-Spring MVC는 이 문제를 **스레드를 늘리는 방식**으로 해결합니다. 요청이 100개 동시에 들어오면 스레드도 100개를 만드는 식이죠. 하지만 스레드는 비싼 자원입니다. 각 스레드는 스택 메모리를 수백 KB씩 차지하며, 컨텍스트 스위칭 비용도 발생합니다.
+### 1.2 Non-Blocking I/O 모델 (Spring WebFlux)
 
-### Non-Blocking I/O
+Spring WebFlux는 Netty 기반의 이벤트 루프(Event Loop) 아키텍처와 논블로킹 I/O를 활용한다.
 
 ```kotlin
-// Spring WebFlux 방식 (Non-Blocking)
+// Spring WebFlux (Non-Blocking I/O)
 @PostMapping("/confirm")
 fun confirm(@RequestBody request: TossPaymentConfirmRequest): Mono<ResponseEntity<ApiResponse<PaymentConfirmationResult>>> {
     val command = PaymentConfirmCommand(...)
@@ -31,95 +40,220 @@ fun confirm(@RequestBody request: TossPaymentConfirmRequest): Mono<ResponseEntit
 }
 ```
 
-WebFlux에서는 스레드가 블로킹되지 않습니다. DB 쿼리나 외부 API 호출을 *"나중에 결과가 오면 이걸 해줘"* 라는 식으로 **선언적으로** 등록해두고, 스레드는 다른 요청을 처리하러 갑니다.
+- I/O 작업 요청 시 호출 스레드가 결과를 대기하지 않고, 완료 시점에 실행될 파이프라인만 등록한 뒤 즉시 다음 작업을 처리한다.
+- CPU 코어 수에 최적화된 소수의 이벤트 루프 스레드만으로 대량의 동시 연결 및 I/O 대기 작업을 효율적으로 수용할 수 있다.
 
-이 덕분에 **소수의 스레드로 엄청난 수의 동시 요청**을 처리할 수 있습니다. 이것이 결제 서비스처럼 외부 PG사 API 호출이 많고 대기 시간이 긴 서비스에서 WebFlux가 빛을 발하는 이유입니다.
+---
 
+### 1.3 Publisher 핵심 타입: Mono와 Flux
 
-## 2. Publisher의 두 종류 — Mono와 Flux
+Reactive Streams 사양의 핵심은 데이터를 비동기적으로 발행하는 `Publisher<T>`이다. Project Reactor는 이를 `Mono`와 `Flux` 두 가지 타입으로 구현한다.
 
-리액티브 프로그래밍의 핵심은 **Publisher** 개념입니다. Publisher는 "나중에 데이터를 발행하겠다"는 약속입니다.
-
-Project Reactor(WebFlux의 기반 라이브러리)에는 두 가지 Publisher가 있습니다.
-
-| | Mono | Flux |
+| 구분 | `Mono<T>` | `Flux<T>` |
 |---|---|---|
-| 발행 데이터 수 | 0개 또는 1개 | 0개 ~ N개 |
-| 사용 예 | 단건 조회, 저장 결과 | 목록 조회, 스트림 |
-| 비유 | `Optional` / `CompletableFuture` | `Stream` / `List` |
+| 발행 데이터 수 | 0 또는 1개 (`0..1`) | 0부터 N개 (`0..N`) |
+| 대응 개념 | `Optional<T>`, `CompletableFuture<T>` | `List<T>`, `Stream<T>` |
+| 주요 용도 | 단건 데이터 조회, CUD 처리 결과, HTTP 단건 응답 | 다건 데이터 스트리밍, 이벤트 피드, SSE |
 
 ```kotlin
-// Mono 예시 — 결제 확인 결과 (항상 단건)
+// Mono: 결제 승인 단건 결과 반환
 fun confirm(command: PaymentConfirmCommand): Mono<PaymentConfirmationResult>
 
-// Flux 예시 — 미처리 결제 목록 조회 (여러 건)
+// Flux: 미처리 결제 복구 대상 목록 스트림
 fun getPendingPayments(): Flux<PendingPaymentEvent>
 ```
 
-> **중요**: `Mono`와 `Flux`는 선언만 해도 아무 일도 일어나지 않습니다. **subscribe()** 가 호출될 때 비로소 실행됩니다. 이를 **Cold Stream** 이라고 합니다.
+---
 
+### 1.4 Cold Stream 동작 특성
 
-## 3. 리액티브 연산자 실전
+Reactor의 기본 스트림은 Cold Stream 방식으로 동작한다.
 
-가장 중요한 내용입니다. 실제 결제 확인 서비스 코드를 보면서 핵심 연산자들을 이해해 봅시다.
+- 파이프라인의 정의(연산자 체이닝)와 실행은 엄격히 분리된다.
+- `subscribe()`가 호출되기 전까지는 쿼리 실행, 네트워크 호출 등 어떠한 비즈니스 로직도 실행되지 않는다.
+- WebFlux 컨트롤러에서는 반환된 `Mono`/`Flux`를 프레임워크가 내부적으로 구독하여 클라이언트에 응답 스트림을 전송한다.
+
+---
+
+## 2. 결제 승인 파이프라인 및 핵심 리액티브 연산자 분석
+
+결제 승인 프로세스는 상태 검증, 외부 PG 승인, 영속성 갱신 등의 연속적인 비동기 단계로 구성된다.
+
+```
+[결제 승인 파이프라인 단계]
+1. DB 주문 상태를 '진행중(EXECUTING)'으로 갱신
+   |
+2. 주문 금액 및 유효성 비동기 검증 (filterWhen)
+   |
+3. 외부 PG사 승인 API 호출 (flatMap)
+   |
+4. 결제 결과 DB 영속화 (flatMap + thenReturn)
+   |
+5. 최종 응답 DTO 매핑 (map)
+   | (예외 발생 시)
+6. 에러 핸들링 및 실패 상태 기록 (onErrorResume)
+```
+
+### 2.1 결제 승인 서비스 구현체
 
 ```kotlin
 // PaymentConfirmService.kt
-override fun confirm(command: PaymentConfirmCommand): Mono<PaymentConfirmationResult> {
-    return paymentStatusUpdatePort.updatePaymentStatusToExecuting(command.orderId, command.paymentKey)
-        .filterWhen { paymentValidationPort.isValid(command.orderId, command.amount) }
-        .flatMap { paymentExecutorPort.execute(command) }
-        .flatMap {
-            paymentStatusUpdatePort.updatePaymentStatus(
-                command = PaymentStatusUpdateCommand(...)
-            ).thenReturn(it)
-        }
-        .map { PaymentConfirmationResult(status = it.paymentStatus(), failure = it.failure) }
-        .onErrorResume { paymentErrorHandler.handlePaymentConfirmationError(it, command) }
+@Service
+class PaymentConfirmService(
+    private val paymentStatusUpdatePort: PaymentStatusUpdatePort,
+    private val paymentValidationPort: PaymentValidationPort,
+    private val paymentExecutorPort: PaymentExecutorPort,
+    private val paymentErrorHandler: PaymentErrorHandler
+) : PaymentConfirmUseCase {
+
+    override fun confirm(command: PaymentConfirmCommand): Mono<PaymentConfirmationResult> {
+        return paymentStatusUpdatePort.updatePaymentStatusToExecuting(command.orderId, command.paymentKey)
+            .filterWhen { paymentValidationPort.isValid(command.orderId, command.amount) }
+            .flatMap { paymentExecutorPort.execute(command) }
+            .flatMap {
+                paymentStatusUpdatePort.updatePaymentStatus(
+                    command = PaymentStatusUpdateCommand(
+                        paymentKey = it.paymentKey,
+                        orderId = it.orderId,
+                        status = it.paymentStatus(),
+                        extraDetails = it.extraDetails,
+                        failure = it.failure
+                    )
+                ).thenReturn(it)
+            }
+            .map { PaymentConfirmationResult(status = it.paymentStatus(), failure = it.failure) }
+            .onErrorResume { paymentErrorHandler.handlePaymentConfirmationError(it, command) }
+    }
 }
 ```
 
-이 코드 한 줄 한 줄을 뜯어봅시다.
+---
 
-### `flatMap` — 비동기 연산 체이닝
+### 2.2 핵심 연산자 상세 분석
 
-가장 많이 쓰이는 연산자입니다. `map`과의 차이가 핵심입니다.
+#### 1) `flatMap` vs `map`
+- **`map`**: 동기 변환 함수 `(T) -> R`을 적용한다. 입력 요소를 다른 일반 객체로 1:1 변환할 때 사용한다.
+- **`flatMap`**: 비동기 Publisher를 반환하는 함수 `(T) -> Publisher<R>`을 적용한다. 반환된 내부 Publisher를 구독하고 결과를 단일 스트림으로 평탄화(Flatten)한다. 비동기 작업 체이닝 시 중첩(`Mono<Mono<T>>`)을 방지하기 위해 필수적으로 사용된다.
 
 ```kotlin
-// map: 동기 변환 (결과가 일반 값)
+// map: 일반 객체 변환
 .map { result -> PaymentConfirmationResult(status = result.paymentStatus()) }
 
-// flatMap: 비동기 변환 (결과가 또 다른 Mono/Flux)
+// flatMap: 비동기 작업 연계 (execute() 반환 타입: Mono<TossPaymentResponse>)
 .flatMap { paymentExecutorPort.execute(command) }
-//         └── 이 메서드가 Mono<TossPaymentResponse>를 반환함
 ```
 
-`flatMap`은 내부에서 새로운 `Mono`를 반환할 때 사용합니다. 만약 `map`으로 `Mono`를 반환하면 `Mono<Mono<T>>`가 되어버립니다. `flatMap`은 이를 자동으로 **평탄화(flatten)** 해줍니다.
-
-### `filterWhen` — 비동기 조건 필터링
+#### 2) `filterWhen`
+- 일반 `filter`는 동기식 `(T) -> Boolean`을 기반으로 평가한다.
+- `filterWhen`은 `Mono<Boolean>`과 같은 비동기 조건식을 평가한다. DB 조회나 외부 API 검증 결과를 조건으로 활용할 때 사용하며, 평가 결과가 `false`일 경우 다운스트림으로 데이터를 방출하지 않고 스트림을 즉시 종료(Complete)한다.
 
 ```kotlin
 .filterWhen { paymentValidationPort.isValid(command.orderId, command.amount) }
 ```
 
-`filter`는 `Boolean`을 반환하는 동기 조건에 사용하지만, `filterWhen`은 `Mono<Boolean>`을 반환하는 **비동기 조건**에 사용합니다. DB에서 결제 금액 유효성을 확인해야 하므로 여기선 `filterWhen`이 맞습니다.
-
-조건이 `false`면 스트림이 조용히 **완료(complete)** 됩니다.
-
-### `thenReturn` — 결과를 다른 값으로 교체
+#### 3) `thenReturn`
+- 비동기 체인 중간의 작업(예: DB 저장)이 완료된 후, 해당 작업의 반환값 대신 선행 단계의 데이터 객체를 유지하여 다음 연산자로 전달할 때 사용한다.
 
 ```kotlin
-.flatMap { 
-    paymentStatusUpdatePort.updatePaymentStatus(command = ...).thenReturn(it) 
+.flatMap {
+    // updatePaymentStatus()의 반환값(Mono<Boolean>) 대신 PG 승인 응답 객체(it)를 다운스트림으로 전달
+    paymentStatusUpdatePort.updatePaymentStatus(command = ...).thenReturn(it)
 }
 ```
 
-`updatePaymentStatus()`의 반환값은 `Mono<Boolean>`이지만, 이전 단계의 `it` (결제 실행 결과)을 계속 흘려보내야 합니다. `.thenReturn(it)`은 "업데이트가 끝나면, 결과 대신 `it`을 흘려보내"라는 의미입니다.
+#### 4) `handle`
+- 개별 요소 단위로 세부적인 조건 검사, 데이터 매핑, 비즈니스 예외 방출을 하나의 연산자 내에서 처리할 수 있는 기능을 제공한다.
 
+```kotlin
+// R2DBCPaymentStatusUpdateRepository.kt
+private fun checkPreviousPaymentOrderStatus(orderId: String): Mono<List<Pair<Long, String>>> {
+    return selectPaymentOrderStatus(orderId)
+        .handle { paymentOrder, sink ->
+            when (paymentOrder.second) {
+                PaymentStatus.NOT_STARTED.name,
+                PaymentStatus.UNKNOWN.name,
+                PaymentStatus.EXECUTING.name -> sink.next(paymentOrder)
 
-## 4. R2DBC — 비동기 DB 접근
+                PaymentStatus.SUCCESS.name -> sink.error(
+                    PaymentAlreadyProcessedException("이미 처리 성공한 결제입니다.", PaymentStatus.SUCCESS)
+                )
 
-JDBC는 블로킹입니다. WebFlux의 논블로킹 이점을 살리려면 DB 접근도 논블로킹이어야 합니다. **R2DBC(Reactive Relational Database Connectivity)** 가 그 역할을 합니다.
+                PaymentStatus.FAILURE.name -> sink.error(
+                    PaymentAlreadyProcessedException("이미 처리 실패한 결제입니다.", PaymentStatus.FAILURE)
+                )
+            }
+        }
+        .collectList()
+}
+```
+
+---
+
+## 3. 리액티브 예외 처리 메커니즘
+
+비동기 논블로킹 환경에서는 호출 스레드와 실행 스레드가 분리되므로 일반적인 `try-catch` 구문으로 예외를 제어할 수 없다. 스트림 레벨의 에러 처리 연산자를 적용해야 한다.
+
+### 3.1 `onErrorResume`: Fallback 스트림 전환
+
+파이프라인 실행 중 예외가 발생했을 때 기존 스트림을 대체 스트림으로 전환한다. 결제 시스템에서는 에러 발생 시 결제 상태를 `FAILURE` 또는 `UNKNOWN`으로 DB에 기록하고 정형화된 응답을 반환하는 데 사용된다.
+
+```kotlin
+// PaymentErrorHandler.kt
+@Component
+class PaymentErrorHandler(
+    private val paymentStatusUpdatePort: PaymentStatusUpdatePort
+) {
+    fun handlePaymentConfirmationError(
+        error: Throwable,
+        command: PaymentConfirmCommand
+    ): Mono<PaymentConfirmationResult> {
+        val (status, failure) = when (error) {
+            is PSPConfirmationException   -> Pair(error.paymentStatus(), PaymentFailure(...))
+            is PaymentValidationException -> Pair(PaymentStatus.FAILURE, PaymentFailure(...))
+            is PaymentAlreadyProcessedException -> return Mono.just(PaymentConfirmationResult(...))
+            is TimeoutException           -> Pair(PaymentStatus.UNKNOWN, PaymentFailure(...))
+            else                          -> Pair(PaymentStatus.UNKNOWN, PaymentFailure(...))
+        }
+
+        val paymentStatusUpdateCommand = PaymentStatusUpdateCommand(...)
+
+        // 에러 발생 건에 대해 DB 상태 업데이트를 수행한 후 최종 DTO 반환
+        return paymentStatusUpdatePort.updatePaymentStatus(paymentStatusUpdateCommand)
+            .map { PaymentConfirmationResult(status, failure) }
+    }
+}
+```
+
+### 3.2 `onErrorContinue`: 항목별 예외 격리
+
+스트림 전체를 중단시키지 않고, 에러를 유발한 개별 항목만 로깅하거나 건너뛴 뒤 후속 데이터 처리를 지속한다.
+
+```kotlin
+// PaymentEventMessageSender.kt
+sender.asFlux()
+    .onErrorContinue { err, value ->
+        Logger.error("sendEventMessage", "메시지 발송 실패: value=$value, err=${err.message}", err)
+    }
+```
+
+---
+
+## 4. 논블로킹 영속성 계층 및 트랜잭션 (R2DBC)
+
+WebFlux 환경에서 기존 JDBC 드라이버(JPA, MyBatis)를 사용할 경우 데이터베이스 I/O 구간에서 스레드 블로킹이 발생하여 리액티브의 성능적 이점이 무효화된다. 이를 방지하기 위해 완전한 비동기 논블로킹 드라이버인 **R2DBC(Reactive Relational Database Connectivity)**를 적용한다.
+
+### 4.1 JDBC vs R2DBC 비교
+
+| 비교 항목 | JDBC (전통적 방식) | R2DBC (리액티브 방식) |
+|---|---|---|
+| I/O 방식 | Blocking I/O | Non-Blocking I/O |
+| 데이터 반환 형태 | `T`, `List<T>` | `Mono<T>`, `Flux<T>` |
+| 스레드 점유 | 쿼리 응답 수신 시까지 스레드 대기 | 이벤트 루프 유지, 응답 도착 시 콜백 수행 |
+| 트랜잭션 전파 | ThreadLocal 기반 (`@Transactional`) | Reactor Context 기반 (`TransactionalOperator`) |
+
+---
+
+### 4.2 `DatabaseClient`를 통한 쿼리 실행 및 스트리밍
 
 ```kotlin
 // R2DBCPaymentRepository.kt
@@ -133,13 +267,13 @@ class R2DBCPaymentRepository(
         return databaseClient.sql(SELECT_PENDING_PAYMENT_QUERY)
             .bind("updatedAt", LocalDateTime.now().format(MySQLDateTimeFormatter))
             .fetch()
-            .all()                          // Flux<Map<String, Any>>로 행(row)을 스트림으로 받음
-            .groupBy { it["payment_event_id"] as Long }  // payment_event_id로 그룹핑
+            .all() // 각 Row를 Flux<Map<String, Any>> 형태로 비동기 스트리밍 수신
+            .groupBy { it["payment_event_id"] as Long }
             .flatMap { groupedFlux ->
                 groupedFlux.collectList().map { results ->
-                    PendingPaymentEvent(    // 그룹별로 도메인 객체로 변환
+                    PendingPaymentEvent(
                         paymentEventId = groupedFlux.key(),
-                        ...
+                        paymentOrders = results.map { ... }
                     )
                 }
             }
@@ -147,34 +281,17 @@ class R2DBCPaymentRepository(
 }
 ```
 
-### JDBC vs R2DBC 핵심 차이
+- **`.fetch().all()`**: 쿼리 결과 전체 행을 `Flux`로 스트리밍 수신한다.
+- **`.fetch().first()`**: 첫 번째 행만 `Mono`로 수신한다.
+- **`.fetch().rowsUpdated()`**: DML 실행에 의해 영향받은 행 수를 `Mono<Long>`으로 수신한다.
 
-| | JDBC | R2DBC |
-|---|---|---|
-| I/O 방식 | Blocking | Non-Blocking |
-| 반환 타입 | `List<T>`, `T` | `Flux<T>`, `Mono<T>` |
-| 스레드 | 결과 올 때까지 대기 | 결과 오면 콜백 실행 |
-| 트랜잭션 | `@Transactional` | `TransactionalOperator` |
+---
 
-### `.fetch().all()` vs `.fetch().first()`
+### 4.3 `TransactionalOperator`를 통한 리액티브 트랜잭션 관리
 
-```kotlin
-// 여러 행을 Flux로 스트리밍
-databaseClient.sql(query).fetch().all()    // Flux<Map<String, Any>>
+전통적인 Spring의 `@Transactional`은 `ThreadLocal`에 데이터베이스 커넥션을 보관한다. 반면 WebFlux는 파이프라인 수행 도중 스레드가 전환될 수 있으므로 `ThreadLocal` 방식이 유효하지 않다.
 
-// 첫 번째 행만 Mono로
-databaseClient.sql(query).fetch().first()  // Mono<Map<String, Any>>
-
-// 업데이트/삽입된 행 수
-databaseClient.sql(query).fetch().rowsUpdated()  // Mono<Long>
-```
-
-
-## 5. 리액티브 트랜잭션 처리
-
-Spring MVC에서 익숙한 `@Transactional`은 **스레드-로컬(ThreadLocal)** 기반입니다. WebFlux에서는 요청이 여러 스레드를 넘나들기 때문에 이 방식이 동작하지 않습니다.
-
-대신 **`TransactionalOperator`** 를 사용합니다.
+따라서 Reactor Context를 통해 트랜잭션을 전파하는 `TransactionalOperator`를 활용한다.
 
 ```kotlin
 // R2DBCPaymentStatusUpdateRepository.kt
@@ -183,37 +300,51 @@ override fun updatePaymentStatusToExecuting(orderId: String, paymentKey: String)
         .flatMap { insertPaymentHistory(it, PaymentStatus.EXECUTING, "PAYMENT_CONFIRMATION_START") }
         .flatMap { updatePaymentOrderStatus(orderId, PaymentStatus.EXECUTING) }
         .flatMap { updatePaymentKey(orderId, paymentKey) }
-        .`as`(transactionalOperator::transactional)  // ← 여기서 트랜잭션 적용
+        .`as`(transactionalOperator::transactional) // 일련의 비동기 DB 작업을 단일 트랜잭션으로 바인딩
         .thenReturn(true)
 }
 ```
 
-`.as(transactionalOperator::transactional)` 한 줄로 위의 모든 비동기 DB 작업을 **하나의 트랜잭션**으로 묶습니다. 중간에 에러가 나면 자동으로 롤백됩니다.
+체인 내 `.as(transactionalOperator::transactional)` 적용 시 모든 하위 R2DBC 쿼리가 하나의 트랜잭션으로 원자성을 보장받으며, 실패 시 자동 롤백된다.
 
-> 참고로 Spring WebFlux 5.2+부터는 R2DBC와 함께 `@Transactional`을 사용할 수 있습니다. 내부적으로 Reactor Context를 통해 트랜잭션 컨텍스트를 전파합니다. 하지만 동작 원리를 이해하기 위해 `TransactionalOperator`를 직접 다뤄보는 것을 추천합니다.
+Spring WebFlux 5.2+ 및 Spring Data R2DBC 환경에서는 리액티브용 `@Transactional` 어노테이션도 지원된다. 내부적으로 Reactor Context를 활용해 동일하게 동작하지만, 연산자 체인의 명시적 흐름과 원리를 파악하기 위해 `TransactionalOperator`의 동작 방식을 이해해 두는 것이 권장된다.
 
+---
 
-## 6. Sinks — 리액티브 이벤트 브릿지
+## 5. 이벤트 브릿지 및 트랜잭셔널 아웃박스 연동 (Sinks)
 
-`Sinks`는 **명령형 코드와 리액티브 스트림을 연결**하는 브릿지입니다. 쉽게 말하면, "일반 코드에서 리액티브 스트림에 데이터를 밀어 넣는" 도구입니다.
+### 5.1 `Sinks`의 역할
 
-결제 서비스에서 Kafka로 이벤트를 보내는 코드를 보겠습니다.
+`Sinks`는 명령형(Imperative) 코드나 비-리액티브 이벤트 리스너에서 리액티브 스트림(`Flux`/`Mono`)으로 데이터를 동적으로 주입하기 위한 진입점(Bridge) 역할을 수행한다.
+
+```
+[명령형 코드 / 이벤트 리스너] ---> sink.emitNext(data) ---> [ Sinks 내부 버퍼 ] ---> Flux 스트림 (Kafka 전송 등)
+```
+
+### 5.2 Sinks 주요 구성 방식
+- **`unicast`**: 단일 구독자만 허용하는 파이프라인.
+- **`multicast`**: 다수의 구독자에게 데이터를 브로드캐스트하는 파이프라인.
+- **`replay`**: 신규 구독자에게 이전 N개의 데이터를 재전송하는 파이프라인.
+
+---
+
+### 5.3 트랜잭션 완료 후 이벤트 발행 구현
+
+결제 시스템에서는 DB 트랜잭션 커밋 완료가 확인된 이후 메시지 브로커(Kafka)로 이벤트를 발행해야 데이터 정합성이 보장된다.
 
 ```kotlin
 // PaymentEventMessageSender.kt
+@Component
 class PaymentEventMessageSender : DispatchEventMessagePort {
 
-    // Sinks 생성 — 메시지를 담을 "파이프"
     private val sender = Sinks.many().unicast().onBackpressureBuffer<Message<PaymentEventMessage>>()
-    private val sendResult = Sinks.many().unicast().onBackpressureBuffer<SenderResult<String>>()
 
-    // Kafka로 흘려보낼 Flux를 Bean으로 등록
     @Bean
     fun send(): Supplier<Flux<Message<PaymentEventMessage>>> {
         return Supplier { sender.asFlux() }
     }
 
-    // 트랜잭션 커밋 후에 Sink에 데이터를 밀어넣음
+    // DB 트랜잭션이 성공적으로 커밋된 시점에만 실행 (Transactional Outbox 연계)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun dispatchAfterCommit(paymentEventMessage: PaymentEventMessage) {
         dispatch(paymentEventMessage)
@@ -228,146 +359,69 @@ class PaymentEventMessageSender : DispatchEventMessagePort {
 }
 ```
 
-### Sinks의 종류
+---
 
-```kotlin
-// unicast: 구독자가 단 1명인 파이프
-Sinks.many().unicast().onBackpressureBuffer()
+## 6. 스레드 모델 및 작업 격리 전략 (Schedulers)
 
-// multicast: 여러 구독자에게 브로드캐스트
-Sinks.many().multicast().onBackpressureBuffer()
+### 6.1 Netty 이벤트 루프 보호 원칙
 
-// replay: 새 구독자에게도 과거 데이터를 재전송
-Sinks.many().replay().limit(10)
-```
+Netty의 이벤트 루프 스레드는 CPU 코어 수 단위(보통 4~16개)로 한정되어 있다. 이벤트 루프 스레드 내에서 블로킹 연산(`Thread.sleep`, 동기 파일 I/O 등)이나 장시간의 CPU 집약적 연산을 수행할 경우 해당 스레드가 처리 중이던 수천 건의 네트워크 I/O가 동시에 지연된다.
 
-이 코드에서 `AFTER_COMMIT` 이 중요합니다. DB 트랜잭션이 **커밋된 이후에** Kafka 이벤트를 발행하므로, DB에는 저장됐지만 Kafka 전송은 실패한 경우를 처리하기 위한 **Outbox 패턴**을 함께 사용하고 있습니다.
-
-
-## 7. Schedulers — 스레드 모델 이해하기
-
-WebFlux는 기본적으로 **Netty**의 이벤트 루프 스레드(소수)로 동작합니다. 연산자 체인은 기본적으로 subscribe가 발생한 스레드에서 실행됩니다.
-
-`Schedulers`를 사용하면 특정 연산을 다른 스레드 풀에서 실행할 수 있습니다.
-
-```kotlin
-// PaymentRecoveryService.kt — 주기적 미결제 복구
-@Scheduled(fixedDelay = 180, initialDelay = 180, timeUnit = TimeUnit.SECONDS)
-override fun recovery() {
-    loadPendingPaymentPort.getPendingPayments()
-        .parallel(2)                      // 병렬로 2개 레일 생성
-        .runOn(Schedulers.parallel())     // 각 레일을 병렬 스레드 풀에서 실행
-        .flatMap { command ->
-            paymentExecutorPort.execute(it)
-        }
-        .sequential()                     // 다시 순차 스트림으로 합침
-        .subscribeOn(scheduler)           // 전체 구독을 특정 스레드에서 시작
-        .subscribe()
-}
-```
-
-### 주요 Schedulers
-
-| Scheduler | 특징 | 사용처 |
-|---|---|---|
-| `Schedulers.parallel()` | CPU 코어 수만큼 스레드 | CPU 집약 작업 |
-| `Schedulers.boundedElastic()` | 유연한 스레드 풀 (최대 제한) | Blocking I/O 래핑 |
-| `Schedulers.newSingle("name")` | 단일 스레드 | 순서 보장이 필요한 작업 |
-| `Schedulers.immediate()` | 현재 스레드 | 테스트, 기본값 |
-
-```kotlin
-// PaymentEventMessageRelayService.kt
-private val scheduler = Schedulers.newSingle("message-relay")
-
-// PaymentRecoveryService.kt
-private val scheduler = Schedulers.newSingle("recovery")
-```
-
-복구 서비스와 메시지 릴레이 서비스가 각각 **전용 단일 스레드**를 가지는 이유는, 스케줄링 작업이 이벤트 루프 스레드를 점유하는 것을 막기 위해서입니다.
+이러한 작업을 격리하기 위해 적절한 `Scheduler` 풀로 작업을 오프로딩(Offloading)해야 한다.
 
 ---
 
-## 8. 에러 처리
+### 6.2 주요 Scheduler 종류 및 용도
 
-### `onErrorResume` — 에러를 다른 스트림으로 대체
+| Scheduler | 스레드 풀 구조 | 주요 용도 |
+|---|---|---|
+| `Schedulers.parallel()` | CPU 코어 수 기반 고정 스레드 풀 | 대량 연산, 병렬 데이터 파티셔닝 |
+| `Schedulers.boundedElastic()` | 동적 확장 및 상한선 기반 스레드 풀 | 레거시 블로킹 I/O, 블로킹 드라이버 래핑 |
+| `Schedulers.newSingle("name")` | 지정된 이름의 전용 단일 스레드 | 순차성 보장 작업, 백그라운드 주기적 배치 격리 |
+| `Schedulers.immediate()` | 호출 스레드 직접 사용 | 테스트 및 즉각적 실행 |
 
-```kotlin
-// PaymentConfirmService.kt
-.onErrorResume { paymentErrorHandler.handlePaymentConfirmationError(it, command) }
-```
+---
 
-에러가 발생하면 스트림이 종료되는 대신, `handlePaymentConfirmationError`가 반환하는 새로운 `Mono`로 **대체**합니다.
-
-```kotlin
-// PaymentErrorHandler.kt
-fun handlePaymentConfirmationError(
-    error: Throwable,
-    command: PaymentConfirmCommand
-): Mono<PaymentConfirmationResult> {
-    val (status, failure) = when (error) {
-        is PSPConfirmationException   -> Pair(error.paymentStatus(), PaymentFailure(...))
-        is PaymentValidationException -> Pair(PaymentStatus.FAILURE, PaymentFailure(...))
-        is PaymentAlreadyProcessedException -> return Mono.just(PaymentConfirmationResult(...))
-        is TimeoutException           -> Pair(PaymentStatus.UNKNOWN, PaymentFailure(...))
-        else                          -> Pair(PaymentStatus.UNKNOWN, PaymentFailure(...))
-    }
-    
-    return paymentStatusUpdatePort.updatePaymentStatus(paymentStatusUpdateCommand)
-        .map { PaymentConfirmationResult(status, failure) }
-}
-```
-
-에러 타입별로 다른 처리를 하고, **에러 상황도 결제 상태(FAILURE, UNKNOWN)로 DB에 기록**하는 것이 포인트입니다.
-
-### `handle` — 요소별 성공/에러 제어
+### 6.3 미처리 결제 복구 배치에서의 병렬 처리 구현
 
 ```kotlin
-// R2DBCPaymentStatusUpdateRepository.kt
-private fun checkPreviousPaymentOrderStatus(orderId: String): Mono<List<Pair<Long, String>>> {
-    return selectPaymentOrderStatus(orderId)
-        .handle { paymentOrder, sink ->
-            when (paymentOrder.second) {
-                PaymentStatus.NOT_STARTED.name,
-                PaymentStatus.UNKNOWN.name,
-                PaymentStatus.EXECUTING.name -> sink.next(paymentOrder)  // 정상 통과
+// PaymentRecoveryService.kt
+@Service
+class PaymentRecoveryService(
+    private val loadPendingPaymentPort: LoadPendingPaymentPort,
+    private val paymentExecutorPort: PaymentExecutorPort
+) {
+    // 배치 작업 전용 독립 스레드 할당 (이벤트 루프 간섭 차단)
+    private val scheduler = Schedulers.newSingle("payment-recovery")
 
-                PaymentStatus.SUCCESS.name -> sink.error(               // 에러 발생
-                    PaymentAlreadyProcessedException("이미 처리 성공한 결제입니다.", PaymentStatus.SUCCESS)
-                )
-
-                PaymentStatus.FAILURE.name -> sink.error(
-                    PaymentAlreadyProcessedException("이미 처리 실패한 결제입니다.", PaymentStatus.FAILURE)
-                )
+    @Scheduled(fixedDelay = 180, initialDelay = 180, timeUnit = TimeUnit.SECONDS)
+    fun recovery() {
+        loadPendingPaymentPort.getPendingPayments()
+            .parallel(2)                      // 1. 스트림을 2개의 병렬 레일(ParallelFlux)로 분할
+            .runOn(Schedulers.parallel())     // 2. 각 레일을 parallel 스레드 풀에서 동시 실행
+            .flatMap { command ->
+                paymentExecutorPort.execute(command)
             }
-        }
-        .collectList()
+            .sequential()                     // 3. 병렬 처리 완료 후 단일 스트림으로 재병합
+            .subscribeOn(scheduler)           // 4. 전체 구독 및 실행 트리거를 복구 전용 스레드에서 수행
+            .subscribe()
+    }
 }
 ```
 
-`handle`은 각 요소를 보면서 `sink.next()`로 다음 요소를 내보내거나 `sink.error()`로 에러를 발생시키는 강력한 연산자입니다. `filter`와 `flatMap`의 기능을 동시에 수행합니다.
+- `subscribeOn(scheduler)`를 통해 스케줄링 주기가 메인 이벤트 루프 스레드에 부하를 주지 않도록 전용 스레드로 격리한다.
+- `parallel(N)` 및 `runOn(Schedulers.parallel())`을 결합하여 다수의 복구 대상 건을 멀티코어 환경에서 병렬 분산 처리한다.
 
-### `onErrorContinue` — 에러 건너뛰기
+---
 
-```kotlin
-// PaymentEventMessageSender.kt
-sender.asFlux()
-    .onErrorContinue { err, _ ->
-        Logger.error("sendEventMessage", err.message ?: "failed to send eventMessage", err)
-    }
-```
+## 7. 종합 평가 및 도입 기준
 
-`onErrorResume`은 스트림 전체를 대체하지만, `onErrorContinue`는 **에러를 일으킨 요소만 건너뛰고 스트림을 계속** 진행합니다. 이벤트 전송에서 특정 메시지 전송 실패가 전체 스트림을 멈추게 하면 안 되므로 적절한 선택입니다.
+### 7.1 WebFlux 도입이 권장되는 환경
+- **I/O Bound 고동시성 시스템**: 외부 API 연동이 빈번하고 네트워크 레이턴시 대기 비중이 높은 게이트웨이 및 결제 서비스.
+- **스트리밍 서비스**: 실시간 데이터 스트림(SSE, WebSocket) 및 대용량 이벤트 처리 파이프라인.
+- **자원 최적화 요구**: 적은 수의 인스턴스로 대량의 동시 커넥션을 유지해야 하는 클라우드 인프라 환경.
 
-
-## 9. 마치며 — WebFlux를 써야 할 때와 아닐 때
-
-
-### WebFlux가 유리한 경우
-- **I/O 집약적 서비스**: 외부 API 호출, DB 쿼리 등 대기 시간이 많은 경우
-- **높은 동시성이 필요한 경우**: 적은 자원으로 많은 동시 요청을 처리해야 할 때
-- **스트리밍**: 실시간 데이터 스트림을 다룰 때
-
-### WebFlux가 불리한 경우
-- **CPU 집약적 작업**: CPU를 오래 쓰는 계산은 이벤트 루프를 블로킹시킬 수 있음
-- **팀 경험이 부족할 때**: 리액티브 패러다임은 학습 곡선이 가파름
-- **간단한 CRUD**: 복잡성 대비 얻는 게 적을 수 있음
+### 7.2 WebFlux 도입 시 고려사항 및 제약
+- **학습 곡선**: 리액티브 스트림 사양, 디버깅 복잡도, 비동기 컨텍스트 전파에 대한 러닝 커브 존재.
+- **블로킹 의존성**: 전 구간(드라이버, 로깅, 서드파티 라이브러리)에서 논블로킹이 유지되지 않을 경우 리액티브의 성능상 이점이 상쇄됨.
+- **단순 CRUD 시스템**: I/O 대기가 적고 트래픽 밀도가 낮은 환경에서는 아키텍처 복잡도 증가 대비 실익이 제한적일 수 있음.
