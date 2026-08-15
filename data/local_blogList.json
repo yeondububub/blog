@@ -50,5 +50,9 @@
     {
         "name": "[20260814]_[Spring Cloud Stream 입문]_[Spring Cloud]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현]_[].md",
         "download_url": "/backend/[20260814]_[Spring Cloud Stream 입문]_[Spring Cloud]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현]_[].md"
+    },
+    {
+        "name": "[20260815]_[Transactional Outbox 패턴]_[Architecture]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현]_[].md",
+        "download_url": "/backend/[20260815]_[Transactional Outbox 패턴]_[Architecture]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현]_[].md"
     }
 ]
