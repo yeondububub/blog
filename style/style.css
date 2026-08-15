@@ -1,6 +1,7 @@
 #contents {
   word-break: keep-all;
   overflow-wrap: break-word;
+  text-align: left;
 }
 
 #menu-button {
