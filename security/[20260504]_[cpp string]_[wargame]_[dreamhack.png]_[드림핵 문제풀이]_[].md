@@ -158,7 +158,7 @@ is.read(readbuffer, sizeof(readbuffer));
 
 `show_contents()` 함수는 `std::cout << readbuffer << std::endl;` 구문을 통해 문자열을 출력합니다. `std::cout`은 문자열을 출력할 때 널 바이트를 만날 때까지 메모리를 계속 읽어 나갑니다.
 
-`readbuffer`에 널 바이트가 없으므로 64바이트를 모두 출력한 후, **바로 뒤에 위치한 `flag` 메모리 영역까지 침범하여 플래그 문자열을 화면에 노출(Leak)**하게 됩니다.
+`readbuffer`에 널 바이트가 없으므로 64바이트를 모두 출력한 후, **바로 뒤에 위치한 `flag` 메모리 영역까지 침범하여 플래그 문자열을 화면에 노출(Leak)하게** 됩니다.
 
 
 ## 익스플로잇
