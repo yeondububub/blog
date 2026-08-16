@@ -379,4 +379,28 @@ html.dark .hljs-meta,
 html.dark .hljs-link {
   color: #38bdf8 !important;
 }
+
+/* ==========================================================================
+   Mermaid Diagram Card Styles (Light & Dark Mode)
+   ========================================================================== */
+.mermaid {
+  background-color: #ffffff !important;
+  border-radius: 0.75rem !important;
+  padding: 1.5rem 1rem !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+html.dark .mermaid {
+  background-color: #ffffff !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.mermaid svg {
+  max-width: 100% !important;
+  height: auto !important;
+}
 /*# sourceMappingURL=style.css.map */

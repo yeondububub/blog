@@ -13,19 +13,23 @@
 전통적인 Spring MVC 기반 블로킹 I/O 모델과 WebFlux의 논블로킹 I/O 모델을 비교 분석한 내용은 다음과 같습니다.
 
 ```mermaid
-flowchart TD
+flowchart LR
     subgraph Spring_MVC ["Spring MVC (Blocking I/O)"]
+        direction TB
         Req1["Request 1"] --> T1["Thread 1 (Blocked during I/O)"]
         Req2["Request 2"] --> T2["Thread 2 (Blocked during I/O)"]
         Req3["Request 3"] --> T3["Thread Pool Exhaustion (대기 큐 지연)"]
     end
 
     subgraph Spring_WebFlux ["Spring WebFlux (Non-Blocking I/O)"]
+        direction TB
         W_Req1["Request 1"] --> EL["Event Loop Thread (CPU Core 최적화)"]
         W_Req2["Request 2"] --> EL
         W_Req3["Request 3"] --> EL
         EL -. 비동기 I/O 위임 .-> IO["DB / PG Network I/O"]
     end
+
+    Spring_MVC ~~~ Spring_WebFlux
 ```
 
 ### 1.1 Thread-per-request 모델의 스레드 고갈

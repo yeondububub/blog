@@ -2,7 +2,7 @@
 
 macOS 환경에서 로컬 개발 및 테스트를 위해 Linux 컨테이너를 실행하는 것은 중요한 워크플로우입니다. 그러나 전통적인 가상화 솔루션(Docker Desktop 등)은 macOS 상에 단일 거대 Linux 가상 머신(VM)을 상시 구동하고 그 내부에서 모든 컨테이너를 공유 실행하는 방식을 사용하여 높은 CPU 및 메모리 점유율, 과도한 배터리 소모, 컨테이너 간 보안 격리 취약 문제를 유발하였습니다.
 
-Apple이 공식 공개한 오픈소스 도구인 **`apple/container`는** macOS 네이티브 시스템 가상화 프레임워크와 Apple Silicon 하드웨어 가속을 기반으로, 컨테이너마다 독립된 전용 초경량 VM(Dedicated Lightweight VM)을 실행하는 가상화 기술을 제공합니다.
+Apple이 공식 공개한 오픈소스 도구인 **`apple/container`는** macOS 네이티브 시스템 가상화 프레임워크와 Apple Silicon 하드웨어 가속을 기반으로, 컨테이너마다 독립된 전용 초경량 VM(Dedicated Lightweight VM)을 실행하는 가상화 기술입니다.
 
 본 문서에서는 Apple `container`의 내부 아키텍처 및 격리 메커니즘을 분석하고, 실무 개발 환경 구축을 위한 설치 및 핵심 CLI 제어 방식을 상세히 기술합니다.
 
@@ -13,8 +13,9 @@ Apple이 공식 공개한 오픈소스 도구인 **`apple/container`는** macOS 
 전통적인 macOS 컨테이너 구동 방식과 Apple 네이티브 컨테이너 방식의 아키텍처 비교는 다음과 같습니다.
 
 ```mermaid
-flowchart TD
+flowchart LR
     subgraph Traditional ["전통적 Docker Desktop 방식"]
+        direction TB
         M1["macOS Host"] --> VM1["단일 대형 Linux VM (상시 점유)"]
         VM1 --> C1["Container A"]
         VM1 --> C2["Container B"]
@@ -22,11 +23,14 @@ flowchart TD
     end
 
     subgraph Apple_Container ["Apple container 아키텍처"]
+        direction TB
         M2["macOS Host (Virtualization.framework)"]
         M2 --> DVM1["Micro VM 1 (Container A)"]
         M2 --> DVM2["Micro VM 2 (Container B)"]
         M2 --> DVM3["Micro VM 3 (Container C)"]
     end
+
+    Traditional ~~~ Apple_Container
 ```
 
 ### 1.1 대형 단일 VM의 상시 자원 점유 (Resource Overhead)
@@ -128,7 +132,7 @@ Apple Silicon 환경에서 x86_64 전용 Linux 바이너리를 포함한 이미�
 
 ---
 
-## 5. 결론 (해당 기술의 기대효과 요약)
+## 5. 결론
 
 Apple `container`는 macOS 플랫폼의 하드웨어와 운영체제 소프트웨어의 결합력을 극대화하여 로컬 가상화 성능을 비약적으로 개선한 도구입니다.
 

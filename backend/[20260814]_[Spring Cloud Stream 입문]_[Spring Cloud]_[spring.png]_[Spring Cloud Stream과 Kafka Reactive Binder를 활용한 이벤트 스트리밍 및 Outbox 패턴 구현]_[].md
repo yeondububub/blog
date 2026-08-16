@@ -15,15 +15,19 @@
 ```mermaid
 flowchart LR
     subgraph Direct_Dependency ["브로커 직접 의존 방식"]
+        direction TB
         Biz1["비즈니스 서비스"] --> KP["KafkaProducer (API 직접 호출)"]
         KP --> Broker1["Kafka Broker"]
     end
 
     subgraph SCS_Abstraction ["Spring Cloud Stream 추상화 모델"]
+        direction TB
         Biz2["함수형 비즈니스 로직<br/>(Supplier / Function)"] --> SCS["Spring Cloud Stream Core"]
         SCS --> Binder["Kafka Reactive Binder"]
         Binder --> Broker2["Kafka Broker"]
     end
+
+    Direct_Dependency ~~~ SCS_Abstraction
 ```
 
 ### 1.1 강한 인프라 결합도(Tight Coupling)
