@@ -146,19 +146,29 @@ function styleMarkdown(kinds, text, title_info = null) {
 
     // category
     // category는 클릭하면 해당 카테고리의 블로그 리스트를 렌더링
-    const category = document.createElement("a");
-    category.classList.add(...postcategoryStyle.split(" "));
-    category.textContent = title_info.category;
+    const categoryContainer = document.createElement("div");
+    categoryContainer.className = "flex flex-wrap gap-2 mb-3";
+    const categories = (title_info.category || "")
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
 
-    category.onclick = (event) => {
-      event.preventDefault();
-      // console.log('click')
-      search(title_info.category);
-      const url = new URL(origin);
-      url.searchParams.set("search", title_info.category);
-      window.history.pushState({}, "", url);
-    };
-    title_section.appendChild(category);
+    categories.forEach((cat) => {
+      const category = document.createElement("a");
+      category.classList.add(...postcategoryStyle.split(" "));
+      category.textContent = cat;
+      category.href = "#";
+
+      category.onclick = (event) => {
+        event.preventDefault();
+        search(cat.toLowerCase(), "category");
+        const url = new URL(origin);
+        url.searchParams.set("search", cat);
+        window.history.pushState({}, "", url);
+      };
+      categoryContainer.appendChild(category);
+    });
+    title_section.appendChild(categoryContainer);
 
     // title
     const title = document.createElement("h1");
@@ -381,19 +391,29 @@ function styleJupyter(kinds, text, title_info = null) {
 
     // category
     // category는 클릭하면 해당 카테고리의 블로그 리스트를 렌더링
-    const category = document.createElement("a");
-    category.classList.add(...postcategoryStyle.split(" "));
-    category.textContent = title_info.category;
+    const categoryContainer = document.createElement("div");
+    categoryContainer.className = "flex flex-wrap gap-2 mb-3";
+    const categories = (title_info.category || "")
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
 
-    category.onclick = (event) => {
-      event.preventDefault();
-      // console.log('click')
-      search(title_info.category);
-      const url = new URL(origin);
-      url.searchParams.set("search", title_info.category);
-      window.history.pushState({}, "", url);
-    };
-    title_section.appendChild(category);
+    categories.forEach((cat) => {
+      const category = document.createElement("a");
+      category.classList.add(...postcategoryStyle.split(" "));
+      category.textContent = cat;
+      category.href = "#";
+
+      category.onclick = (event) => {
+        event.preventDefault();
+        search(cat.toLowerCase(), "category");
+        const url = new URL(origin);
+        url.searchParams.set("search", cat);
+        window.history.pushState({}, "", url);
+      };
+      categoryContainer.appendChild(category);
+    });
+    title_section.appendChild(categoryContainer);
 
     // title
     const title = document.createElement("h1");

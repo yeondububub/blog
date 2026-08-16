@@ -33,11 +33,11 @@ DTO 객체 내부에서 만료 여부를 판별하기 위해 `public boolean isE
 Jackson의 `ObjectMapper`는 리플렉션(Reflection)을 기반으로 객체의 메타데이터를 수집하며 다음과 같은 프로퍼티 탐색 규칙을 가집니다.
 
 ```mermaid
-flowchart TD
+flowchart LR
     Method["public 메서드 탐색"] --> CheckPrefix{"접두사 검사"}
-    CheckPrefix -- "get으로 시작 (파라미터 없음)" --> StripGet["'get' 제거 후 첫 글자 소문자 변환<br/>(예: getOrderNo -> orderNo)"]
-    CheckPrefix -- "is로 시작 (boolean 반환)" --> StripIs["'is' 제거 후 첫 글자 소문자 변환<br/>(예: isExpired -> expired)"]
-    StripGet --> Property["JSON Key로 등록"]
+    CheckPrefix -- "get* (파라미터 없음)" --> StripGet["'get' 제거 & 소문자 변환<br/>(예: getOrderNo -> orderNo)"]
+    CheckPrefix -- "is* (boolean 반환)" --> StripIs["'is' 제거 & 소문자 변환<br/>(예: isExpired -> expired)"]
+    StripGet --> Property["JSON Key 등록"]
     StripIs --> Property
 ```
 

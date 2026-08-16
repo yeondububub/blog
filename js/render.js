@@ -63,8 +63,13 @@ function search(keyword, kinds) {
               if (!inCurrentFolder) return false;
             }
 
-            if (postInfo && postInfo.category.toLowerCase() === keyword) {
-              return post;
+            if (postInfo) {
+              const categories = postInfo.category
+                .split(",")
+                .map((c) => c.trim().toLowerCase());
+              if (categories.includes(keyword)) {
+                return post;
+              }
             }
           } else if (kinds === "folder") {
             // 폴더명(경로)으로 검색 (저장소 이름 등과 중복 매칭되는 버그 방지)
@@ -296,17 +301,27 @@ function createCardElement(fileInfo, index) {
   const cardBody = document.createElement("div");
   cardBody.classList.add(...bloglistCardBodyStyle.split(" "));
 
-  const category = document.createElement("span");
-  category.classList.add(...bloglistCardCategoryStyle.split(" "));
-  category.textContent = fileInfo.category;
-  cardBody.appendChild(category);
+  const categoryContainer = document.createElement("div");
+  categoryContainer.className = "flex flex-wrap gap-2 mb-3";
+  const categories = fileInfo.category
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
 
-  // category 이벤트 생성으로 카테고리 클릭 시 해당 카테고리로 검색
-  category.onclick = (event) => {
-    // 클릭했을 때 카드가 클릭되는 것이 아니라 카테고리가 클릭되게 해야함
-    event.stopPropagation();
-    search(fileInfo.category, "category");
-  };
+  categories.forEach((cat) => {
+    const category = document.createElement("span");
+    category.classList.add(...bloglistCardCategoryStyle.split(" "));
+    category.classList.remove("mb-3");
+    category.textContent = cat;
+
+    // category 클릭 시 해당 카테고리로 검색
+    category.onclick = (event) => {
+      event.stopPropagation();
+      search(cat.toLowerCase(), "category");
+    };
+    categoryContainer.appendChild(category);
+  });
+  cardBody.appendChild(categoryContainer);
 
   const title = document.createElement("h2");
   title.classList.add(...bloglistCardTitleStyle.split(" "));
@@ -523,19 +538,30 @@ function renderBlogCategory(targetList = blogList) {
     categoryTitle.textContent = "Category";
   }
 
-  const categoryList = {};
+  const categoryMap = {};
   targetList.forEach((post) => {
     const postInfo = extractFileInfo(post.name);
     if (postInfo) {
-      if (categoryList[postInfo.category.toLowerCase()]) {
-        categoryList[postInfo.category.toLowerCase()] += 1;
-      } else {
-        categoryList[postInfo.category.toLowerCase()] = 1;
-      }
+      const categories = postInfo.category
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+
+      categories.forEach((cat) => {
+        const catKey = cat.toLowerCase();
+        if (categoryMap[catKey]) {
+          categoryMap[catKey].count += 1;
+        } else {
+          categoryMap[catKey] = {
+            displayName: cat,
+            count: 1,
+          };
+        }
+      });
     }
   });
-  const categoryArray = Object.keys(categoryList);
-  categoryArray.sort();
+  const categoryKeys = Object.keys(categoryMap);
+  categoryKeys.sort();
 
   const categoryContainer = document.querySelector("aside");
   if (!categoryContainer) return;
@@ -543,39 +569,36 @@ function renderBlogCategory(targetList = blogList) {
   categoryContainer.className = "";
   categoryContainer.classList.add(...categoryContainerStyle.split(" "));
 
-  categoryArray.unshift("All");
-
-  categoryArray.forEach((category) => {
-    // category div
-    const categoryItem = document.createElement("div");
-
-    // category count span
-    const categoryCount = document.createElement("span");
-
-    if (categoryList[category]) {
-      categoryItem.classList.add(...categoryItemStyle.split(" "));
-      categoryItem.textContent = category;
-      categoryItem.onclick = (event) => {
-        search(category, "category");
-      };
-
-      categoryCount.classList.add(...categoryItemCountStyle.split(" "));
-      categoryCount.textContent = `(${categoryList[category]})`;
+  // All 항목 생성
+  const allItem = document.createElement("div");
+  allItem.classList.add(...categoryItemStyle.split(" "));
+  allItem.textContent = "All";
+  allItem.onclick = () => {
+    if (currentFolder) {
+      search(currentFolder, "folder");
     } else {
-      categoryItem.classList.add(...categoryItemStyle.split(" "));
-      categoryItem.textContent = category;
-      categoryItem.onclick = (event) => {
-        // "All" 버튼을 눌렀을 때 동작: 현재 폴더 안에서의 전체 검색
-        if (currentFolder) {
-          search(currentFolder, "folder");
-        } else {
-          search();
-        }
-      };
-
-      categoryCount.classList.add(...categoryItemCountStyle.split(" "));
-      categoryCount.textContent = `(${targetList.length})`;
+      search();
     }
+  };
+  const allCount = document.createElement("span");
+  allCount.classList.add(...categoryItemCountStyle.split(" "));
+  allCount.textContent = `(${targetList.length})`;
+  allItem.appendChild(allCount);
+  categoryContainer.appendChild(allItem);
+
+  // 개별 카테고리 항목 생성
+  categoryKeys.forEach((catKey) => {
+    const item = categoryMap[catKey];
+    const categoryItem = document.createElement("div");
+    categoryItem.classList.add(...categoryItemStyle.split(" "));
+    categoryItem.textContent = item.displayName;
+    categoryItem.onclick = () => {
+      search(catKey, "category");
+    };
+
+    const categoryCount = document.createElement("span");
+    categoryCount.classList.add(...categoryItemCountStyle.split(" "));
+    categoryCount.textContent = `(${item.count})`;
 
     categoryItem.appendChild(categoryCount);
     categoryContainer.appendChild(categoryItem);

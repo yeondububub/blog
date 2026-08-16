@@ -36,12 +36,14 @@ flowchart LR
 Spring Framework는 비즈니스 로직에 특정 캐시 벤더 기술을 종속시키지 않고 선언적으로 캐시를 제어할 수 있도록 **Spring Cache 추상화 레이어를** 제공합니다.
 
 ```mermaid
-flowchart TD
-    Client["조회 요청"] --> CacheLayer{"Spring Cache AOP<br/>(@Cacheable)"}
-    CacheLayer -- "Cache Hit" --> ReturnVal["Redis 캐시 데이터 즉각 반환"]
-    CacheLayer -- "Cache Miss" --> Remote["외부 조회수 API 호출"]
-    Remote --> Store["Redis에 1초 TTL로 캐시 적재"]
-    Store --> ReturnVal
+flowchart LR
+    Client["1. 조회 요청"] --> Cache{"2. Spring Cache AOP<br/>(@Cacheable)"}
+    
+    Cache -- "Cache Hit" --> ReturnHit["Redis 캐시 즉시 반환"]
+    
+    Cache -- "Cache Miss" --> Remote["3. 외부 조회수 API 호출"]
+    Remote --> Store["4. Redis 1초 TTL 적재"]
+    Store --> ReturnHit
 ```
 
 ### 2.1 Spring Cache 추상화와 Redis의 결합

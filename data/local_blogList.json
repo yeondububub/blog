@@ -1,58 +1,58 @@
 [
     {
-        "name": "[20260504]_[Polar Bear Hunt]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md",
-        "download_url": "/security/[20260504]_[Polar Bear Hunt]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md"
+        "name": "[20260504]_[Polar Bear Hunt]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
+        "download_url": "/security/[20260504]_[Polar Bear Hunt]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
     },
     {
-        "name": "[20260508]_[Cat jump]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md",
-        "download_url": "/security/[20260508]_[Cat jump]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md"
+        "name": "[20260508]_[Cat jump]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
+        "download_url": "/security/[20260508]_[Cat jump]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
     },
     {
-        "name": "[20260713]_[Redis Cache 조회수 캐싱]_[Redis]_[]_[Spring Boot와 Redis를 활용하여 조회수 데이터를 캐싱하는 방법을 알아봅니다.]_[].md",
-        "download_url": "/backend/[20260713]_[Redis Cache 조회수 캐싱]_[Redis]_[]_[Spring Boot와 Redis를 활용하여 조회수 데이터를 캐싱하는 방법을 알아봅니다.]_[].md"
+        "name": "[20260713]_[Redis Cache 조회수 캐싱]_[Spring, Redis]_[]_[Spring Boot와 Redis를 활용하여 조회수 데이터를 캐싱하는 방법을 알아봅니다.].md",
+        "download_url": "/backend/[20260713]_[Redis Cache 조회수 캐싱]_[Spring, Redis]_[]_[Spring Boot와 Redis를 활용하여 조회수 데이터를 캐싱하는 방법을 알아봅니다.].md"
     },
     {
-        "name": "[20260715]_[Kafka Auto Commit 설정과 수동 커밋 가이드]_[Kafka]_[]_[Spring Boot와 Kafka에서 auto commit을 비활성화하고 수동 커밋을 적용하는 방법에 대해 알아봅니다.]_[].md",
-        "download_url": "/backend/[20260715]_[Kafka Auto Commit 설정과 수동 커밋 가이드]_[Kafka]_[]_[Spring Boot와 Kafka에서 auto commit을 비활성화하고 수동 커밋을 적용하는 방법에 대해 알아봅니다.]_[].md"
+        "name": "[20260715]_[Kafka Auto Commit 설정과 수동 커밋 가이드]_[Spring, Kafka]_[]_[Spring Boot와 Kafka에서 auto commit을 비활성화하고 수동 커밋을 적용하는 방법에 대해 알아봅니다.].md",
+        "download_url": "/backend/[20260715]_[Kafka Auto Commit 설정과 수동 커밋 가이드]_[Spring, Kafka]_[]_[Spring Boot와 Kafka에서 auto commit을 비활성화하고 수동 커밋을 적용하는 방법에 대해 알아봅니다.].md"
     },
     {
-        "name": "[20260716]_[Apple의 container 도구 활용 가이드]_[Container]_[container.png]_[Apple의 container의 특징과 설치 및 사용법]_[].md",
-        "download_url": "/development/[20260716]_[Apple의 container 도구 활용 가이드]_[Container]_[container.png]_[Apple의 container의 특징과 설치 및 사용법]_[].md"
+        "name": "[20260716]_[Apple의 container 도구 활용 가이드]_[Container]_[container.png]_[Apple의 container의 특징과 설치 및 사용법].md",
+        "download_url": "/development/[20260716]_[Apple의 container 도구 활용 가이드]_[Container]_[container.png]_[Apple의 container의 특징과 설치 및 사용법].md"
     },
     {
-        "name": "[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제]_[].md",
-        "download_url": "/backend/[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제]_[].md"
+        "name": "[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제].md",
+        "download_url": "/backend/[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제].md"
     },
     {
-        "name": "[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md",
-        "download_url": "/security/[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md"
+        "name": "[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
+        "download_url": "/security/[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
     },
     {
-        "name": "[20260724]_[Recover]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md",
-        "download_url": "/security/[20260724]_[Recover]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md"
+        "name": "[20260724]_[Recover]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
+        "download_url": "/security/[20260724]_[Recover]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
     },
     {
-        "name": "[20260726]_[XOR Board]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md",
-        "download_url": "/security/[20260726]_[XOR Board]_[wargame]_[dreamhack.png]_[드림핵 문제풀이]_[].md"
+        "name": "[20260726]_[XOR Board]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
+        "download_url": "/security/[20260726]_[XOR Board]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
     },
     {
-        "name": "[20260806]_[스프링 배치 사용법]_[Spring Batch]_[spring_batch.png]_[스프링 배치의 사용법에 대해 알아본다]_[].md",
-        "download_url": "/backend/[20260806]_[스프링 배치 사용법]_[Spring Batch]_[spring_batch.png]_[스프링 배치의 사용법에 대해 알아본다]_[].md"
+        "name": "[20260806]_[스프링 배치 사용법]_[Spring, Batch]_[spring_batch.png]_[스프링 배치의 사용법에 대해 알아본다].md",
+        "download_url": "/backend/[20260806]_[스프링 배치 사용법]_[Spring, Batch]_[spring_batch.png]_[스프링 배치의 사용법에 대해 알아본다].md"
     },
     {
-        "name": "[20260812]_[Spring Cloud 개요와 분산 시스템 아키텍처]_[Spring Cloud]_[spring.png]_[마이크로서비스 환경에서 Spring Cloud의 존재 이유와 핵심 생태계 분석]_[].md",
-        "download_url": "/backend/[20260812]_[Spring Cloud 개요와 분산 시스템 아키텍처]_[Spring Cloud]_[spring.png]_[마이크로서비스 환경에서 Spring Cloud의 존재 이유와 핵심 생태계 분석]_[].md"
+        "name": "[20260812]_[Spring Cloud 개요와 분산 시스템 아키텍처]_[Spring, Cloud]_[spring.png]_[마이크로서비스 환경에서 Spring Cloud의 존재 이유와 핵심 생태계 분석].md",
+        "download_url": "/backend/[20260812]_[Spring Cloud 개요와 분산 시스템 아키텍처]_[Spring, Cloud]_[spring.png]_[마이크로서비스 환경에서 Spring Cloud의 존재 이유와 핵심 생태계 분석].md"
     },
     {
-        "name": "[20260813]_[Spring WebFlux 입문]_[WebFlux]_[spring.png]_[WebFlux와 R2DBC]_[].md",
-        "download_url": "/backend/[20260813]_[Spring WebFlux 입문]_[WebFlux]_[spring.png]_[WebFlux와 R2DBC]_[].md"
+        "name": "[20260813]_[Spring WebFlux 입문]_[Spring, WebFlux]_[spring.png]_[WebFlux와 R2DBC].md",
+        "download_url": "/backend/[20260813]_[Spring WebFlux 입문]_[Spring, WebFlux]_[spring.png]_[WebFlux와 R2DBC].md"
     },
     {
-        "name": "[20260814]_[Spring Cloud Stream 입문]_[Spring Cloud]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현]_[].md",
-        "download_url": "/backend/[20260814]_[Spring Cloud Stream 입문]_[Spring Cloud]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현]_[].md"
+        "name": "[20260814]_[Spring Cloud Stream 입문]_[Spring, Kafka]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현].md",
+        "download_url": "/backend/[20260814]_[Spring Cloud Stream 입문]_[Spring, Kafka]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현].md"
     },
     {
-        "name": "[20260815]_[Transactional Outbox 패턴]_[Architecture]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현]_[].md",
-        "download_url": "/backend/[20260815]_[Transactional Outbox 패턴]_[Architecture]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현]_[].md"
+        "name": "[20260815]_[Transactional Outbox 패턴]_[Spring, Kafka]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현].md",
+        "download_url": "/backend/[20260815]_[Transactional Outbox 패턴]_[Spring, Kafka]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현].md"
     }
 ]

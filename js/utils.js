@@ -44,9 +44,9 @@ function extractFileInfo(filename) {
   // render.js에서 사용
   // 파일 이름에서 정보 추출하는 함수
 
-  // 정규 표현식을 사용하여 날짜, 제목, 카테고리, 썸네일, 저자 정보 추출
+  // 정규 표현식을 사용하여 날짜, 제목, 카테고리, 썸네일, 설명 정보 추출 (저자 블록 생략 지원)
   const regex =
-    /^\[(\d{8})\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\].(md|ipynb)$/;
+    /^\[(\d{8})\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\](?:\_\[(.*?)\])?\.(md|ipynb)$/;
   const matches = filename.match(regex);
   // console.log(`extractFileInfo: ${matches}`);
 
@@ -58,7 +58,6 @@ function extractFileInfo(filename) {
       thumbnail: matches[4]
         ? "img/" + matches[4]
         : `img/thumb${Math.floor(Math.random() * 8) + 1}.png`,
-      // description: matches[5].length > 25 ? matches[5].substring(0, 25) + '...' : matches[5],
       description: matches[5],
       author: matches[6] ? parseInt(matches[6]) : 0,
       fileType: matches[7],
