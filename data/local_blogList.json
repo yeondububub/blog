@@ -60,7 +60,7 @@
         "download_url": "/backend/[20260816]_[Idempotency Key를 활용한 API 중복 요청 방지]_[Spring, Redis]_[spring.png]_[분산 환경에서 멱등성 키와 Redis 분산 락을 활용하여 결제 및 주문의 중복 처리를 방지하는 방법].md"
     },
     {
-        "name": "[20260819]_[SAGA 패턴을 활용한 분산 트랜잭션과 보상 트랜잭션 구현]_[Spring, Kafka]_[spring.png]_[마이크로서비스 환경에서 2PC의 한계를 극복하고 SAGA 패턴과 이벤트 기반 보상 트랜잭션으로 최종 일관성을 보장하는 방법].md",
-        "download_url": "/backend/[20260819]_[SAGA 패턴을 활용한 분산 트랜잭션과 보상 트랜잭션 구현]_[Spring, Kafka]_[spring.png]_[마이크로서비스 환경에서 2PC의 한계를 극복하고 SAGA 패턴과 이벤트 기반 보상 트랜잭션으로 최종 일관성을 보장하는 방법].md"
+        "name": "[20260819]_[SAGA 패턴을 활용한 분산 트랜잭션 구현]_[Spring, Kafka]_[spring.png]_[SAGA 패턴과 보상 트랜잭션으로 분산 데이터 일관성 보장하기].md",
+        "download_url": "/backend/[20260819]_[SAGA 패턴을 활용한 분산 트랜잭션 구현]_[Spring, Kafka]_[spring.png]_[SAGA 패턴과 보상 트랜잭션으로 분산 데이터 일관성 보장하기].md"
     }
 ]
