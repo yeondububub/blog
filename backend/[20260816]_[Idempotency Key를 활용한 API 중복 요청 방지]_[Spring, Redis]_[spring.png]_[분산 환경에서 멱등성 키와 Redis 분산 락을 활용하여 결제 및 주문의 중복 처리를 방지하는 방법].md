@@ -137,8 +137,11 @@ public class IdempotencyRecord implements Serializable {
     }
 
     public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; }
     public int getStatusCode() { return statusCode; }
+    public void setStatusCode(int statusCode) { this.statusCode = statusCode; }
     public Object getResponseBody() { return responseBody; }
+    public void setResponseBody(Object responseBody) { this.responseBody = responseBody; }
 }
 ```
 
