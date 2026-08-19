@@ -76,4 +76,272 @@ flowchart LR
 
 ---
 
+## 3. 코드 구현 및 라인별 상세 분석
 
+본 구현은 **오케스트레이션 기반 SAGA 패턴**을 적용하여 주문 생성 시 결제 승인과 재고 차감을 조율하고, 재고 부족 시 결제를 환불하고 주문을 취소하는 예제입니다.
+
+### 3.1 SAGA 상태 및 이벤트 모델 정의
+
+```java
+package com.example.blog.saga.model;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+
+public class OrderSagaState implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    public enum SagaStatus {
+        STARTED,
+        PAYMENT_SUCCESS,
+        INVENTORY_SUCCESS,
+        COMPENSATING,
+        FAILED,
+        COMPLETED
+    }
+
+    private String sagaId;
+    private Long orderId;
+    private Long productId;
+    private int quantity;
+    private BigDecimal amount;
+    private SagaStatus status;
+
+    public OrderSagaState() {}
+
+    public OrderSagaState(String sagaId, Long orderId, Long productId, int quantity, BigDecimal amount) {
+        this.sagaId = sagaId;
+        this.orderId = orderId;
+        this.productId = productId;
+        this.quantity = quantity;
+        this.amount = amount;
+        this.status = SagaStatus.STARTED;
+    }
+
+    public String getSagaId() { return sagaId; }
+    public Long getOrderId() { return orderId; }
+    public Long getProductId() { return productId; }
+    public int getQuantity() { return quantity; }
+    public BigDecimal getAmount() { return amount; }
+    public SagaStatus getStatus() { return status; }
+    public void setStatus(SagaStatus status) { this.status = status; }
+}
+```
+
+### 3.2 SAGA 오케스트레이터 구현 (OrderSagaOrchestrator)
+
+```java
+package com.example.blog.saga.orchestrator;
+
+import com.example.blog.saga.model.OrderSagaState;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * 주문 분산 트랜잭션의 상태 머신을 관리하는 SAGA 오케스트레이터
+ */
+@Component
+public class OrderSagaOrchestrator {
+
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    // 실무 환경에서는 Redis나 RDB에 Saga 상태를 영속화하여 관리합니다.
+    private final Map<String, OrderSagaState> sagaRepository = new ConcurrentHashMap<>();
+
+    public OrderSagaOrchestrator(KafkaTemplate<String, Object> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    /**
+     * SAGA 시작점: 결제 명령 발행
+     */
+    public void startSaga(OrderSagaState sagaState) {
+        sagaRepository.put(sagaState.getSagaId(), sagaState);
+        
+        // 1. 결제 서비스로 결제 명령(Command)을 발행합니다.
+        kafkaTemplate.send("payment-commands", sagaState.getSagaId(), sagaState);
+    }
+
+    /**
+     * 결제 처리 결과 수신
+     */
+    @KafkaListener(topics = "payment-events", groupId = "saga-orchestrator-group")
+    public void handlePaymentEvent(OrderSagaState event) {
+        OrderSagaState state = sagaRepository.get(event.getSagaId());
+        if (state == null) return;
+
+        if (event.getStatus() == OrderSagaState.SagaStatus.PAYMENT_SUCCESS) {
+            state.setStatus(OrderSagaState.SagaStatus.PAYMENT_SUCCESS);
+            // 2. 결제 성공 시 다음 단계인 재고 차감 명령을 발행합니다.
+            kafkaTemplate.send("inventory-commands", state.getSagaId(), state);
+        } else {
+            // 결제 실패 시 즉시 주문 취소 보상 트랜잭션을 실행합니다.
+            state.setStatus(OrderSagaState.SagaStatus.FAILED);
+            kafkaTemplate.send("order-cancel-commands", state.getSagaId(), state);
+        }
+    }
+
+    /**
+     * 재고 처리 결과 수신 및 보상 트랜잭션 조율
+     */
+    @KafkaListener(topics = "inventory-events", groupId = "saga-orchestrator-group")
+    public void handleInventoryEvent(OrderSagaState event) {
+        OrderSagaState state = sagaRepository.get(event.getSagaId());
+        if (state == null) return;
+
+        if (event.getStatus() == OrderSagaState.SagaStatus.INVENTORY_SUCCESS) {
+            // 3. 재고 차감까지 성공하면 전체 SAGA 트랜잭션을 완료 처리합니다.
+            state.setStatus(OrderSagaState.SagaStatus.COMPLETED);
+            kafkaTemplate.send("order-complete-commands", state.getSagaId(), state);
+        } else {
+            // 4. 재고 차감 실패 시 역순으로 결제 환불 및 주문 취소 보상 트랜잭션을 트리거합니다.
+            state.setStatus(OrderSagaState.SagaStatus.COMPENSATING);
+            kafkaTemplate.send("payment-compensate-commands", state.getSagaId(), state);
+            kafkaTemplate.send("order-cancel-commands", state.getSagaId(), state);
+        }
+    }
+}
+```
+
+### 3.3 결제 서비스 및 보상 트랜잭션 리스너 (PaymentService)
+
+```java
+package com.example.blog.payment.service;
+
+import com.example.blog.saga.model.OrderSagaState;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class PaymentService {
+
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public PaymentService(KafkaTemplate<String, Object> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    /**
+     * 정상 결제 처리 로컬 트랜잭션
+     */
+    @Transactional
+    @KafkaListener(topics = "payment-commands", groupId = "payment-service-group")
+    public void processPayment(OrderSagaState command) {
+        try {
+            // 실제 결제 승인 비즈니스 로직 수행 (PG 연동 및 잔액 차감)
+            boolean paymentSuccess = executePayment(command.getOrderId(), command.getAmount());
+
+            if (paymentSuccess) {
+                command.setStatus(OrderSagaState.SagaStatus.PAYMENT_SUCCESS);
+            } else {
+                command.setStatus(OrderSagaState.SagaStatus.FAILED);
+            }
+        } catch (Exception ex) {
+            command.setStatus(OrderSagaState.SagaStatus.FAILED);
+        }
+
+        // 결과를 오케스트레이터 응답 토픽으로 전송합니다.
+        kafkaTemplate.send("payment-events", command.getSagaId(), command);
+    }
+
+    /**
+     * 결제 취소 보상 트랜잭션 (Compensating Transaction)
+     */
+    @Transactional
+    @KafkaListener(topics = "payment-compensate-commands", groupId = "payment-service-group")
+    public void compensatePayment(OrderSagaState command) {
+        // 이미 승인된 결제 내역을 조회하여 환불 처리를 실행합니다.
+        refundPayment(command.getOrderId(), command.getAmount());
+    }
+
+    private boolean executePayment(Long orderId, java.math.BigDecimal amount) {
+        return true;
+    }
+
+    private void refundPayment(Long orderId, java.math.BigDecimal amount) {
+        // 환불 API 호출 및 DB 결제 상태 CANCELLED 변경
+    }
+}
+```
+
+### 3.4 재고 서비스 및 로컬 트랜잭션 (InventoryService)
+
+```java
+package com.example.blog.inventory.service;
+
+import com.example.blog.saga.model.OrderSagaState;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class InventoryService {
+
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public InventoryService(KafkaTemplate<String, Object> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    /**
+     * 재고 차감 로컬 트랜잭션
+     */
+    @Transactional
+    @KafkaListener(topics = "inventory-commands", groupId = "inventory-service-group")
+    public void deductInventory(OrderSagaState command) {
+        boolean stockDeducted = executeDeduct(command.getProductId(), command.getQuantity());
+
+        if (stockDeducted) {
+            command.setStatus(OrderSagaState.SagaStatus.INVENTORY_SUCCESS);
+        } else {
+            // 재고가 부족하여 실패 상태를 오케스트레이터로 반환합니다.
+            command.setStatus(OrderSagaState.SagaStatus.FAILED);
+        }
+
+        kafkaTemplate.send("inventory-events", command.getSagaId(), command);
+    }
+
+    private boolean executeDeduct(Long productId, int quantity) {
+        // DB 재고 수량 확인 및 차감 쿼리 실행 (재고 부족 시 false 반환)
+        return false; // 재고 부족 실패 시나리오 재현
+    }
+}
+```
+
+- **코드 분석 및 효율성**:
+  - **비동기 이벤트 기반 상태 전이**: 동기식 HTTP 통신 대신 Kafka 토픽을 활용하여 서비스 간 타임아웃 전파를 차단하고 장애 격리를 구현합니다.
+  - **독립 로컬 트랜잭션 커밋**: 각 서비스는 자신의 데이터베이스 트랜잭션만 짧게 점유하고 커밋하므로 락 경합 없이 처리량을 극대화합니다.
+  - **역순 보상 체인 보장**: 재고 차감 실패 시 오케스트레이터가 `payment-compensate-commands`와 `order-cancel-commands`를 즉시 트리거하여 최종 일관성을 보장합니다.
+
+---
+
+## 4. 적용 시 고려해야 할 점 (주의사항 및 예외 처리)
+
+### 4.1 ACID 격리성(Isolation) 부재와 세만틱 락(Semantic Lock)
+SAGA 패턴은 각 단계의 로컬 트랜잭션이 즉시 커밋되므로, 전체 프로세스가 완료되기 전의 중간 상태가 외부 조회 쿼리에 노출될 수 있습니다.
+- **대응 방안**: 엔티티에 `PENDING` 상태 플래그를 도입(예: `ORDER_PENDING`)하여, SAGA가 완전히 완료되기 전까지는 해당 엔티티에 대한 다른 트랜잭션의 수정이나 중복 결제를 제한하는 **Semantic Lock**을 적용해야 합니다.
+
+### 4.2 보상 트랜잭션의 절대적 성공 보장 (Idempotent Consumer)
+보상 트랜잭션은 롤백할 대상이 없으므로 **반드시 성공해야 합니다**.
+- 네트워크 장애로 인해 동일한 보상 명령이 중복 인입되더라도 중복 환불이 발생하지 않도록 **컨슈머 멱등성(Idempotency)을** 필수로 구현해야 합니다.
+- 시스템 장애로 보상 트랜잭션이 실패할 경우, 무한 재시도(Exponential Backoff) 및 Dead Letter Topic(DLT) 격리 후 운영자 알림 파이프라인을 구축해야 합니다.
+
+### 4.3 피벗 트랜잭션(Pivot Transaction) 설계
+SAGA 흐름에서 보상 불가능한 액션(예: 실제 이메일 발송, 외부 제휴사 API 확정)은 반드시 전체 비즈니스 흐름의 **가장 마지막 단계(피벗 이후)에** 배치해야 합니다.
+
+---
+
+## 5. 결론 (해당 기술의 기대효과 요약)
+
+SAGA 패턴은 분산 마이크로서비스 환경에서 2PC 분산 트랜잭션의 성능 병목을 해결하는 핵심 아키텍처 패턴입니다.
+
+1. **무손실 데이터 최종 일관성 확보**: 분산 노드 장애나 비즈니스 예외 발생 시 자동화된 보상 트랜잭션을 통해 시스템 상태를 안전하게 원복합니다.
+2. **서비스 독립성 및 확장성 극대화**: 동기식 락 대기 없이 서비스별 로컬 트랜잭션만 커밋하므로 대규모 트래픽 환경에서도 안정적인 처리량을 유지합니다.
+3. **복원력(Resilience) 강화**: 일시적인 서비스 지연이나 장애가 전체 시스템 셧다운으로 전파되지 않고 비동기 큐를 통해 안전하게 격리됩니다.
