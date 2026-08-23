@@ -228,6 +228,9 @@ function styleMarkdown(kinds, text, title_info = null) {
 
   hljs.highlightAll();
 
+  // KaTeX 수식 렌더링
+  renderMath(contentsDiv);
+
   if (window.mermaid) {
     try {
       if (typeof mermaid.run === "function") {
@@ -242,6 +245,42 @@ function styleMarkdown(kinds, text, title_info = null) {
 
   // 본문 렌더링 후 목차(TOC) 생성
   renderTOC();
+}
+
+function renderMath(element) {
+  if (!element) return;
+  const tryRender = () => {
+    if (typeof renderMathInElement === "function") {
+      try {
+        renderMathInElement(element, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true },
+          ],
+          ignoredTags: [
+            "script",
+            "noscript",
+            "style",
+            "textarea",
+            "pre",
+            "code",
+            "option",
+          ],
+          throwOnError: false,
+        });
+      } catch (e) {
+        console.error("KaTeX render error:", e);
+      }
+    }
+  };
+
+  if (typeof renderMathInElement === "function") {
+    tryRender();
+  } else {
+    setTimeout(tryRender, 200);
+  }
 }
 
 function styleJupyter(kinds, text, title_info = null) {
@@ -480,6 +519,9 @@ function styleJupyter(kinds, text, title_info = null) {
   contentsDiv.appendChild(downloadButton);
   contentsDiv.appendChild(tempDiv);
   hljs.highlightAll();
+
+  // KaTeX 수식 렌더링
+  renderMath(contentsDiv);
 
   if (window.mermaid) {
     try {

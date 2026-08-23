@@ -403,4 +403,23 @@ html.dark .mermaid {
   max-width: 100% !important;
   height: auto !important;
 }
+
+/* ==========================================================================
+   KaTeX LaTeX Math Styles (Light & Dark Mode)
+   ========================================================================== */
+.katex {
+  font-size: 1.05em !important;
+  text-rendering: auto !important;
+}
+
+.katex-display {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 0.75rem 0 !important;
+  margin: 1rem 0 !important;
+}
+
+html.dark .katex {
+  color: #f1f5f9 !important;
+}
 /*# sourceMappingURL=style.css.map */
