@@ -1,4 +1,4 @@
-const defaultTitle = "WENIVLOG";
+const defaultTitle = "ydbb";
 // 현재 url 가져와서 parsing (url 스키마는 readme.md 참고)
 const url = new URL(window.location.href);
 const origin = url.origin + url.pathname;
@@ -6,7 +6,7 @@ const pathParts = url.pathname.split("/").filter((part) => part.length > 0);
 // console.log(url)
 // console.log(pathParts)
 
-// 로켈 테스트 환경(127.0.0.1)인지 github 배포 상태인지 확인
+// 로컬 테스트 환경(127.0.0.1)인지 github 배포 상태인지 확인
 const isLocal = url.hostname === "127.0.0.1" || url.hostname === "localhost";
 
 // 현재 URL에서 "index.html"을 제거하고자 할 때
