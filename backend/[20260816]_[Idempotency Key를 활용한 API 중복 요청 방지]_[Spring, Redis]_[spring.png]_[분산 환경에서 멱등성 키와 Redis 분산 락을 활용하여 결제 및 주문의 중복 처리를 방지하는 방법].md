@@ -69,19 +69,13 @@ flowchart LR
 
 ## 3. 코드 구현 및 라인별 상세 분석
 
+> 전체 실행 가능한 프로젝트 소스코드는 [GitHub 저장소](https://github.com/yeondububub/blog-code/tree/main/spring/spring-idempotency-aop)에서 확인하실 수 있습니다.
+
 컨트롤러 계층에 선언적으로 적용할 수 있는 어노테이션 기반 AOP 멱등성 프레임워크 구현 코드입니다.
 
 ### 3.1 `@Idempotent` 어노테이션 정의
 
 ```java
-package com.example.blog.common.idempotency;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.concurrent.TimeUnit;
-
 /**
  * 선언적 멱등성 보장을 위한 커스텀 어노테이션
  */
@@ -103,10 +97,6 @@ public @interface Idempotent {
 ### 3.2 멱등성 응답 래퍼 객체 (IdempotencyRecord)
 
 ```java
-package com.example.blog.common.idempotency;
-
-import java.io.Serializable;
-
 public class IdempotencyRecord implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -136,34 +126,13 @@ public class IdempotencyRecord implements Serializable {
         return record;
     }
 
-    public Status getStatus() { return status; }
-    public void setStatus(Status status) { this.status = status; }
-    public int getStatusCode() { return statusCode; }
-    public void setStatusCode(int statusCode) { this.statusCode = statusCode; }
-    public Object getResponseBody() { return responseBody; }
-    public void setResponseBody(Object responseBody) { this.responseBody = responseBody; }
+    // Getter 및 Setter 생략
 }
 ```
 
 ### 3.3 AOP 기반 멱등성 검증 어스펙트 (IdempotencyAspect)
 
 ```java
-package com.example.blog.common.idempotency;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-
-import java.time.Duration;
-
 @Aspect
 @Component
 public class IdempotencyAspect {
@@ -253,15 +222,6 @@ public class IdempotencyAspect {
 ### 3.4 결제 컨트롤러 적용 예시
 
 ```java
-package com.example.blog.payment.controller;
-
-import com.example.blog.common.idempotency.Idempotent;
-import com.example.blog.payment.dto.PaymentRequest;
-import com.example.blog.payment.dto.PaymentResponse;
-import com.example.blog.payment.service.PaymentService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 @RestController
 @RequestMapping("/api/v1/payments")
 public class PaymentController {
