@@ -12,15 +12,27 @@ iOS 애플리케이션 개발에서 네트워크 통신과 비동기 데이터 �
 
 ```mermaid
 flowchart TD
-    subgraph Callback_Approach ["기존 Completion Handler 방식"]
-        Req["URLSession.shared.dataTask"] --> AsyncExec["백그라운드 스레드 실행"]
-        AsyncExec --> Callback["(Data?, URLResponse?, Error?) 3개 인자 수신"]
-        Callback --> CheckErr{"Error 검증 및 분기"}
-        CheckErr --> Unwrapping{"Data 언래핑"}
-        Unwrapping --> JSONDec["JSON 디코딩 (try-catch)"]
-        JSONDec --> MainQueue["DispatchQueue.main.async 수동 전환"]
-        MainQueue --> CompletionCall["completion(model) 호출"]
+    subgraph MainThread ["메인 스레드 (화면 그리는 곳)"]
+        UI1["1. 버튼 클릭 (데이터 요청)"]:::main
+        UI2["6. 전달받은 데이터 출력"]:::main
     end
+
+    subgraph Background ["백그라운드 (인터넷 통신 / 무거운 작업)"]
+        Net["2. 서버에서 데이터 다운로드"]:::bg
+        
+        subgraph Callback ["개발자가 직접 작성해야 하는 코드 (콜백 함수)"]
+            Check["3. 데이터가 잘 왔는지 검사<br/>(에러/데이터/응답 3가지를 매번 체크)"]:::danger
+            Parse["4. 받아온 데이터를 기계어로 번역<br/>(do-catch JSON 디코딩)"]:::danger
+            Switch["5. 메인 스레드로 이동 명령<br/>(DispatchQueue.main.async)"]:::danger
+        end
+    end
+
+    %% 흐름 연결
+    UI1 -->|"인터넷 요청 보냄"| Net
+    Net -->|"다운로드 완료"| Check
+    Check -->|"이상 없으면"| Parse
+    Parse -->|"번역 성공하면"| Switch
+    Switch -->|"스레드 강제 전환"| UI2
 ```
 
 ### 1.1 삼중 상태(Data, Response, Error)의 조합 복잡성
@@ -46,7 +58,7 @@ flowchart LR
     Op3 -- "스케줄러 변경" --> Sub["Subscriber<br/>(.sink)"]
 ```
 
-### 2.1 Combine 핵심 프로토콜 사양 (Apple 공식 문서 기준)
+### 2.1 Combine 핵심 프로토콜 사양
 
 #### Publisher 프로토콜
 ```swift
