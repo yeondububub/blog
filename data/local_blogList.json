@@ -70,5 +70,9 @@
     {
         "name": "[20260825]_[Reactive Programming의 개념과 Combine 데이터 스트림 구조]_[Swift, Combine]_[swift_ui.png]_[반응형 프로그래밍의 정의와 시간 축 기반의 데이터 스트림 및 Output과 Failure 타입 시스템 분석].md",
         "download_url": "/ios/[20260825]_[Reactive Programming의 개념과 Combine 데이터 스트림 구조]_[Swift, Combine]_[swift_ui.png]_[반응형 프로그래밍의 정의와 시간 축 기반의 데이터 스트림 및 Output과 Failure 타입 시스템 분석].md"
+    },
+    {
+        "name": "[20260826]_[Combine Publisher]_[Swift, Combine]_[swift_ui.png]_[Combine Publisher란].md",
+        "download_url": "/ios/[20260826]_[Combine Publisher]_[Swift, Combine]_[swift_ui.png]_[Combine Publisher란].md"
     }
 ]
