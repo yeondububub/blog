@@ -17,7 +17,7 @@ if (window.location.pathname.endsWith("/index.html")) {
   let newPath = window.location.pathname.replace(/index\.html$/, "");
 
   // history.replaceState()를 사용하여 URL을 변경합니다. 페이지는 리로드되지 않습니다.
-  history.replaceState(null, "", newPath);
+  history.replaceState(null, "", newPath + window.location.search + window.location.hash);
 }
 
 if (isLocal) {

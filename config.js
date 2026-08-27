@@ -5,7 +5,7 @@ const siteConfig = {
   mainColor: "#3498db", // 사이트의 주 색상
   textColor: "#333333", // 기본 텍스트 색상
   blogTitle: "yddb", // 블로그 제목
-  menuOrder: ["Backend.md", "Data.md", "Development.md", "Diary.md", "iOS.md", "Security.md", "About.md"], // 커스텀 메뉴 순서
+  menuOrder: ["Backend.md", "AI.md", "Development.md", "Diary.md", "iOS.md", "Security.md", "About.md"], // 커스텀 메뉴 순서
 };
 
 // 카테고리별 배너 텍스트 설정
@@ -19,8 +19,8 @@ const categoryBanners = {
   "diary": {
     description: "일상을 기록하는 공간입니다."
   },
-  "data": {
-    description: "데이터 분석 및 처리 관련 지식을 기록합니다."
+  "ai": {
+    description: "인공지능 및 머신러닝 관련 지식을 기록하는 공간입니다."
   },
   "ios": {
     description: "iOS 앱 개발 지식을 정리합니다."

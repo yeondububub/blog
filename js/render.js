@@ -150,13 +150,13 @@ async function renderMenu() {
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
         window.history.pushState({}, "", url);
-      } else if (menu.name === "Data.md") {
+      } else if (menu.name === "AI.md") {
         if (blogList.length === 0) {
           initDataBlogList().then(() => {
-            search("data", "folder");
+            search("ai", "folder");
           });
         } else {
-          search("data", "folder");
+          search("ai", "folder");
         }
         const url = new URL(origin);
         url.searchParams.set("menu", menu.name);
@@ -797,10 +797,10 @@ async function initialize() {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
         search("development", "folder");
-      } else if (menuName === "Data.md") {
+      } else if (menuName === "AI.md") {
         document.getElementById("contents").style.display = "none";
         await initDataBlogList();
-        search("data", "folder");
+        search("ai", "folder");
       } else {
         document.getElementById("blog-posts").style.display = "none";
         document.getElementById("contents").style.display = "block";

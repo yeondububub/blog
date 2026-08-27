@@ -30,8 +30,8 @@ window.addEventListener("click", (event) => {
             search("blog", "folder");
         } else if (menuName === "Development.md") {
             search("development", "folder");
-        } else if (menuName === "Data.md") {
-            search("data", "folder");
+        } else if (menuName === "AI.md") {
+            search("ai", "folder");
         } else if (menuName === "Backend.md") {
             search("backend", "folder");
         } else if (menuName === "iOS.md") {
