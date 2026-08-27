@@ -74,5 +74,9 @@
     {
         "name": "[20260826]_[Combine Publisher]_[Swift, Combine]_[swift_ui.png]_[Combine Publisher란].md",
         "download_url": "/ios/[20260826]_[Combine Publisher]_[Swift, Combine]_[swift_ui.png]_[Combine Publisher란].md"
+    },
+    {
+        "name": "[20260827]_[Combine Subscriber와 메모리 관리(sink, assign, 순환 참조)]_[Swift, Combine]_[swift_ui.png]_[Subscriber의 동작 원리와 sink 및 assign 연산자의 종류별 차이점과 강한 참조 순환 방지 기법].md",
+        "download_url": "/ios/[20260827]_[Combine Subscriber와 메모리 관리(sink, assign, 순환 참조)]_[Swift, Combine]_[swift_ui.png]_[Subscriber의 동작 원리와 sink 및 assign 연산자의 종류별 차이점과 강한 참조 순환 방지 기법].md"
     }
 ]
