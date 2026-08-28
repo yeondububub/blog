@@ -24,7 +24,7 @@ function convertIpynvToHtml(fileContent) {
             htmlContent += `<pre class="code-cell"><code class="language-python">${codeText}</code></pre>`;
 
             // 코드 출력 처리
-            if (cell.outputs && cell.outputs.length > 0) {
+            if (cell.outputs && cell.outputs.length > 0) { 
                 cell.outputs.forEach(output => {
                     // output.data가 존재하는지 확인
                     if (output.data || output.text) {

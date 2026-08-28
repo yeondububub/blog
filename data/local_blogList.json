@@ -64,8 +64,8 @@
         "download_url": "/backend/[20260819]_[SAGA 패턴을 활용한 분산 트랜잭션 구현]_[Spring, Kafka]_[spring.png]_[SAGA 패턴과 보상 트랜잭션으로 분산 데이터 일관성 보장하기].md"
     },
     {
-        "name": "[20260825]_[Combine 기본 구조와 비동기 코드의 선언형 전환]_[Swift, Combine]_[swift_ui.png]_[기존 클로저 기반 비동기 처리 방식의 한계와 URLSession DataTaskPublisher를 통한 선언형 데이터 스트림 전환].md",
-        "download_url": "/ios/[20260825]_[Combine 기본 구조와 비동기 코드의 선언형 전환]_[Swift, Combine]_[swift_ui.png]_[기존 클로저 기반 비동기 처리 방식의 한계와 URLSession DataTaskPublisher를 통한 선언형 데이터 스트림 전환].md"
+        "name": "[20260825]_[Combine 기본 구조 분석과 비동기 처리의 선언형 전환]_[Swift, Combine]_[swift_ui.png]_[기존 비동기 방식의 한계와 Combine 3대 구성 요소 및 5단계 구독 생명주기 분석].md",
+        "download_url": "/ios/[20260825]_[Combine 기본 구조 분석과 비동기 처리의 선언형 전환]_[Swift, Combine]_[swift_ui.png]_[기존 비동기 방식의 한계와 Combine 3대 구성 요소 및 5단계 구독 생명주기 분석].md"
     },
     {
         "name": "[20260825]_[Reactive Programming의 개념과 Combine 데이터 스트림 구조]_[Swift, Combine]_[swift_ui.png]_[반응형 프로그래밍의 정의와 시간 축 기반의 데이터 스트림 및 Output과 Failure 타입 시스템 분석].md",
