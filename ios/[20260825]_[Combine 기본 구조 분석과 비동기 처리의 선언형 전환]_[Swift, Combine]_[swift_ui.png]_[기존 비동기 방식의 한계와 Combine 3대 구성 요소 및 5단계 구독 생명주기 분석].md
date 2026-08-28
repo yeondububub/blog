@@ -33,33 +33,34 @@ flowchart LR
 
 ### 2.1 Combine의 3대 핵심 구성 요소
 
-1. **Publisher (발행자)**:
-   - 시간에 따라 하나 이상의 값을 방출할 수 있는 프로토콜입니다.
-   - 방출할 데이터 타입(`Output`)과 실패 시 전달할 에러 타입(`Failure`)을 제네릭으로 명시합니다.
-   ```swift
-   public protocol Publisher<Output, Failure> {
-       associatedtype Output
-       associatedtype Failure : Error
-       func receive<S>(subscriber: S) where S : Subscriber, Self.Failure == S.Failure, Self.Output == S.Input
-   }
-   ```
+**Publisher (발행자)**
 
-2. **Operator (연산자)**:
-   - 업스트림(Upstream) Publisher로부터 전달받은 데이터를 가공, 필터링, 변환하여 다운스트림(Downstream)으로 전달하는 중간 처리자입니다.
-   - `map`, `filter`, `decode`, `receive(on:)`, `eraseToAnyPublisher` 등이 이에 해당합니다.
+- 시간에 따라 하나 이상의 값을 방출할 수 있는 프로토콜입니다.
+- 방출할 데이터 타입(`Output`)과 실패 시 전달할 에러 타입(`Failure`)을 제네릭으로 명시합니다.
+```swift
+public protocol Publisher<Output, Failure> {
+    associatedtype Output
+    associatedtype Failure : Error
+    func receive<S>(subscriber: S) where S : Subscriber, Self.Failure == S.Failure, Self.Output == S.Input
+}
+```
 
-3. **Subscriber (구독자)**:
-   - Publisher가 방출한 데이터와 완료(정상 종료 또는 에러) 이벤트를 수신하여 최종적으로 소비하는 프로토콜입니다.
-   - 대표적으로 클로저 기반의 `sink`와 객체 프로퍼티에 값을 직접 할당하는 `assign`이 사용됩니다.
-   ```swift
-   public protocol Subscriber<Input, Failure> : CustomCombineIdentifierConvertible {
-       associatedtype Input
-       associatedtype Failure : Error
-       func receive(subscription: Subscription)
-       func receive(_ input: Self.Input) -> Subscribers.Demand
-       func receive(completion: Subscribers.Completion<Self.Failure>)
-   }
-   ```
+**Operator (연산자)**
+ - 업스트림(Upstream) Publisher로부터 전달받은 데이터를 가공, 필터링, 변환하여 다운스트림(Downstream)으로 전달하는 중간 처리자입니다.
+- `map`, `filter`, `decode`, `receive(on:)`, `eraseToAnyPublisher` 등이 이에 해당합니다.
+
+**Subscriber (구독자)**
+- Publisher가 방출한 데이터와 완료(정상 종료 또는 에러) 이벤트를 수신하여 최종적으로 소비하는 프로토콜입니다.
+- 대표적으로 클로저 기반의 `sink`와 객체 프로퍼티에 값을 직접 할당하는 `assign`이 사용됩니다.
+```swift
+public protocol Subscriber<Input, Failure> : CustomCombineIdentifierConvertible {
+    associatedtype Input
+    associatedtype Failure : Error
+    func receive(subscription: Subscription)
+    func receive(_ input: Self.Input) -> Subscribers.Demand
+    func receive(completion: Subscribers.Completion<Self.Failure>)
+}
+```
 
 ---
 

@@ -118,7 +118,7 @@ testLeak()
 ```
 
 #### 코드 분석
-- **21~22번 라인**: `assign(to: \.timestamp, on: self)`는 `self`를 강하게 유지합니다. 이 `assign`의 결과인 `AnyCancellable`을 `self.cancellables`에 저장하므로 상호 참조가 발생하여 `testLeak()` 스코프가 끝나도 `deinit`이 실행되지 않습니다.
+- **23~24번 라인**: `assign(to: \.timestamp, on: self)`는 `self`를 강하게 유지합니다. 이 `assign`의 결과인 `AnyCancellable`을 `self.cancellables`에 저장하므로 상호 참조가 발생하여 `testLeak()` 스코프가 끝나도 `deinit`이 실행되지 않습니다.
 
 ---
 
@@ -164,7 +164,7 @@ testSafeSink()
 ```
 
 #### 코드 분석
-- **16~18번 라인**: `sink` 클로저 내부에서 `[weak self]` 캡처 리스트를 선언하여 `self`에 대한 약한 참조를 유지합니다. 인스턴스가 스코프를 벗어나면 즉시 `deinit`이 호출되고 `cancellables`가 해제되면서 타이머가 정상 종료됩니다.
+- **18~20번 라인**: `sink` 클로저 내부에서 `[weak self]` 캡처 리스트를 선언하여 `self`에 대한 약한 참조를 유지합니다. 인스턴스가 스코프를 벗어나면 즉시 `deinit`이 호출되고 `cancellables`가 해제되면서 타이머가 정상 종료됩니다.
 
 ---
 
@@ -212,7 +212,7 @@ testModern()
 ```
 
 #### 라인별 상세 분석
-- **20번 라인 (`assign(to: &$timestamp)`)**:
+- **23번 라인 (`assign(to: &$timestamp)`)**:
   - `@Published` 프로퍼티 래퍼의 `inout` 파라미터(`&$timestamp`)를 전달합니다.
   - 이 메서드는 `AnyCancellable`을 반환하지 않고(`Void`), 구독의 라이프사이클을 `@Published` 프로퍼티 래퍼 내부로 귀속시킵니다.
   - 별도의 `cancellables` 컬렉션을 유지할 필요가 없으며, `self`를 강하게 유지하지 않으므로 강한 참조 순환이 원천적으로 발생하지 않습니다.

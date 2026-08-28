@@ -78,5 +78,9 @@
     {
         "name": "[20260827]_[Combine Subscriber와 메모리 관리(sink, assign, 순환 참조)]_[Swift, Combine]_[swift_ui.png]_[Subscriber의 동작 원리와 sink 및 assign 연산자의 종류별 차이점과 강한 참조 순환 방지 기법].md",
         "download_url": "/ios/[20260827]_[Combine Subscriber와 메모리 관리(sink, assign, 순환 참조)]_[Swift, Combine]_[swift_ui.png]_[Subscriber의 동작 원리와 sink 및 assign 연산자의 종류별 차이점과 강한 참조 순환 방지 기법].md"
+    },
+    {
+        "name": "[20260829]_[Combine Subscription의 수명주기 관리와 취소 메커니즘]_[Swift, Combine]_[swift_ui.png]_[AnyCancellable 저장이 필요한 이유와 View 생명주기 연동 취소 및 명시적 cancel 처리 기법].md",
+        "download_url": "/ios/[20260829]_[Combine Subscription의 수명주기 관리와 취소 메커니즘]_[Swift, Combine]_[swift_ui.png]_[AnyCancellable 저장이 필요한 이유와 View 생명주기 연동 취소 및 명시적 cancel 처리 기법].md"
     }
 ]

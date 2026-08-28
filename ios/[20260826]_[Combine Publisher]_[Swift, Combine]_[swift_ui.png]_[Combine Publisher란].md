@@ -125,7 +125,7 @@ class OrientationViewController: UIViewController {
 #### 코드 분석
 - **16번 라인**: `NotificationCenter.default.publisher(for:)` 메서드로 알림을 스트림으로 변환합니다. `Failure` 타입은 `Never`입니다.
 - **18번 라인**: `compactMap`을 통해 불필요한 알림 페이로드를 제거하고 현재 디바이스의 방향 값만 추출합니다.
-- **29번 라인**: `store(in: &cancellables)`에 의해 `OrientationViewController`가 메모리에서 해제될 때 `AnyCancellable`이 소멸되며 자동으로 옵저버가 제거됩니다.
+- **33번 라인**: `store(in: &cancellables)`에 의해 `OrientationViewController`가 메모리에서 해제될 때 `AnyCancellable`이 소멸되며 자동으로 옵저버가 제거됩니다.
 
 ---
 
@@ -156,7 +156,7 @@ viewModel.score = 25
 ```
 
 #### 코드 분석
-- **6번 라인**: `@Published`를 선언하면 컴파일러가 해당 변수의 변경 이벤트를 발행하는 `Published.Publisher`를 생성합니다.
+- **7번 라인**: `@Published`를 선언하면 컴파일러가 해당 변수의 변경 이벤트를 발행하는 `Published.Publisher`를 생성합니다.
 - **14번 라인**: `viewModel.$score`로 접근하여 `score`가 변경될 때마다 최신 값을 구독자에게 전달합니다. 초기화 시점의 기본값(`0`)도 첫 번째 이벤트로 즉시 방출됩니다.
 
 ---
