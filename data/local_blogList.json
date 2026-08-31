@@ -86,5 +86,9 @@
     {
         "name": "[20260830]_[Combine Subject의 동작 원리와 @Published 프로퍼티 래퍼 비교]_[Swift, Combine]_[swift_ui.png]_[PassthroughSubject와 CurrentValueSubject의 차이점 및 SwiftUI ObservableObject 연동 패턴 분석].md",
         "download_url": "/ios/[20260830]_[Combine Subject의 동작 원리와 @Published 프로퍼티 래퍼 비교]_[Swift, Combine]_[swift_ui.png]_[PassthroughSubject와 CurrentValueSubject의 차이점 및 SwiftUI ObservableObject 연동 패턴 분석].md"
+    },
+    {
+        "name": "[20260831]_[데이터 전처리 기법 정리]_[Pandas]_[]_[결측치와 이상치 처리부터 인코딩과 스케일링까지 수치형 및 범주형 데이터 전처리 과정 분석].ipynb",
+        "download_url": "/ai/[20260831]_[데이터 전처리 기법 정리]_[Pandas]_[]_[결측치와 이상치 처리부터 인코딩과 스케일링까지 수치형 및 범주형 데이터 전처리 과정 분석].ipynb"
     }
 ]

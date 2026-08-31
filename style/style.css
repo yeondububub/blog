@@ -422,4 +422,168 @@ html.dark .mermaid {
 html.dark .katex {
   color: #f1f5f9 !important;
 }
+
+/* ==========================================================================
+   Jupyter Notebook Styles
+   ========================================================================== */
+.markdown-cell {
+  margin-top: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.markdown-cell ul,
+.markdown-cell ol,
+#contents ul,
+#contents ol {
+  margin-top: 1rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+#contents li > p,
+.markdown-cell li > p {
+  display: inline !important;
+  margin: 0 !important;
+}
+
+#contents li > p + p,
+.markdown-cell li > p + p {
+  display: block !important;
+  margin-top: 0.5rem !important;
+}
+
+.code-cell {
+  margin-top: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.output-image {
+  margin-top: 1.5rem !important;
+  margin-bottom: 2rem !important;
+  display: flex;
+  justify-content: center;
+}
+
+.output-image img,
+.output-img {
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  max-width: 100%;
+  height: auto;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+html.dark .output-image img,
+html.dark .output-img {
+  border-color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.output-text {
+  margin-top: 0.75rem !important;
+  margin-bottom: 1.75rem !important;
+}
+
+.output-html {
+  margin-top: 1rem !important;
+  margin-bottom: 1.75rem !important;
+  overflow-x: auto !important;
+  max-width: 100% !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================================================
+   Pandas DataFrame & Output Table Styles
+   ========================================================================== */
+.output-html table,
+table.dataframe {
+  width: auto !important;
+  min-width: 100% !important;
+  border-collapse: collapse !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 1.5rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  text-align: left !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.375rem !important;
+  background-color: #ffffff !important;
+}
+
+html.dark .output-html table,
+html.dark table.dataframe {
+  border-color: #374151 !important;
+  background-color: #1a1b1e !important;
+}
+
+.output-html th,
+table.dataframe th {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  font-weight: 600 !important;
+  padding: 0.625rem 0.875rem !important;
+  border: 1px solid #d1d5db !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+html.dark .output-html th,
+html.dark table.dataframe th {
+  background-color: #252830 !important;
+  color: #f3f4f6 !important;
+  border-color: #374151 !important;
+}
+
+.output-html td,
+table.dataframe td {
+  padding: 0.5rem 0.875rem !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  white-space: nowrap !important;
+  text-align: left !important;
+}
+
+html.dark .output-html td,
+html.dark table.dataframe td {
+  border-color: #374151 !important;
+  color: #d1d5db !important;
+}
+
+.output-html tbody tr:nth-child(even),
+table.dataframe tbody tr:nth-child(even) {
+  background-color: #f9fafb !important;
+}
+
+html.dark .output-html tbody tr:nth-child(even),
+html.dark table.dataframe tbody tr:nth-child(even) {
+  background-color: #202226 !important;
+}
+
+.output-html tbody tr:hover,
+table.dataframe tbody tr:hover {
+  background-color: #f0f4f8 !important;
+}
+
+html.dark .output-html tbody tr:hover,
+html.dark table.dataframe tbody tr:hover {
+  background-color: #2a2d35 !important;
+}
+
+table.dataframe tbody th {
+  font-weight: 600 !important;
+  background-color: #f9fafb !important;
+  color: #4b5563 !important;
+  border: 1px solid #d1d5db !important;
+  text-align: center !important;
+}
+
+html.dark table.dataframe tbody th {
+  background-color: #202226 !important;
+  color: #9ca3af !important;
+  border-color: #374151 !important;
+}
 /*# sourceMappingURL=style.css.map */

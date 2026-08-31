@@ -16,9 +16,9 @@ const postpStyle = `text-lg my-6 font-normal tracking-wide text-left dark:text-g
 const postimgStyle = `border-4 border-graylv1 dark:border-gray-800 rounded my-10 mx-auto block max-w-full h-auto align-middle`;
 const postaStyle = `text-lg text-primary underline hover:bg-activation dark:hover:bg-blue-900/50 transition duration-200`;
 
-const postulStyle = `list-disc list-inside text-lg font-normal tracking-wide text-left dark:text-gray-300 break-keep`;
-const postolStyle = `list-decimal list-inside text-lg font-normal tracking-wide text-left dark:text-gray-300 break-keep`;
-const postliStyle = `pl-4 mb-2 leading-relaxed tracking-wide text-left dark:text-gray-300 break-keep`;
+const postulStyle = `list-disc list-outside pl-6 text-lg font-normal tracking-wide text-left dark:text-gray-300 break-keep my-5`;
+const postolStyle = `list-decimal list-outside pl-6 text-lg font-normal tracking-wide text-left dark:text-gray-300 break-keep my-5`;
+const postliStyle = `mb-3 leading-relaxed tracking-wide text-left dark:text-gray-300 break-keep`;
 
 const postblockquoteStyle = `border-l-4 border-primary pl-4 dark:text-gray-300 break-keep`;
 const postpreStyle = `relative bg-graylv1 dark:bg-[#1a1b1e] dark:text-gray-200 p-4 rounded-[10px] mb-6 text-base font-medium overflow-x-auto whitespace-pre text-left max-w-full h-auto align-middle`;
