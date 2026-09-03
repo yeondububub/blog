@@ -1,13 +1,19 @@
-function styleMarkdown(kinds, text, title_info = null) {
-  /* 
-    메뉴와 블로그 상세 목록을 globalStyle.js에 정의된 tailwind css로 스타일링 합니다. 
-    */
-  // console.log(kinds, text, title_info);
+/**
+ * 마크다운 및 Jupyter Notebook 본문 스타일링, KaTeX 수식, Mermaid 다이어그램, TOC(목차) 렌더링 모듈
+ */
 
+/**
+ * 마크다운 텍스트를 파싱하여 Tailwind CSS 스타일이 적용된 HTML로 렌더링합니다.
+ * @param {'post'|'menu'} kinds - 본문 유형 ('post': 블로그 게시글, 'menu': 단독 페이지)
+ * @param {string} text - 원본 마크다운 문자열
+ * @param {object|null} [title_info=null] - 포스트 메타데이터 정보 객체
+ */
+function styleMarkdown(kinds, text, title_info = null) {
   const tempDiv = document.createElement("div");
   const html = marked.parse(text);
   tempDiv.innerHTML = html;
 
+  // 1. 헤딩 태그(H1 ~ H6) 스타일 적용
   tempDiv
     .querySelectorAll("h1")
     .forEach((h1) => h1.classList.add(...posth1Style.split(" ")));
@@ -27,6 +33,7 @@ function styleMarkdown(kinds, text, title_info = null) {
     .querySelectorAll("h6")
     .forEach((h6) => h6.classList.add(...posth6Style.split(" ")));
 
+  // 2. 기본 인라인/블록 요소 스타일 적용
   tempDiv
     .querySelectorAll("p")
     .forEach((p) => p.classList.add(...postpStyle.split(" ")));
@@ -53,7 +60,7 @@ function styleMarkdown(kinds, text, title_info = null) {
       blockquote.classList.add(...postblockquoteStyle.split(" "))
     );
 
-  // mermaid 코드 블록 처리
+  // 3. Mermaid 다이어그램 코드 블록 변환
   tempDiv.querySelectorAll("code").forEach((codeEl) => {
     if (
       codeEl.classList.contains("language-mermaid") ||
@@ -72,36 +79,37 @@ function styleMarkdown(kinds, text, title_info = null) {
     }
   });
 
+  // 4. 소스 코드 블록 스타일링 및 복사(Copy) 버튼 추가
   tempDiv.querySelectorAll("pre").forEach((pre) => {
     pre.classList.add(...postpreStyle.split(" "));
 
-    const code = pre.textContent;
+    const codeEl = pre.querySelector("code");
+    const codeText = codeEl ? codeEl.innerText : pre.innerText;
 
-    // 복사 버튼 생성
     const copyButton = document.createElement("button");
     copyButton.innerHTML = '<span class="sr-only">코드 복사하기</span>';
     copyButton.classList.add(...notebookcopyButtonStyle.split(" "));
     copyButton.setAttribute("id", "copy-button");
 
-    // 복사 버튼 클릭 이벤트, pre에 텍스트가 있는 경우에만 활성화
     copyButton.addEventListener("click", async function (event) {
-      event.stopPropagation(); // 이벤트 버블링을 막습니다.
+      event.stopPropagation();
       try {
-        await navigator.clipboard.writeText(code);
-        alert("복사되었습니다");
+        await navigator.clipboard.writeText(codeText);
+        alert("복사되었습니다.");
       } catch (err) {
         console.error("Failed to copy text: ", err);
         alert("복사에 실패했습니다.");
       }
     });
 
-    // pre 요소 안에 버튼 삽입
     pre.appendChild(copyButton);
   });
+
   tempDiv
     .querySelectorAll("code")
     .forEach((code) => code.classList.add(...postcodeStyle.split(" ")));
 
+  // 5. 테이블(Table) 반응형 래퍼 및 스타일 적용
   tempDiv
     .querySelectorAll("table")
     .forEach((table) => table.classList.add(...posttableStyle.split(" ")));
@@ -140,12 +148,11 @@ function styleMarkdown(kinds, text, title_info = null) {
     .querySelectorAll("strong")
     .forEach((strong) => strong.classList.add(...poststrongStyle.split(" ")));
 
-  if (kinds === "post") {
-    // 일반 마크다운 블로그 포스트
+  // 6. 블로그 포스트 상단 헤더 섹션(카테고리, 제목, 작성자, 날짜, 썸네일) 생성
+  if (kinds === "post" && title_info) {
     const title_section = document.createElement("div");
 
-    // category
-    // category는 클릭하면 해당 카테고리의 블로그 리스트를 렌더링
+    // 카테고리 태그 목록
     const categoryContainer = document.createElement("div");
     categoryContainer.className = "flex flex-wrap gap-2 mb-3";
     const categories = (title_info.category || "")
@@ -162,75 +169,78 @@ function styleMarkdown(kinds, text, title_info = null) {
       category.onclick = (event) => {
         event.preventDefault();
         search(cat.toLowerCase(), "category");
-        const url = new URL(origin);
-        url.searchParams.set("search", cat);
-        window.history.pushState({}, "", url);
+        const nextUrl = new URL(origin);
+        nextUrl.searchParams.set("search", cat);
+        window.history.pushState({}, "", nextUrl);
       };
       categoryContainer.appendChild(category);
     });
     title_section.appendChild(categoryContainer);
 
-    // title
+    // 포스트 제목
     const title = document.createElement("h1");
     title.classList.add(...posttitleStyle.split(" "));
-    // console.log(title_info)
     title.textContent = title_info.title;
     title_section.appendChild(title);
 
-    // author와 date를 담는 div
+    // 작성자 및 게시일 컨테이너
     const author_date = document.createElement("div");
     author_date.classList.add(...postauthordateDivStyle.split(" "));
     title_section.appendChild(author_date);
 
-    // author
     const authorDiv = document.createElement("div");
     authorDiv.classList.add(...postauthorDivStyle.split(" "));
     author_date.appendChild(authorDiv);
 
+    const authorIndex =
+      title_info.author >= 0 && title_info.author < users.length
+        ? title_info.author
+        : 0;
     const authorImg = document.createElement("img");
-    authorImg.src = users[title_info.author]["img"];
-    authorImg.alt = users[title_info.author]["username"];
+    authorImg.src = users[authorIndex]["img"];
+    authorImg.alt = users[authorIndex]["username"];
     authorImg.classList.add(...postauthorImgStyle.split(" "));
     authorDiv.appendChild(authorImg);
 
     const author = document.createElement("div");
     author.classList.add(...postauthorStyle.split(" "));
-    author.textContent = users[title_info.author]["username"];
+    author.textContent = users[authorIndex]["username"];
     authorDiv.appendChild(author);
 
-    // date
     const date = document.createElement("div");
     date.classList.add(...postdateStyle.split(" "));
     date.textContent = formatDate(title_info.date);
     author_date.appendChild(date);
 
-    // image
-    const image = document.createElement("img");
-    image.src = title_info.thumbnail;
-    image.alt = title_info.title;
-    image.classList.add(...postimgtitleStyle.split(" "));
-    title_section.appendChild(image);
+    // 대표 썸네일 이미지
+    if (title_info.thumbnail) {
+      const image = document.createElement("img");
+      image.src = title_info.thumbnail;
+      image.alt = title_info.title;
+      image.classList.add(...postimgtitleStyle.split(" "));
+      title_section.appendChild(image);
+    }
 
-    // section styling
     title_section.classList.add(...postsectionStyle.split(" "));
     title_section.setAttribute("id", "title_section");
 
     tempDiv.insertBefore(title_section, tempDiv.firstChild);
-  } else if (kinds === "menu") {
   }
 
-  // innerHTML을 사용하면 click이벤트가 사라지므로, appendChild를 사용하여 렌더링
+  // 7. #contents 컨테이너 렌더링
   const contentsDiv = document.getElementById("contents");
   while (contentsDiv.firstChild) {
     contentsDiv.removeChild(contentsDiv.firstChild);
   }
   contentsDiv.appendChild(tempDiv);
 
+  // 코드 하이라이팅 적용
   hljs.highlightAll();
 
   // KaTeX 수식 렌더링
   renderMath(contentsDiv);
 
+  // Mermaid 다이어그램 렌더링
   if (window.mermaid) {
     try {
       if (typeof mermaid.run === "function") {
@@ -243,10 +253,14 @@ function styleMarkdown(kinds, text, title_info = null) {
     }
   }
 
-  // 본문 렌더링 후 목차(TOC) 생성
+  // 본문 목차(TOC) 생성
   renderTOC();
 }
 
+/**
+ * 요소 내부의 LaTeX 수식 기호를 KaTeX로 파싱 및 렌더링합니다.
+ * @param {HTMLElement} element - 수식을 렌더링할 상위 DOM 엘리먼트
+ */
 function renderMath(element) {
   if (!element) return;
   const tryRender = () => {
@@ -283,13 +297,18 @@ function renderMath(element) {
   }
 }
 
+/**
+ * Jupyter Notebook (.ipynb) 데이터를 파싱하여 스타일이 적용된 HTML로 렌더링합니다.
+ * @param {'post'|'menu'} kinds - 본문 유형
+ * @param {string} text - .ipynb 파일 JSON 텍스트
+ * @param {object|null} [title_info=null] - 포스트 메타데이터 정보 객체
+ */
 function styleJupyter(kinds, text, title_info = null) {
-  /* 
-    주피터 노트북 파일 내용을 globalStyle.js에 정의된 tailwind css로 스타일링 합니다. 
-    */
   const tempDiv = document.createElement("div");
-  const html = typeof convertIpynbToHtml === "function" ? convertIpynbToHtml(text) : convertIpynvToHtml(text);
-  // const html = marked.parse(text);
+  const html =
+    typeof convertIpynbToHtml === "function"
+      ? convertIpynbToHtml(text)
+      : convertIpynvToHtml(text);
   tempDiv.innerHTML = html;
 
   tempDiv.querySelectorAll(".markdown-cell").forEach((markdownCell) => {
@@ -338,13 +357,6 @@ function styleJupyter(kinds, text, title_info = null) {
         blockquote.classList.add(...postblockquoteStyle.split(" "))
       );
     markdownCell
-      .querySelectorAll("pre")
-      .forEach((pre) => pre.classList.add(...postpreStyle.split(" ")));
-    markdownCell
-      .querySelectorAll("code")
-      .forEach((code) => code.classList.add(...postcodeStyle.split(" ")));
-
-    markdownCell
       .querySelectorAll("table")
       .forEach((table) => table.classList.add(...posttableStyle.split(" ")));
     markdownCell
@@ -371,65 +383,44 @@ function styleJupyter(kinds, text, title_info = null) {
       .forEach((strong) => strong.classList.add(...poststrongStyle.split(" ")));
   });
 
-  // mermaid 코드 블록 처리
-  tempDiv.querySelectorAll("code").forEach((codeEl) => {
-    if (
-      codeEl.classList.contains("language-mermaid") ||
-      codeEl.classList.contains("lang-mermaid") ||
-      codeEl.classList.contains("mermaid")
-    ) {
-      const pre = codeEl.parentElement;
-      const mermaidDiv = document.createElement("div");
-      mermaidDiv.className = "mermaid flex justify-center my-6 overflow-x-auto";
-      mermaidDiv.textContent = codeEl.textContent;
-      if (pre && pre.tagName.toLowerCase() === "pre") {
-        pre.replaceWith(mermaidDiv);
-      } else {
-        codeEl.replaceWith(mermaidDiv);
-      }
-    }
-  });
-
-  tempDiv.querySelectorAll("code").forEach((code) => {
-    code.classList.add(...notebookcodeStyle.split(" "));
-  });
   tempDiv.querySelectorAll("pre").forEach((pre) => {
     pre.classList.add(...notebookpreStyle.split(" "));
-    const code = pre.textContent;
 
-    // 복사 버튼 생성
+    const codeEl = pre.querySelector("code");
+    const codeText = codeEl ? codeEl.innerText : pre.innerText;
+
     const copyButton = document.createElement("button");
     copyButton.innerHTML = '<span class="sr-only">코드 복사하기</span>';
     copyButton.classList.add(...notebookcopyButtonStyle.split(" "));
     copyButton.setAttribute("id", "copy-button");
 
-    // 복사 버튼 클릭 이벤트, pre에 텍스트가 있는 경우에만 활성화
     copyButton.addEventListener("click", async function (event) {
-      event.stopPropagation(); // 이벤트 버블링을 막습니다.
+      event.stopPropagation();
       try {
-        await navigator.clipboard.writeText(code);
-        alert("복사되었습니다");
+        await navigator.clipboard.writeText(codeText);
+        alert("복사되었습니다.");
       } catch (err) {
         console.error("Failed to copy text: ", err);
         alert("복사에 실패했습니다.");
       }
     });
 
-    // pre 요소 안에 버튼 삽입
     pre.appendChild(copyButton);
   });
+
+  tempDiv
+    .querySelectorAll("code")
+    .forEach((code) => code.classList.add(...notebookcodeStyle.split(" ")));
 
   const contentsDiv = document.getElementById("contents");
   while (contentsDiv.firstChild) {
     contentsDiv.removeChild(contentsDiv.firstChild);
   }
 
-  if (kinds === "post") {
-    // 일반 마크다운 블로그 포스트
+  // 상단 헤더 섹션 생성
+  if (kinds === "post" && title_info) {
     const title_section = document.createElement("div");
 
-    // category
-    // category는 클릭하면 해당 카테고리의 블로그 리스트를 렌더링
     const categoryContainer = document.createElement("div");
     categoryContainer.className = "flex flex-wrap gap-2 mb-3";
     const categories = (title_info.category || "")
@@ -446,81 +437,79 @@ function styleJupyter(kinds, text, title_info = null) {
       category.onclick = (event) => {
         event.preventDefault();
         search(cat.toLowerCase(), "category");
-        const url = new URL(origin);
-        url.searchParams.set("search", cat);
-        window.history.pushState({}, "", url);
+        const nextUrl = new URL(origin);
+        nextUrl.searchParams.set("search", cat);
+        window.history.pushState({}, "", nextUrl);
       };
       categoryContainer.appendChild(category);
     });
     title_section.appendChild(categoryContainer);
 
-    // title
     const title = document.createElement("h1");
     title.classList.add(...posttitleStyle.split(" "));
-    // console.log(title_info)
     title.textContent = title_info.title;
     title_section.appendChild(title);
 
-    // author와 date를 담는 div
     const author_date = document.createElement("div");
     author_date.classList.add(...postauthordateDivStyle.split(" "));
     title_section.appendChild(author_date);
 
-    // author
     const authorDiv = document.createElement("div");
     authorDiv.classList.add(...postauthorDivStyle.split(" "));
     author_date.appendChild(authorDiv);
 
+    const authorIndex =
+      title_info.author >= 0 && title_info.author < users.length
+        ? title_info.author
+        : 0;
     const authorImg = document.createElement("img");
-    authorImg.src = users[title_info.author]["img"];
-    authorImg.alt = users[title_info.author]["username"];
+    authorImg.src = users[authorIndex]["img"];
+    authorImg.alt = users[authorIndex]["username"];
     authorImg.classList.add(...postauthorImgStyle.split(" "));
     authorDiv.appendChild(authorImg);
 
     const author = document.createElement("div");
     author.classList.add(...postauthorStyle.split(" "));
-    author.textContent = users[title_info.author]["username"];
+    author.textContent = users[authorIndex]["username"];
     authorDiv.appendChild(author);
 
-    // date
     const date = document.createElement("div");
     date.classList.add(...postdateStyle.split(" "));
     date.textContent = formatDate(title_info.date);
     author_date.appendChild(date);
 
-    // image
-    const image = document.createElement("img");
-    image.src = title_info.thumbnail;
-    image.alt = title_info.title;
-    image.classList.add(...postimgtitleStyle.split(" "));
-    title_section.appendChild(image);
+    if (title_info.thumbnail) {
+      const image = document.createElement("img");
+      image.src = title_info.thumbnail;
+      image.alt = title_info.title;
+      image.classList.add(...postimgtitleStyle.split(" "));
+      title_section.appendChild(image);
+    }
 
-    // section styling
     title_section.classList.add(...postsectionStyle.split(" "));
     title_section.setAttribute("id", "title_section");
 
     contentsDiv.insertBefore(title_section, contentsDiv.firstChild);
   }
 
-  // 노트북 다운로드 버튼 추가
+  // 노트북 원본 다운로드 버튼 추가
   const downloadButton = document.createElement("button");
   downloadButton.textContent = "Notebook Download";
   downloadButton.classList.add(...notebookdownloadButtonStyle.split(" "));
   downloadButton.addEventListener("click", function (event) {
-    event.stopPropagation(); // 이벤트 버블링을 막습니다.
+    event.stopPropagation();
     const blob = new Blob([text], { type: "text/plain" });
-    const url = window.URL.createObjectURL(blob);
+    const blobUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = title_info.title + ".ipynb";
+    a.href = blobUrl;
+    a.download = (title_info ? title_info.title : "notebook") + ".ipynb";
     a.click();
-    window.URL.revokeObjectURL(url);
+    window.URL.revokeObjectURL(blobUrl);
   });
   contentsDiv.appendChild(downloadButton);
   contentsDiv.appendChild(tempDiv);
-  hljs.highlightAll();
 
-  // KaTeX 수식 렌더링
+  hljs.highlightAll();
   renderMath(contentsDiv);
 
   if (window.mermaid) {
@@ -535,13 +524,17 @@ function styleJupyter(kinds, text, title_info = null) {
     }
   }
 
-  // 본문 렌더링 후 목차(TOC) 생성
   renderTOC();
 }
 
-// 목차(TOC) 스크롤 리스너 관리 변수
+/**
+ * 목차(TOC) 스크롤스파이(Scrollspy) 리스너 핸들러 변수
+ */
 let tocScrollHandler = null;
 
+/**
+ * 기존에 등록된 TOC 스크롤 이벤트 리스너를 해제합니다.
+ */
 function clearTOCScrollListener() {
   if (tocScrollHandler) {
     window.removeEventListener("scroll", tocScrollHandler);
@@ -549,6 +542,9 @@ function clearTOCScrollListener() {
   }
 }
 
+/**
+ * 본문(#contents)의 헤딩 태그를 탐색하여 오른쪽 Aside 영역에 인터랙티브 목차(TOC)를 생성합니다.
+ */
 function renderTOC() {
   clearTOCScrollListener();
 
@@ -558,17 +554,15 @@ function renderTOC() {
 
   if (!asideContainer) return;
 
-  // aside 타이틀을 'Content'로 변경
   if (asideTit) {
     asideTit.textContent = "Content";
   }
 
-  // 기존 aside 내부 초기화 및 스타일 설정
   asideContainer.innerHTML = "";
   asideContainer.className = "";
   asideContainer.classList.add(...tocContainerStyle.split(" "));
 
-  // 본문(#contents) 내의 모든 heading 추출 (#title_section의 타이틀은 제외)
+  // 본문(#contents) 내 헤딩 태그 추출 (#title_section의 대제목 제외)
   const allHeadings = Array.from(
     document.querySelectorAll(
       "#contents h1, #contents h2, #contents h3, #contents h4, #contents h5, #contents h6"
@@ -577,13 +571,14 @@ function renderTOC() {
 
   if (allHeadings.length === 0) {
     const emptyMsg = document.createElement("div");
-    emptyMsg.className = "px-4 py-3 text-xs text-gray-400 dark:text-gray-500 text-center";
+    emptyMsg.className =
+      "px-4 py-3 text-xs text-gray-400 dark:text-gray-500 text-center";
     emptyMsg.textContent = "목차가 없습니다.";
     asideContainer.appendChild(emptyMsg);
     return;
   }
 
-  // 최상위 depth 계산 (예: H1이 없으면 H2가 0레벨)
+  // 최상위 depth 기준 상대 레벨 계산
   const depths = allHeadings.map((h) => parseInt(h.tagName.substring(1), 10));
   const minDepth = Math.min(...depths);
 
@@ -594,7 +589,7 @@ function renderTOC() {
 
   allHeadings.forEach((heading, idx) => {
     const depth = parseInt(heading.tagName.substring(1), 10);
-    const relativeLevel = depth - minDepth; // 0, 1, 2...
+    const relativeLevel = depth - minDepth;
     const headingId = `toc-heading-${idx}`;
     heading.id = headingId;
     heading.classList.add("scroll-mt-24");
@@ -606,17 +601,31 @@ function renderTOC() {
 
     const headingText = heading.textContent.trim();
     tocItem.textContent = headingText;
-    tocItem.title = headingText; // hover 툴팁으로 전체 제목 확인 가능
+    tocItem.title = headingText;
 
-    // 계층별 들여쓰기 설정
+    // 레벨별 들여쓰기 클래스 추가
     if (relativeLevel === 0) {
-      tocItem.classList.add("font-medium", "text-gray-800", "dark:text-gray-200");
+      tocItem.classList.add(
+        "font-medium",
+        "text-gray-800",
+        "dark:text-gray-200"
+      );
     } else if (relativeLevel === 1) {
       tocItem.classList.add("pl-6", "text-gray-600", "dark:text-gray-400");
     } else if (relativeLevel === 2) {
-      tocItem.classList.add("pl-9", "text-[12px]", "text-gray-500", "dark:text-gray-500");
+      tocItem.classList.add(
+        "pl-9",
+        "text-[12px]",
+        "text-gray-500",
+        "dark:text-gray-500"
+      );
     } else {
-      tocItem.classList.add("pl-12", "text-[12px]", "text-gray-400", "dark:text-gray-500");
+      tocItem.classList.add(
+        "pl-12",
+        "text-[12px]",
+        "text-gray-400",
+        "dark:text-gray-500"
+      );
     }
 
     tocItem.addEventListener("click", (e) => {
@@ -644,21 +653,23 @@ function renderTOC() {
     });
   }
 
-  // 초기 활성화 (첫 번째 항목)
+  // 첫 번째 항목 활성화
   if (tocItems.length > 0) {
     setActiveTOC(tocItems[0].heading.id);
   }
 
-  // Scrollspy (스크롤 시 활성 헤딩 실시간 감지 및 하이라이트)
+  // 실시간 스크롤 스파이(Scrollspy) 감지
   let isTicking = false;
   tocScrollHandler = () => {
     if (!isTicking) {
       window.requestAnimationFrame(() => {
-        const topThreshold = 140; // 상단 헤더 여백 기준점
+        const topThreshold = 140;
         let currentHeading = allHeadings[0];
 
-        // 페이지 맨 아래 도달 시 마지막 헤딩 선택
-        if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50) {
+        if (
+          window.innerHeight + window.scrollY >=
+          document.documentElement.scrollHeight - 50
+        ) {
           currentHeading = allHeadings[allHeadings.length - 1];
         } else {
           for (let i = 0; i < allHeadings.length; i++) {
@@ -682,4 +693,3 @@ function renderTOC() {
 
   window.addEventListener("scroll", tocScrollHandler, { passive: true });
 }
-

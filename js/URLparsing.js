@@ -1,99 +1,90 @@
+/**
+ * URL 파싱 및 브라우저 히스토리(popstate) 라우팅 제어 모듈
+ */
 const defaultTitle = "ydbb";
-// 현재 url 가져와서 parsing (url 스키마는 readme.md 참고)
 const url = new URL(window.location.href);
-const origin = url.origin + url.pathname;
-const pathParts = url.pathname.split("/").filter((part) => part.length > 0);
-// console.log(url)
-// console.log(pathParts)
 
-// 로컬 테스트 환경(127.0.0.1)인지 github 배포 상태인지 확인
+// index.html 제거 후 기본 경로(Base Path) 정규화
+const normalizedPath = window.location.pathname.replace(/\/index\.html$/, "").replace(/\/+$/, "") + "/";
+const origin = url.origin + normalizedPath;
+const pathParts = url.pathname.split("/").filter((part) => part.length > 0);
+
+// 로컬 개발 환경(127.0.0.1, localhost) 여부 판별
 const isLocal = url.hostname === "127.0.0.1" || url.hostname === "localhost";
 
-// 현재 URL에서 "index.html"을 제거하고자 할 때
+// URL 끝에 /index.html이 포함된 경우 깔끔한 URL로 변경 (새로고침 없이 히스토리 상태 갱신)
 if (window.location.pathname.endsWith("/index.html")) {
-  // 새 경로를 생성합니다. "index.html"을 제거합니다.
-  // 이 때 pathParts에서 마지막 요소를 제거하지 않으면 다른 블로그를 클릭할 때 index.html이 붙어 이동합니다.
   pathParts.pop();
-  let newPath = window.location.pathname.replace(/index\.html$/, "");
-
-  // history.replaceState()를 사용하여 URL을 변경합니다. 페이지는 리로드되지 않습니다.
+  const newPath = window.location.pathname.replace(/index\.html$/, "");
   history.replaceState(null, "", newPath + window.location.search + window.location.hash);
 }
 
 if (isLocal) {
-  // 로컬 테스트 환경
-
-  // 블로그 제목 설정
+  // 로컬 개발 환경 설정
   const $blogTitle = document.getElementById("blog-title");
-  $blogTitle.innerText = siteConfig.blogTitle || defaultTitle;
-
-  // 홈페이지 title을 제목으로 설정
+  if ($blogTitle) {
+    $blogTitle.innerText = siteConfig.blogTitle || defaultTitle;
+  }
   document.title = siteConfig.blogTitle || defaultTitle;
 
-  // 클릭했을 때 메인페이지로 이동
-  $blogTitle.onclick = () => {
-    const mainUrl = new URL(`http://127.0.0.1${url.port ? ":" + url.port : ""}`);
-    window.history.pushState({}, "", mainUrl);
-    renderBlogList();
-  };
+  if ($blogTitle) {
+    $blogTitle.onclick = () => {
+      const mainUrl = new URL(`http://127.0.0.1${url.port ? ":" + url.port : ""}`);
+      window.history.pushState({}, "", mainUrl);
+      renderBlogList();
+    };
+  }
 } else {
-  // github 배포 상태
-
-  // config에서 값이 없을 경우 URL에서 추출
+  // GitHub Pages 배포 환경 설정
   if (!siteConfig.username || !siteConfig.repositoryName) {
     const urlConfig = extractFromUrl();
     siteConfig.username = siteConfig.username || urlConfig.username;
-    siteConfig.repositoryName =
-      siteConfig.repositoryName || urlConfig.repositoryName;
+    siteConfig.repositoryName = siteConfig.repositoryName || urlConfig.repositoryName;
   }
 
-  // 블로그 제목 설정
   const $blogTitle = document.getElementById("blog-title");
-  $blogTitle.innerText = siteConfig.blogTitle || defaultTitle;
-
-  // 홈페이지 title을 제목으로 설정
+  if ($blogTitle) {
+    $blogTitle.innerText = siteConfig.blogTitle || defaultTitle;
+  }
   document.title = siteConfig.blogTitle || defaultTitle;
 
-  // 클릭했을 때 메인페이지로 이동
-  $blogTitle.onclick = () => {
-    const url = new URL(`https://${siteConfig.username}.github.io/${siteConfig.repositoryName}/`);
-    window.history.pushState({}, "", url);
-    renderBlogList();
-  };
+  if ($blogTitle) {
+    $blogTitle.onclick = () => {
+      const deployUrl = new URL(`https://${siteConfig.username}.github.io/${siteConfig.repositoryName}/`);
+      window.history.pushState({}, "", deployUrl);
+      renderBlogList();
+    };
+  }
 }
 
-// 브라우저의 뒤로가기/앞으로가기 버튼 처리
-window.addEventListener("popstate", (event) => {
-  // 뒤로 가는 것은 3가지 케이스가 있을 수 있음
-  // 1. 뒤로 갔을 때 메인 페이지(/), 뒤로 갔을 때 블로그 리스트 페이지(/?menu=blog.md) (실제로는 동일)
-  // 2. 뒤로 갔을 때 menu 페이지(/?menu=about.md)
-  // 3. 뒤로 갔을 때 post 페이지(/?post=20210601_[제목]_[카테고리]_[썸네일]_[저자].md)
+/**
+ * 브라우저 뒤로가기 / 앞으로가기 네비게이션 이벤트 핸들러
+ */
+window.addEventListener("popstate", () => {
+  const currentUrl = new URL(window.location.href);
+  const searchParam = currentUrl.search;
 
-  // 렌더링이 이미 된 것은 category, init, blogList, blogMenu
-
-  // 뒤로간 url을 가져옴
-  let url = new URL(window.location.href);
-
-  if (!url.search.split("=")[1] || url.search.split("=")[1] === "blog.md") {
-    // 블로그 리스트 로딩
+  if (!searchParam.split("=")[1] || searchParam.split("=")[1] === "blog.md") {
+    // 1. 메인 포스트 목록 화면 복원
     renderBlogList();
-  } else if (url.search.split("=")[0] === "?menu") {
-    // 메뉴 상세 정보 로딩
-    // console.log('menu', url.search.split("=")[1])
+  } else if (searchParam.split("=")[0] === "?menu") {
+    // 2. 단독 메뉴(About 등) 화면 복원
     document.getElementById("blog-posts").style.display = "none";
     document.getElementById("contents").style.display = "block";
-    // console.log(origin + "menu/" + url.search.split("=")[1])
-    fetch(origin + "menu/" + url.search.split("=")[1])
+    const menuFileName = searchParam.split("=")[1];
+    fetch(origin + "menu/" + menuFileName)
       .then((response) => response.text())
       .then((text) => {
-        // console.log(text)
         styleMarkdown("menu", text);
+      })
+      .catch(() => {
+        styleMarkdown("menu", "# 메뉴 로딩 실패");
       });
-  } else if (url.search.split("=")[0] === "?post") {
-    // 블로그 상세 정보 로딩
+  } else if (searchParam.split("=")[0] === "?post") {
+    // 3. 블로그 상세 포스트 화면 복원
     document.getElementById("contents").style.display = "block";
     document.getElementById("blog-posts").style.display = "none";
-    const postNameDecode = decodeURIComponent(url.search.split("=")[1]).replaceAll("+", " ");
+    const postNameDecode = decodeURIComponent(searchParam.split("=")[1]).replaceAll("+", " ");
     const postInfo = extractFileInfo(postNameDecode);
 
     const targetPost = typeof blogList !== "undefined" ? blogList.find((p) => p.name === postNameDecode) : null;
@@ -102,7 +93,7 @@ window.addEventListener("popstate", (event) => {
     fetch(fetchUrl)
       .then((response) => response.text())
       .then((text) =>
-        postInfo.fileType === "md"
+        postInfo && postInfo.fileType === "md"
           ? styleMarkdown("post", text, postInfo)
           : styleJupyter("post", text, postInfo)
       )

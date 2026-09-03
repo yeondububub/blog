@@ -1,52 +1,66 @@
+/**
+ * 모바일 화면 햄버거 메뉴 토글 및 네비게이션 제어 모듈
+ */
 const menuButton = document.getElementById("menu-button");
 const menu = document.getElementById("menu");
-
-/*
-모바일 환경에서 menu, 이 menu는 이벤트 위임으로 최적화하면 불필요한 코드가 많은 함수입니다. 시간상 최적화하지 않고 넘깁니다.
-*/
 const mobileMenu = document.getElementById("mobileMenu");
 
 window.addEventListener("click", (event) => {
-    if (event.target === menuButton) {
-        if (mobileMenu.innerHTML === "") {
-            mobileMenu.innerHTML = menu.innerHTML;
-            const menuItems = mobileMenu.querySelectorAll("a");
-            menuItems.forEach((item, index) => {
-                item.classList.add(...mobileMenuStyle.split(" "));
-                if (index == 0) {
-                    item.classList.add("mt-1.5");
-                }
-                item.style.animation = `slideDown forwards ${index * 0.2}s`;
-            });
-        } else {
-            mobileMenu.innerHTML = "";
+  // 햄버거 버튼 클릭 시 모바일 메뉴 열기/닫기
+  if (menuButton && menuButton.contains(event.target)) {
+    if (mobileMenu.innerHTML === "") {
+      mobileMenu.innerHTML = menu.innerHTML;
+      const menuItems = mobileMenu.querySelectorAll("a");
+      menuItems.forEach((item, index) => {
+        item.classList.add(...mobileMenuStyle.split(" "));
+        if (index === 0) {
+          item.classList.add("mt-1.5");
         }
-    } else if (event.target.parentNode === mobileMenu) {
-        event.preventDefault();
-
-        const menuName = event.target.innerText + ".md";
-        
-        if (menuName === "Diary.md") {
-            search("blog", "folder");
-        } else if (menuName === "Development.md") {
-            search("development", "folder");
-        } else if (menuName === "AI.md") {
-            search("ai", "folder");
-        } else if (menuName === "Backend.md") {
-            search("backend", "folder");
-        } else if (menuName === "iOS.md") {
-            search("ios", "folder");
-        } else if (menuName === "Security.md") {
-            search("security", "folder");
-        } else {
-            renderOtherContents(menuName);
-        }
-
-        const url = new URL(origin);
-        url.searchParams.set("menu", menuName);
-        window.history.pushState({}, "", url);
-        mobileMenu.innerHTML = "";
+        item.style.animation = `slideDown forwards ${index * 0.2}s`;
+      });
     } else {
-        mobileMenu.innerHTML = "";
+      mobileMenu.innerHTML = "";
     }
+  } else if (mobileMenu && event.target.parentNode === mobileMenu) {
+    // 모바일 메뉴 항목 클릭 시 해당 카테고리/페이지로 이동
+    event.preventDefault();
+
+    const menuName = event.target.innerText.trim() + ".md";
+
+    const handleMobileMenuClick = (targetFolder) => {
+      if (blogList.length === 0) {
+        initDataBlogList().then(() => {
+          search(targetFolder, "folder");
+        });
+      } else {
+        search(targetFolder, "folder");
+      }
+    };
+
+    if (menuName === "Diary.md") {
+      handleMobileMenuClick("blog");
+    } else if (menuName === "Development.md") {
+      handleMobileMenuClick("development");
+    } else if (menuName === "AI.md") {
+      handleMobileMenuClick("ai");
+    } else if (menuName === "Backend.md") {
+      handleMobileMenuClick("backend");
+    } else if (menuName === "iOS.md") {
+      handleMobileMenuClick("ios");
+    } else if (menuName === "Security.md") {
+      handleMobileMenuClick("security");
+    } else {
+      renderOtherContents(menuName);
+    }
+
+    const nextUrl = new URL(origin);
+    nextUrl.searchParams.set("menu", menuName);
+    window.history.pushState({}, "", nextUrl);
+    mobileMenu.innerHTML = "";
+  } else {
+    // 메뉴 바깥 클릭 시 메뉴 닫기
+    if (mobileMenu) {
+      mobileMenu.innerHTML = "";
+    }
+  }
 });

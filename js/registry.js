@@ -1,31 +1,23 @@
-// 유지보수를 위해 만든 전역변수 파일입니다. 함수는 없습니다.
+/**
+ * 디버깅 및 전역 상태 참조를 위한 레지스트리 객체
+ */
 const registry = {
-    // utils.js
-    // convertIpynbToHtml.js
+  // 환경 설정 (config.js)
+  config_siteConfig: typeof siteConfig !== "undefined" ? siteConfig : null,
+  config_users: typeof users !== "undefined" ? users : null,
+  config_localDataUsing:
+    typeof localDataUsing !== "undefined" ? localDataUsing : null,
 
-    // globalStyle.js
-    // blogContentsStyle.js
+  // URL 및 라우팅 상태 (URLparsing.js)
+  URLparsing_defaultTitle:
+    typeof defaultTitle !== "undefined" ? defaultTitle : null,
+  URLparsing_url: typeof url !== "undefined" ? url : null,
+  URLparsing_origin: typeof origin !== "undefined" ? origin : null,
+  URLparsing_pathParts: typeof pathParts !== "undefined" ? pathParts : null,
+  URLparsing_isLocal: typeof isLocal !== "undefined" ? isLocal : null,
 
-    // mobileMenuToggle.js
-    ////// menuButton
-    ////// menu
-    ////// mobileMenu
-
-    // config.js
-    'config_siteConfig': siteConfig,
-    'config_users': users,
-    'config_localDataUsing': localDataUsing,
-    // URLparsing.js
-    'URLparsing_defaultTitle': defaultTitle,
-    'URLparsing_url': url, // new URL(window.location.href);
-    'URLparsing_origin': origin, // url.origin + url.pathname;
-    'URLparsing_pathParts': pathParts, // url.pathname.split("/").filter((part) => part.length > 0);
-    'URLparsing_isLocal': isLocal, // url.hostname === "127.0.0.1" || url.hostname === "localhost";
-    // initData.js
-    'initData_blogList': blogList,
-    'initData_blogMenu': blogMenu,
-    'initData_isInitData': isInitData,
-    // render.js
-    ////// searchInput
-    ////// searchInputButton
+  // 데이터 상태 (initData.js)
+  initData_blogList: typeof blogList !== "undefined" ? blogList : null,
+  initData_blogMenu: typeof blogMenu !== "undefined" ? blogMenu : null,
+  initData_isInitData: typeof isInitData !== "undefined" ? isInitData : null,
 };
