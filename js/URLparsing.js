@@ -58,49 +58,116 @@ if (isLocal) {
 }
 
 /**
+ * 카테고리(게시판) 메뉴 파일명과 실제 폴더 경로 매핑 테이블
+ */
+const categoryFolderMap = {
+  "Diary.md": "blog",
+  "Development.md": "development",
+  "AI.md": "ai",
+  "Backend.md": "backend",
+  "iOS.md": "ios",
+  "Security.md": "security",
+};
+
+/**
  * 브라우저 뒤로가기 / 앞으로가기 네비게이션 이벤트 핸들러
  */
 window.addEventListener("popstate", () => {
   const currentUrl = new URL(window.location.href);
-  const searchParam = currentUrl.search;
+  const searchParams = currentUrl.searchParams;
 
-  if (!searchParam.split("=")[1] || searchParam.split("=")[1] === "blog.md") {
-    // 1. 메인 포스트 목록 화면 복원
-    renderBlogList();
-  } else if (searchParam.split("=")[0] === "?menu") {
-    // 2. 단독 메뉴(About 등) 화면 복원
-    document.getElementById("blog-posts").style.display = "none";
-    document.getElementById("contents").style.display = "block";
-    const menuFileName = searchParam.split("=")[1];
-    fetch(origin + "menu/" + menuFileName)
-      .then((response) => response.text())
-      .then((text) => {
-        styleMarkdown("menu", text);
-      })
-      .catch(() => {
-        styleMarkdown("menu", "# 메뉴 로딩 실패");
-      });
-  } else if (searchParam.split("=")[0] === "?post") {
-    // 3. 블로그 상세 포스트 화면 복원
+  const postParam = searchParams.get("post");
+  const menuParam = searchParams.get("menu");
+
+  if (postParam) {
+    // 1. 블로그 상세 포스트 화면 복원
     document.getElementById("contents").style.display = "block";
     document.getElementById("blog-posts").style.display = "none";
-    const postNameDecode = decodeURIComponent(searchParam.split("=")[1]).replaceAll("+", " ");
+    const paginationEl = document.getElementById("pagination");
+    if (paginationEl) {
+      paginationEl.style.display = "none";
+      paginationEl.innerHTML = "";
+    }
+
+    const banner = document.getElementById("category-banner");
+    if (banner) banner.classList.add("hidden");
+
+    const postNameDecode = decodeURIComponent(postParam).replaceAll("+", " ");
     const postInfo = extractFileInfo(postNameDecode);
 
-    const targetPost = typeof blogList !== "undefined" ? blogList.find((p) => p.name === postNameDecode) : null;
-    const fetchUrl = targetPost ? getPostDownloadUrl(targetPost) : getPostDownloadUrl(`blog/${postNameDecode}`);
+    const renderPost = () => {
+      const targetPost =
+        typeof blogList !== "undefined"
+          ? blogList.find((p) => p.name === postNameDecode)
+          : null;
+      const fetchUrl = targetPost
+        ? getPostDownloadUrl(targetPost)
+        : getPostDownloadUrl(`blog/${postNameDecode}`);
 
-    fetch(fetchUrl)
-      .then((response) => response.text())
-      .then((text) =>
-        postInfo && postInfo.fileType === "md"
-          ? styleMarkdown("post", text, postInfo)
-          : styleJupyter("post", text, postInfo)
-      )
-      .catch(() => {
-        styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
-      });
+      fetch(fetchUrl)
+        .then((response) => response.text())
+        .then((text) =>
+          postInfo && postInfo.fileType === "md"
+            ? styleMarkdown("post", text, postInfo)
+            : styleJupyter("post", text, postInfo)
+        )
+        .catch(() => {
+          styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
+        });
+    };
+
+    if (typeof blogList !== "undefined" && blogList.length === 0) {
+      initDataBlogList().then(renderPost);
+    } else {
+      renderPost();
+    }
+  } else if (menuParam && menuParam !== "blog.md") {
+    // 2. 카테고리 게시판(폴더) 또는 단독 마크다운 메뉴(About 등) 화면 복원
+    if (categoryFolderMap[menuParam]) {
+      // 카테고리 게시판(폴더) 복원: 텍스트 파일 fetch 대신 글 목록 렌더링
+      document.getElementById("contents").style.display = "none";
+      document.getElementById("blog-posts").style.display = "grid";
+
+      const targetFolder = categoryFolderMap[menuParam];
+      if (typeof blogList !== "undefined" && blogList.length === 0) {
+        initDataBlogList().then(() => {
+          search(targetFolder, "folder");
+        });
+      } else {
+        search(targetFolder, "folder");
+      }
+    } else {
+      // About 등 단독 마크다운 메뉴 화면 복원
+      document.getElementById("blog-posts").style.display = "none";
+      document.getElementById("contents").style.display = "block";
+      const paginationEl = document.getElementById("pagination");
+      if (paginationEl) {
+        paginationEl.style.display = "none";
+        paginationEl.innerHTML = "";
+      }
+
+      const banner = document.getElementById("category-banner");
+      if (banner) banner.classList.add("hidden");
+
+      const menuFetchUrl = getPostDownloadUrl(`menu/${menuParam}`);
+      fetch(menuFetchUrl)
+        .then((response) => response.text())
+        .then((text) => {
+          styleMarkdown("menu", text);
+        })
+        .catch(() => {
+          styleMarkdown("menu", "# 메뉴 로딩 실패");
+        });
+    }
   } else {
-    alert("잘못된 URL입니다.");
+    // 3. 메인 포스트 목록(전체 글 보기) 복원
+    document.getElementById("contents").style.display = "none";
+    document.getElementById("blog-posts").style.display = "grid";
+
+    if (typeof search === "function") {
+      search();
+    } else if (typeof renderBlogList === "function") {
+      renderBlogList();
+    }
   }
 });

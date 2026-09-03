@@ -666,75 +666,34 @@ function renderPagination(totalPage, currentPage, targetList = null) {
  */
 async function initialize() {
   const currentUrl = new URL(window.location.href);
-  const searchParam = currentUrl.search;
+  const searchParams = currentUrl.searchParams;
 
-  if (!searchParam.split("=")[1] || searchParam.split("=")[1] === "Diary.md") {
-    await initDataBlogMenu();
-    renderMenu();
+  const postParam = searchParams.get("post");
+  const menuParam = searchParams.get("menu");
 
+  await initDataBlogMenu();
+  renderMenu();
+
+  if (postParam) {
+    document.getElementById("contents").style.display = "block";
+    document.getElementById("blog-posts").style.display = "none";
+    if (document.getElementById("pagination")) {
+      document.getElementById("pagination").style.display = "none";
+      document.getElementById("pagination").innerHTML = "";
+    }
     await initDataBlogList();
 
-    const menuParam = currentUrl.searchParams.get("menu");
-    if (menuParam === "Diary.md") {
-      search("blog", "folder");
-    } else {
-      search();
-    }
-  } else {
-    await initDataBlogMenu();
-    renderMenu();
+    const postNameDecode = decodeURIComponent(postParam).replaceAll(
+      "+",
+      " "
+    );
+    const postInfo = extractFileInfo(postNameDecode);
+    const targetPost = blogList.find((p) => p.name === postNameDecode);
+    const fetchUrl = targetPost
+      ? getPostDownloadUrl(targetPost)
+      : getPostDownloadUrl(`blog/${postNameDecode}`);
 
-    if (searchParam.split("=")[0] === "?menu") {
-      const menuName = searchParam.split("=")[1];
-      const categoryMap = {
-        "iOS.md": "ios",
-        "Security.md": "security",
-        "Backend.md": "backend",
-        "Development.md": "development",
-        "AI.md": "ai",
-      };
-
-      if (categoryMap[menuName]) {
-        document.getElementById("contents").style.display = "none";
-        await initDataBlogList();
-        search(categoryMap[menuName], "folder");
-      } else {
-        document.getElementById("blog-posts").style.display = "none";
-        document.getElementById("contents").style.display = "block";
-        if (document.getElementById("pagination")) {
-          document.getElementById("pagination").style.display = "none";
-          document.getElementById("pagination").innerHTML = "";
-        }
-        const menuFetchUrl = getPostDownloadUrl(`menu/${menuName}`);
-        fetch(menuFetchUrl)
-          .then((response) => response.text())
-          .then((text) => styleMarkdown("menu", text))
-          .then(() => {
-            window.history.pushState({}, "", currentUrl);
-          })
-          .catch(() => {
-            styleMarkdown("menu", "# Error입니다. 파일명을 확인해주세요.");
-          });
-      }
-    } else if (searchParam.split("=")[0] === "?post") {
-      document.getElementById("contents").style.display = "block";
-      document.getElementById("blog-posts").style.display = "none";
-      if (document.getElementById("pagination")) {
-        document.getElementById("pagination").style.display = "none";
-        document.getElementById("pagination").innerHTML = "";
-      }
-      await initDataBlogList();
-
-      const postNameDecode = decodeURIComponent(searchParam.split("=")[1]).replaceAll(
-        "+",
-        " "
-      );
-      const postInfo = extractFileInfo(postNameDecode);
-      const targetPost = blogList.find((p) => p.name === postNameDecode);
-      const fetchUrl = targetPost
-        ? getPostDownloadUrl(targetPost)
-        : getPostDownloadUrl(`blog/${postNameDecode}`);
-
+    try {
       fetch(fetchUrl)
         .then((response) => response.text())
         .then((text) =>
@@ -742,13 +701,35 @@ async function initialize() {
             ? styleMarkdown("post", text, postInfo)
             : styleJupyter("post", text, postInfo)
         )
-        .then(() => {
-          window.history.pushState({}, "", currentUrl);
-        })
         .catch(() => {
           styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
         });
+    } catch (error) {
+      styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
     }
+  } else if (menuParam && menuParam !== "blog.md") {
+    if (typeof categoryFolderMap !== "undefined" && categoryFolderMap[menuParam]) {
+      document.getElementById("contents").style.display = "none";
+      await initDataBlogList();
+      search(categoryFolderMap[menuParam], "folder");
+    } else {
+      document.getElementById("blog-posts").style.display = "none";
+      document.getElementById("contents").style.display = "block";
+      if (document.getElementById("pagination")) {
+        document.getElementById("pagination").style.display = "none";
+        document.getElementById("pagination").innerHTML = "";
+      }
+      const menuFetchUrl = getPostDownloadUrl(`menu/${menuParam}`);
+      fetch(menuFetchUrl)
+        .then((response) => response.text())
+        .then((text) => styleMarkdown("menu", text))
+        .catch(() => {
+          styleMarkdown("menu", "# Error입니다. 파일명을 확인해주세요.");
+        });
+    }
+  } else {
+    await initDataBlogList();
+    search();
   }
 }
 
