@@ -1,4 +1,4 @@
-function convertIpynvToHtml(fileContent) {
+function convertIpynbToHtml(fileContent) {
     /*
     주피터 노트북을 마크업으로 변환하는 함수, style/blogContentsStyle.js 에서 사용하는 함수입니다.
     */
@@ -61,3 +61,6 @@ function convertIpynvToHtml(fileContent) {
 
     return htmlContent;
 }
+
+// 하위 호환성을 위한 별칭 유지
+const convertIpynvToHtml = convertIpynbToHtml;

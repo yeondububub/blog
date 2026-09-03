@@ -91,38 +91,24 @@ window.addEventListener("popstate", (event) => {
       });
   } else if (url.search.split("=")[0] === "?post") {
     // 블로그 상세 정보 로딩
-    if (url.search.split("=")[0] === "?menu") {
-      document.getElementById("blog-posts").style.display = "none";
-      document.getElementById("contents").style.display = "block";
-      fetch(origin + "menu/" + url.search.split("=")[1])
-        .then((response) => response.text())
-        .then((text) => styleMarkdown("menu", text));
-    } else if (url.search.split("=")[0] === "?post") {
-      document.getElementById("contents").style.display = "block";
-      document.getElementById("blog-posts").style.display = "none";
-      postNameDecode = decodeURI(url.search.split("=")[1]).replaceAll("+", " ");
-      postInfo = extractFileInfo(postNameDecode);
+    document.getElementById("contents").style.display = "block";
+    document.getElementById("blog-posts").style.display = "none";
+    const postNameDecode = decodeURIComponent(url.search.split("=")[1]).replaceAll("+", " ");
+    const postInfo = extractFileInfo(postNameDecode);
 
-      const targetPost = typeof blogList !== "undefined" ? blogList.find((p) => p.name === postNameDecode) : null;
-      let fetchUrl;
-      if (targetPost && targetPost.download_url) {
-        if (!isLocal && localDataUsing) {
-          fetchUrl = `${url.origin}/${siteConfig.repositoryName}${targetPost.download_url}`;
-        } else {
-          fetchUrl = targetPost.download_url;
-        }
-      } else {
-        fetchUrl = origin + "blog/" + postNameDecode;
-      }
+    const targetPost = typeof blogList !== "undefined" ? blogList.find((p) => p.name === postNameDecode) : null;
+    const fetchUrl = targetPost ? getPostDownloadUrl(targetPost) : getPostDownloadUrl(`blog/${postNameDecode}`);
 
-      fetch(fetchUrl)
-        .then((response) => response.text())
-        .then((text) =>
-          postInfo.fileType === "md"
-            ? styleMarkdown("post", text, postInfo)
-            : styleJupyter("post", text, postInfo)
-        );
-    }
+    fetch(fetchUrl)
+      .then((response) => response.text())
+      .then((text) =>
+        postInfo.fileType === "md"
+          ? styleMarkdown("post", text, postInfo)
+          : styleJupyter("post", text, postInfo)
+      )
+      .catch(() => {
+        styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
+      });
   } else {
     alert("잘못된 URL입니다.");
   }

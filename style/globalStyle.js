@@ -49,7 +49,7 @@ const postsectionStyle = `w-full mb-10 md:mb-[60px] max-w-full h-auto align-midd
 // notebook에 code cell을 표시하는 부분
 const notebookpreStyle = `relative bg-graylv1 dark:bg-[#1a1b1e] dark:text-gray-200 p-8 rounded-[10px] mb-6 text-base font-medium overflow-x-auto whitespace-pre text-left max-w-full h-auto align-middle`;
 const notebookcodeStyle = `font-mono text-base bg-transparent whitespace-pre`;
-const notebookcopyButtonStyle = `border border-lv2 copy-button bg-white dark:bg-gray-800 dark:border-gray-700 rounded-[10px] opacity-70 absolute top-5 right-5 p-2 shadow-md`;
+const notebookcopyButtonStyle = `border border-graylv2 copy-button bg-white dark:bg-gray-800 dark:border-gray-700 rounded-[10px] opacity-70 absolute top-5 right-5 p-2 shadow-md`;
 const notebookdownloadButtonStyle = `download-button px-5 py-[11px] mb-4 text-sm font-medium text-white bg-primary rounded-[10px] hover:bg-primary`;
 
 // bloglist 목록 스타일
@@ -57,7 +57,7 @@ const bloglistFirstCardStyle = `lg:col-span-3 md:col-span-2 col-span-1 h-auto ro
 const bloglistFirstCardImgStyle = `w-full object-cover object-center rounded-2xl overflow-hidden md:h-auto h-[200px] md:w-[49%] lg:w-[52%] shrink-0 mr-8`;
 const bloglistFirstCardDescriptionStyle = `text-graylv4 dark:text-gray-300 text-base font-normal leading-snug md:max-h-40 md:line-clamp-[7] line-clamp-3 mb-3 break-keep`;
 
-const bloglistCardStyle = `lg:max-w-sm overflow-hidden bg-white dark:bg-[#18191c] transition duration-200 ease-in-out transform hover:-translate-y-1 hover:scale-105 cursor-poitner col-span-1 w-auto cursor-pointer`;
+const bloglistCardStyle = `lg:max-w-sm overflow-hidden bg-white dark:bg-[#18191c] transition duration-200 ease-in-out transform hover:-translate-y-1 hover:scale-105 col-span-1 w-auto cursor-pointer`;
 const bloglistCardImgStyle = `w-full h-[200px] object-cover object-center rounded-2xl overflow-hidden`;
 
 const bloglistCardBodyStyle = `py-4`;

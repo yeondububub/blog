@@ -288,7 +288,7 @@ function styleJupyter(kinds, text, title_info = null) {
     주피터 노트북 파일 내용을 globalStyle.js에 정의된 tailwind css로 스타일링 합니다. 
     */
   const tempDiv = document.createElement("div");
-  const html = convertIpynvToHtml(text);
+  const html = typeof convertIpynbToHtml === "function" ? convertIpynbToHtml(text) : convertIpynvToHtml(text);
   // const html = marked.parse(text);
   tempDiv.innerHTML = html;
 

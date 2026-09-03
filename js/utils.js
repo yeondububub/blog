@@ -75,3 +75,17 @@ function formatDate(dateString) {
 
   return `${year}/${month}/${day}`;
 }
+
+function getPostDownloadUrl(post) {
+  // 포스트 객체 또는 URL 문자열을 입력받아 환경(GitHub API, 로컬, 배포)에 무관하게 유효한 fetch URL 반환
+  if (!post) return "";
+  const rawUrl = typeof post === "string" ? post : (post.download_url || post.path || "");
+  if (!rawUrl) return "";
+  if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
+    return rawUrl;
+  }
+  const cleanPath = rawUrl.replace(/^\/+/, "");
+  const pathDir = window.location.pathname.replace(/\/[^\/]*\.[^\/]*$/, "").replace(/\/+$/, "") + "/";
+  return `${window.location.origin}${pathDir}${cleanPath}`;
+}
+

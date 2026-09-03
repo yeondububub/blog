@@ -394,7 +394,8 @@ function renderBlogList(searchResult = null, currentPage = 1) {
           // blog-posts 영역을 보이지 않게 처리
           document.getElementById("blog-posts").style.display = "none";
           document.getElementById("pagination").style.display = "none";
-          fetch(post.download_url)
+          const postDownloadUrl = getPostDownloadUrl(post);
+          fetch(postDownloadUrl)
             .then((response) => response.text())
             .then((text) =>
               postInfo.fileType === "md"
@@ -406,6 +407,9 @@ function renderBlogList(searchResult = null, currentPage = 1) {
               const url = new URL(origin);
               url.searchParams.set("post", post.name);
               window.history.pushState({}, "", url);
+            })
+            .catch(() => {
+              styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
             });
         };
         document.getElementById("blog-posts").appendChild(cardElement);
@@ -426,11 +430,9 @@ function renderBlogList(searchResult = null, currentPage = 1) {
     const startIndex = (currentPage - 1) * pageUnit;
     const endIndex = currentPage * pageUnit;
 
-    // console.log("blogList", blogList);
     blogList.slice(startIndex, endIndex).forEach((post, index) => {
       const postInfo = extractFileInfo(post.name);
       if (postInfo) {
-        // console.log(postInfo)
         const cardElement = createCardElement(postInfo, index);
 
         cardElement.onclick = (event) => {
@@ -442,31 +444,23 @@ function renderBlogList(searchResult = null, currentPage = 1) {
           document.getElementById("blog-posts").style.display = "none";
           document.getElementById("pagination").style.display = "none";
 
-          // console.log(post)
-          // console.log(post.download_url)
-          let postDownloadUrl;
-          if (!isLocal && localDataUsing) {
-            postDownloadUrl = `${url.origin}/${siteConfig.repositoryName}${post.download_url}`;
-          } else {
-            postDownloadUrl = post.download_url;
-          }
-          try {
-            fetch(postDownloadUrl)
-              .then((response) => response.text())
-              .then((text) =>
-                postInfo.fileType === "md"
-                  ? styleMarkdown("post", text, postInfo)
-                  : styleJupyter("post", text, postInfo)
-              )
-              .then(() => {
-                // 렌더링 후에는 URL 변경(query string으로 블로그 포스트 이름 추가)
-                const url = new URL(origin);
-                url.searchParams.set("post", post.name);
-                window.history.pushState({}, "", url);
-              });
-          } catch (error) {
-            styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
-          }
+          const postDownloadUrl = getPostDownloadUrl(post);
+          fetch(postDownloadUrl)
+            .then((response) => response.text())
+            .then((text) =>
+              postInfo.fileType === "md"
+                ? styleMarkdown("post", text, postInfo)
+                : styleJupyter("post", text, postInfo)
+            )
+            .then(() => {
+              // 렌더링 후에는 URL 변경(query string으로 블로그 포스트 이름 추가)
+              const url = new URL(origin);
+              url.searchParams.set("post", post.name);
+              window.history.pushState({}, "", url);
+            })
+            .catch(() => {
+              styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
+            });
         };
         document.getElementById("blog-posts").appendChild(cardElement);
       }
@@ -830,20 +824,11 @@ async function initialize() {
       }
       await initDataBlogList();
 
-      postNameDecode = decodeURI(url.search.split("=")[1]).replaceAll("+", " ");
-      postInfo = extractFileInfo(postNameDecode);
+      const postNameDecode = decodeURIComponent(url.search.split("=")[1]).replaceAll("+", " ");
+      const postInfo = extractFileInfo(postNameDecode);
       const targetPost = blogList.find((p) => p.name === postNameDecode);
 
-      let fetchUrl;
-      if (targetPost && targetPost.download_url) {
-        if (!isLocal && localDataUsing) {
-          fetchUrl = `${url.origin}/${siteConfig.repositoryName}${targetPost.download_url}`;
-        } else {
-          fetchUrl = targetPost.download_url;
-        }
-      } else {
-        fetchUrl = origin + "blog/" + postNameDecode;
-      }
+      const fetchUrl = targetPost ? getPostDownloadUrl(targetPost) : getPostDownloadUrl(`blog/${postNameDecode}`);
 
       try {
         fetch(fetchUrl)
