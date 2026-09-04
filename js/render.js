@@ -519,38 +519,50 @@ function initPagination(totalPage) {
   const pagination = document.getElementById("pagination");
   if (!pagination) return;
 
+  if (totalPage <= 1) {
+    pagination.style.display = "none";
+    pagination.innerHTML = "";
+    return;
+  }
+
   pagination.style.display = "flex";
+  pagination.className = "";
   pagination.classList.add(...paginationStyle.split(" "));
 
-  const prevButton = document.createElement("button");
-  prevButton.setAttribute("id", "page-prev");
-  prevButton.classList.add(...pageMoveButtonStyle.split(" "));
+  let prevButton = document.getElementById("page-prev");
+  let nextButton = document.getElementById("page-next");
+  let pageNav = document.getElementById("pagination-list");
 
-  const pageNav =
-    pagination.querySelector("nav") || document.createElement("nav");
+  if (!prevButton || !nextButton || !pageNav) {
+    pagination.innerHTML = "";
+
+    prevButton = document.createElement("button");
+    prevButton.setAttribute("id", "page-prev");
+    prevButton.setAttribute("aria-label", "이전 페이지");
+    prevButton.classList.add(...pageMoveButtonStyle.split(" "));
+
+    pageNav = document.createElement("nav");
+    pageNav.setAttribute("id", "pagination-list");
+    pageNav.classList.add(...pageNumberListStyle.split(" "));
+
+    nextButton = document.createElement("button");
+    nextButton.setAttribute("id", "page-next");
+    nextButton.setAttribute("aria-label", "다음 페이지");
+    nextButton.classList.add(...pageMoveButtonStyle.split(" "));
+
+    pagination.append(prevButton, pageNav, nextButton);
+  }
+
+  // 최대 7개의 페이지 번호 슬롯 생성
+  const buttonCount = Math.min(totalPage, 7);
   pageNav.innerHTML = "";
-  pageNav.setAttribute("id", "pagination-list");
-  pageNav.classList.add(...pageNumberListStyle.split(" "));
-
   const docFrag = document.createDocumentFragment();
-  for (let i = 0; i < totalPage; i++) {
-    if (i === 7) break;
+  for (let i = 0; i < buttonCount; i++) {
     const page = document.createElement("button");
     page.classList.add(...pageNumberStyle.split(" "));
     docFrag.appendChild(page);
   }
   pageNav.appendChild(docFrag);
-
-  const nextButton = document.createElement("button");
-  nextButton.setAttribute("id", "page-next");
-  nextButton.classList.add(...pageMoveButtonStyle.split(" "));
-
-  if (!pagination.innerHTML) {
-    pagination.append(prevButton, pageNav, nextButton);
-  }
-  if (totalPage <= 1) {
-    pagination.style.display = "none";
-  }
 }
 
 /**
@@ -560,29 +572,39 @@ function initPagination(totalPage) {
  * @param {Array|null} [targetList=null] - 현재 페이징 중인 데이터 목록
  */
 function renderPagination(totalPage, currentPage, targetList = null) {
+  if (totalPage <= 1) return;
+
   const prevButton = document.getElementById("page-prev");
   const nextButton = document.getElementById("page-next");
 
-  if (currentPage === 1) {
+  if (!prevButton || !nextButton) return;
+
+  if (currentPage <= 1) {
     prevButton.setAttribute("disabled", true);
-    nextButton.removeAttribute("disabled");
-  } else if (currentPage === totalPage) {
-    nextButton.setAttribute("disabled", true);
-    prevButton.removeAttribute("disabled");
   } else {
     prevButton.removeAttribute("disabled");
+  }
+
+  if (currentPage >= totalPage) {
+    nextButton.setAttribute("disabled", true);
+  } else {
     nextButton.removeAttribute("disabled");
   }
 
   prevButton.onclick = (event) => {
     event.preventDefault();
-    renderBlogList(targetList, currentPage - 1);
-    renderPagination(totalPage, currentPage - 1, targetList);
+    if (currentPage > 1) {
+      renderBlogList(targetList, currentPage - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
+
   nextButton.onclick = (event) => {
     event.preventDefault();
-    renderBlogList(targetList, currentPage + 1);
-    renderPagination(totalPage, currentPage + 1, targetList);
+    if (currentPage < totalPage) {
+      renderBlogList(targetList, currentPage + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const pageNav = document.querySelector("#pagination nav");
@@ -591,17 +613,22 @@ function renderPagination(totalPage, currentPage, targetList = null) {
 
   if (totalPage <= 7) {
     pageList.forEach((page, index) => {
-      page.textContent = index + 1;
-      if (index + 1 === currentPage) {
+      const pageNum = index + 1;
+      page.textContent = pageNum;
+      if (pageNum === currentPage) {
         page.classList.remove("font-normal");
         page.classList.add(...pageNumberActiveStyle.split(" "));
+        page.setAttribute("aria-current", "page");
       } else {
         page.classList.remove(...pageNumberActiveStyle.split(" "));
         page.classList.add("font-normal");
+        page.removeAttribute("aria-current");
       }
-      page.onclick = () => {
-        renderBlogList(targetList, index + 1);
-        renderPagination(totalPage, index + 1, targetList);
+      page.setAttribute("aria-label", `${pageNum} 페이지로 이동`);
+      page.onclick = (event) => {
+        event.preventDefault();
+        renderBlogList(targetList, pageNum);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       };
     });
   } else {
@@ -640,21 +667,31 @@ function renderPagination(totalPage, currentPage, targetList = null) {
 
   function ellipsisPagination(pageList, indexList, listData = null) {
     pageList.forEach((page, index) => {
-      page.textContent = indexList[index];
-      if (indexList[index] === currentPage) {
+      const pageVal = indexList[index];
+      page.textContent = pageVal;
+
+      if (pageVal === currentPage) {
         page.classList.remove("font-normal");
         page.classList.add(...pageNumberActiveStyle.split(" "));
+        page.setAttribute("aria-current", "page");
       } else {
         page.classList.remove(...pageNumberActiveStyle.split(" "));
         page.classList.add("font-normal");
+        page.removeAttribute("aria-current");
       }
-      if (indexList[index] === "...") {
+
+      if (pageVal === "...") {
         page.style.pointerEvents = "none";
+        page.removeAttribute("aria-label");
         page.onclick = (event) => event.preventDefault();
       } else {
         page.style.pointerEvents = "all";
-        page.onclick = () => {
-          renderPagination(totalPage, indexList[index], listData);
+        page.setAttribute("aria-label", `${pageVal} 페이지로 이동`);
+        page.onclick = (event) => {
+          event.preventDefault();
+          const targetPage = Number(pageVal);
+          renderBlogList(listData, targetPage);
+          window.scrollTo({ top: 0, behavior: "smooth" });
         };
       }
     });
