@@ -89,7 +89,7 @@ function styleMarkdown(kinds, text, title_info = null) {
     const copyButton = document.createElement("button");
     copyButton.innerHTML = '<span class="sr-only">코드 복사하기</span>';
     copyButton.classList.add(...notebookcopyButtonStyle.split(" "));
-    copyButton.setAttribute("id", "copy-button");
+    copyButton.setAttribute("aria-label", "코드 복사하기");
 
     copyButton.addEventListener("click", async function (event) {
       event.stopPropagation();
@@ -400,7 +400,7 @@ function styleJupyter(kinds, text, title_info = null) {
     const copyButton = document.createElement("button");
     copyButton.innerHTML = '<span class="sr-only">코드 복사하기</span>';
     copyButton.classList.add(...notebookcopyButtonStyle.split(" "));
-    copyButton.setAttribute("id", "copy-button");
+    copyButton.setAttribute("aria-label", "코드 복사하기");
 
     copyButton.addEventListener("click", async function (event) {
       event.stopPropagation();
