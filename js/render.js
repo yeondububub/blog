@@ -56,7 +56,7 @@ function search(keyword, kinds) {
       renderBlogList(searchResult);
     } else {
       if (kinds) {
-        const searchResult = blogList.filter((post) => {
+        let searchResult = blogList.filter((post) => {
           if (kinds === "category") {
             const postInfo = extractFileInfo(post.name);
 
@@ -102,6 +102,30 @@ function search(keyword, kinds) {
         if (kinds === "folder") {
           currentFolder = keyword;
           renderBlogCategory(searchResult);
+        } else if (kinds === "category") {
+          if (searchResult.length === 0) {
+            const fallbackResult = blogList.filter((post) => {
+              if (currentFolder) {
+                const inCurrentFolder =
+                  (post.path &&
+                    post.path
+                      .toLowerCase()
+                      .startsWith(currentFolder.toLowerCase() + "/")) ||
+                  (post.download_url &&
+                    post.download_url
+                      .toLowerCase()
+                      .includes(`/${currentFolder}/`));
+                if (!inCurrentFolder) return false;
+              }
+              return post.name.toLowerCase().includes(keyword);
+            });
+            if (fallbackResult.length > 0) {
+              searchResult = fallbackResult;
+            }
+          }
+          if (!currentFolder) {
+            renderBlogCategory(blogList);
+          }
         }
 
         renderBlogList(searchResult);
@@ -287,6 +311,15 @@ function createCardElement(fileInfo, index) {
     category.onclick = (event) => {
       event.stopPropagation();
       search(cat.toLowerCase(), "category");
+      const nextUrl = new URL(origin);
+      if (typeof currentFolder !== "undefined" && currentFolder && typeof categoryFolderMap !== "undefined") {
+        const menuFileName = Object.keys(categoryFolderMap).find(
+          (key) => categoryFolderMap[key] === currentFolder
+        );
+        if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
+      }
+      nextUrl.searchParams.set("search", cat);
+      window.history.pushState({}, "", nextUrl);
     };
     categoryContainer.appendChild(category);
   });
@@ -480,11 +513,17 @@ function renderBlogCategory(targetList = blogList) {
   allItem.classList.add(...categoryItemStyle.split(" "));
   allItem.textContent = "All";
   allItem.onclick = () => {
-    if (currentFolder) {
+    const nextUrl = new URL(origin);
+    if (currentFolder && typeof categoryFolderMap !== "undefined") {
+      const menuFileName = Object.keys(categoryFolderMap).find(
+        (key) => categoryFolderMap[key] === currentFolder
+      );
+      if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
       search(currentFolder, "folder");
     } else {
       search();
     }
+    window.history.pushState({}, "", nextUrl);
   };
   const allCount = document.createElement("span");
   allCount.classList.add(...categoryItemCountStyle.split(" "));
@@ -500,6 +539,15 @@ function renderBlogCategory(targetList = blogList) {
     categoryItem.textContent = item.displayName;
     categoryItem.onclick = () => {
       search(catKey, "category");
+      const nextUrl = new URL(origin);
+      if (currentFolder && typeof categoryFolderMap !== "undefined") {
+        const menuFileName = Object.keys(categoryFolderMap).find(
+          (key) => categoryFolderMap[key] === currentFolder
+        );
+        if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
+      }
+      nextUrl.searchParams.set("search", item.displayName);
+      window.history.pushState({}, "", nextUrl);
     };
 
     const categoryCount = document.createElement("span");
@@ -707,6 +755,7 @@ async function initialize() {
 
   const postParam = searchParams.get("post");
   const menuParam = searchParams.get("menu");
+  const searchParam = searchParams.get("search");
 
   await initDataBlogMenu();
   renderMenu();
@@ -748,7 +797,18 @@ async function initialize() {
     if (typeof categoryFolderMap !== "undefined" && categoryFolderMap[menuParam]) {
       document.getElementById("contents").style.display = "none";
       await initDataBlogList();
-      search(categoryFolderMap[menuParam], "folder");
+      const folder = categoryFolderMap[menuParam];
+      if (searchParam) {
+        currentFolder = folder;
+        const decodedSearch = decodeURIComponent(searchParam).replaceAll("+", " ");
+        const searchInput = document.getElementById("search-input");
+        if (searchInput) searchInput.value = decodedSearch;
+        const resetInputButton = document.querySelector(".reset-inp-btn");
+        if (resetInputButton) resetInputButton.classList.remove("hidden");
+        search(decodedSearch.toLowerCase(), "category");
+      } else {
+        search(folder, "folder");
+      }
     } else {
       document.getElementById("blog-posts").style.display = "none";
       document.getElementById("contents").style.display = "block";
@@ -764,6 +824,18 @@ async function initialize() {
           styleMarkdown("menu", "# Error입니다. 파일명을 확인해주세요.");
         });
     }
+  } else if (searchParam) {
+    // 태그/키워드 검색 상태 복원
+    document.getElementById("contents").style.display = "none";
+    document.getElementById("blog-posts").style.display = "grid";
+    await initDataBlogList();
+    currentFolder = "";
+    const decodedSearch = decodeURIComponent(searchParam).replaceAll("+", " ");
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.value = decodedSearch;
+    const resetInputButton = document.querySelector(".reset-inp-btn");
+    if (resetInputButton) resetInputButton.classList.remove("hidden");
+    search(decodedSearch.toLowerCase(), "category");
   } else {
     await initDataBlogList();
     search();

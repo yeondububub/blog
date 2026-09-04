@@ -78,6 +78,7 @@ window.addEventListener("popstate", () => {
 
   const postParam = searchParams.get("post");
   const menuParam = searchParams.get("menu");
+  const searchParam = searchParams.get("search");
 
   if (postParam) {
     // 1. 블로그 상세 포스트 화면 복원
@@ -129,12 +130,22 @@ window.addEventListener("popstate", () => {
       document.getElementById("blog-posts").style.display = "grid";
 
       const targetFolder = categoryFolderMap[menuParam];
-      if (typeof blogList !== "undefined" && blogList.length === 0) {
-        initDataBlogList().then(() => {
+      const doCategorySearch = () => {
+        if (searchParam) {
+          currentFolder = targetFolder;
+          const decodedSearch = decodeURIComponent(searchParam).replaceAll("+", " ");
+          const searchInput = document.getElementById("search-input");
+          if (searchInput) searchInput.value = decodedSearch;
+          search(decodedSearch.toLowerCase(), "category");
+        } else {
           search(targetFolder, "folder");
-        });
+        }
+      };
+
+      if (typeof blogList !== "undefined" && blogList.length === 0) {
+        initDataBlogList().then(doCategorySearch);
       } else {
-        search(targetFolder, "folder");
+        doCategorySearch();
       }
     } else {
       // About 등 단독 마크다운 메뉴 화면 복원
@@ -159,8 +170,31 @@ window.addEventListener("popstate", () => {
           styleMarkdown("menu", "# 메뉴 로딩 실패");
         });
     }
+  } else if (searchParam) {
+    // 3. 태그/키워드 검색 상태 복원
+    document.getElementById("contents").style.display = "none";
+    document.getElementById("blog-posts").style.display = "grid";
+    const banner = document.getElementById("category-banner");
+    if (banner) banner.classList.add("hidden");
+
+    const decodedSearch = decodeURIComponent(searchParam).replaceAll("+", " ");
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.value = decodedSearch;
+    const resetInputButton = document.querySelector(".reset-inp-btn");
+    if (resetInputButton) resetInputButton.classList.remove("hidden");
+
+    currentFolder = "";
+    const doSearch = () => {
+      search(decodedSearch.toLowerCase(), "category");
+    };
+
+    if (typeof blogList !== "undefined" && blogList.length === 0) {
+      initDataBlogList().then(doSearch);
+    } else {
+      doSearch();
+    }
   } else {
-    // 3. 메인 포스트 목록(전체 글 보기) 복원
+    // 4. 메인 포스트 목록(전체 글 보기) 복원
     document.getElementById("contents").style.display = "none";
     document.getElementById("blog-posts").style.display = "grid";
 

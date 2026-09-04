@@ -168,8 +168,16 @@ function styleMarkdown(kinds, text, title_info = null) {
 
       category.onclick = (event) => {
         event.preventDefault();
+        document.getElementById("contents").style.display = "none";
+        document.getElementById("blog-posts").style.display = "grid";
         search(cat.toLowerCase(), "category");
         const nextUrl = new URL(origin);
+        if (typeof currentFolder !== "undefined" && currentFolder && typeof categoryFolderMap !== "undefined") {
+          const menuFileName = Object.keys(categoryFolderMap).find(
+            (key) => categoryFolderMap[key] === currentFolder
+          );
+          if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
+        }
         nextUrl.searchParams.set("search", cat);
         window.history.pushState({}, "", nextUrl);
       };
@@ -436,8 +444,16 @@ function styleJupyter(kinds, text, title_info = null) {
 
       category.onclick = (event) => {
         event.preventDefault();
+        document.getElementById("contents").style.display = "none";
+        document.getElementById("blog-posts").style.display = "grid";
         search(cat.toLowerCase(), "category");
         const nextUrl = new URL(origin);
+        if (typeof currentFolder !== "undefined" && currentFolder && typeof categoryFolderMap !== "undefined") {
+          const menuFileName = Object.keys(categoryFolderMap).find(
+            (key) => categoryFolderMap[key] === currentFolder
+          );
+          if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
+        }
         nextUrl.searchParams.set("search", cat);
         window.history.pushState({}, "", nextUrl);
       };
