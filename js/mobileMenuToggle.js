@@ -28,6 +28,11 @@ window.addEventListener("click", (event) => {
     const menuName = event.target.innerText.trim() + ".md";
 
     const handleMobileMenuClick = (targetFolder) => {
+      const searchInput = document.getElementById("search-input");
+      if (searchInput) searchInput.value = "";
+      const resetInputButton = document.querySelector(".reset-inp-btn");
+      if (resetInputButton) resetInputButton.classList.add("hidden");
+
       if (blogList.length === 0) {
         initDataBlogList().then(() => {
           search(targetFolder, "folder");

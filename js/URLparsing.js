@@ -27,13 +27,7 @@ if (isLocal) {
   }
   document.title = siteConfig.blogTitle || defaultTitle;
 
-  if ($blogTitle) {
-    $blogTitle.onclick = () => {
-      const mainUrl = new URL(`http://127.0.0.1${url.port ? ":" + url.port : ""}`);
-      window.history.pushState({}, "", mainUrl);
-      renderBlogList();
-    };
-  }
+
 } else {
   // GitHub Pages 배포 환경 설정
   if (!siteConfig.username || !siteConfig.repositoryName) {
@@ -48,13 +42,7 @@ if (isLocal) {
   }
   document.title = siteConfig.blogTitle || defaultTitle;
 
-  if ($blogTitle) {
-    $blogTitle.onclick = () => {
-      const deployUrl = new URL(`https://${siteConfig.username}.github.io/${siteConfig.repositoryName}/`);
-      window.history.pushState({}, "", deployUrl);
-      renderBlogList();
-    };
-  }
+
 }
 
 /**
@@ -197,6 +185,16 @@ window.addEventListener("popstate", () => {
     // 4. 메인 포스트 목록(전체 글 보기) 복원
     document.getElementById("contents").style.display = "none";
     document.getElementById("blog-posts").style.display = "grid";
+
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.value = "";
+    const resetInputButton = document.querySelector(".reset-inp-btn");
+    if (resetInputButton) resetInputButton.classList.add("hidden");
+
+    const categoryBanner = document.getElementById("category-banner");
+    if (categoryBanner) categoryBanner.classList.add("hidden");
+
+    currentFolder = "";
 
     if (typeof search === "function") {
       search();

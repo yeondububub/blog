@@ -159,6 +159,11 @@ async function renderMenu() {
       event.preventDefault();
 
       const handleFolderMenuClick = (targetFolder) => {
+        const searchInput = document.getElementById("search-input");
+        if (searchInput) searchInput.value = "";
+        const resetInputButton = document.querySelector(".reset-inp-btn");
+        if (resetInputButton) resetInputButton.classList.add("hidden");
+
         if (blogList.length === 0) {
           initDataBlogList().then(() => {
             search(targetFolder, "folder");
@@ -426,6 +431,11 @@ function renderBlogList(searchResult = null, currentPage = 1) {
  * @param {object|string} menu - 메뉴 객체 또는 메뉴 파일명 문자열
  */
 function renderOtherContents(menu) {
+  const searchInput = document.getElementById("search-input");
+  if (searchInput) searchInput.value = "";
+  const resetInputButton = document.querySelector(".reset-inp-btn");
+  if (resetInputButton) resetInputButton.classList.add("hidden");
+
   const banner = document.getElementById("category-banner");
   if (banner) banner.classList.add("hidden");
 
@@ -514,6 +524,11 @@ function renderBlogCategory(targetList = blogList) {
   allItem.textContent = "All";
   allItem.onclick = () => {
     const nextUrl = new URL(origin);
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.value = "";
+    const resetInputButton = document.querySelector(".reset-inp-btn");
+    if (resetInputButton) resetInputButton.classList.add("hidden");
+
     if (currentFolder && typeof categoryFolderMap !== "undefined") {
       const menuFileName = Object.keys(categoryFolderMap).find(
         (key) => categoryFolderMap[key] === currentFolder
@@ -876,6 +891,19 @@ if (blogTitle) {
   blogTitle.addEventListener("click", () => {
     const nextUrl = new URL(origin);
     window.history.pushState({}, "", nextUrl);
+
+    // 검색 입력창 및 리셋 버튼 초기화
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.value = "";
+    const resetInputButton = document.querySelector(".reset-inp-btn");
+    if (resetInputButton) resetInputButton.classList.add("hidden");
+
+    // 카테고리 배너 닫기
+    const categoryBanner = document.getElementById("category-banner");
+    if (categoryBanner) categoryBanner.classList.add("hidden");
+
+    // 현재 폴더 초기화
+    currentFolder = "";
 
     document.getElementById("contents").style.display = "none";
     document.getElementById("blog-posts").style.display = "grid";
