@@ -50,3 +50,236 @@ Dynamic Island 지원 기기에서는 화면 상태와 다른 앱의 실행 여�
 
 ---
 
+## 3. 코드 구현 및 라인별 상세 분석
+
+### 3.1 프로젝트 설정 (`Info.plist`)
+라이브 액티비티를 활성화하기 위해 메인 앱 타깃의 `Info.plist`에 다음 키를 등록해야 합니다.
+
+```xml
+<key>NSSupportsLiveActivities</key>
+<true/>
+```
+
+이 설정이 누락되면 런타임에 액티비티 요청 시 시스템 에러가 발생하며 액티비티가 생성되지 않습니다.
+
+### 3.2 데이터 모델 정의 (`DeliveryActivityAttributes.swift`)
+메인 앱과 위젯 확장 타깃 모두에서 접근할 수 있도록 타깃 멤버십(Target Membership)을 양쪽 모두에 체크해야 합니다.
+
+```swift
+import Foundation
+import ActivityKit
+
+// 1. ActivityAttributes 프로토콜을 준수하는 모델 정의
+struct DeliveryActivityAttributes: ActivityAttributes {
+    
+    // 2. 동적 데이터(실시간 갱신 값) 정의: ContentState 구조체
+    public struct ContentState: Codable, Hashable {
+        var statusText: String          // 현재 배달 상태 (예: "조리 중", "배달 중")
+        var estimatedDeliveryTime: Date // 예상 도착 시간
+        var progress: Double            // 진행률 (0.0 ~ 1.0)
+    }
+
+    // 3. 정적 데이터(생명주기 동안 고정된 값) 정의
+    var orderNumber: String             // 고유 주문 번호
+    var restaurantName: String          // 식당 이름
+}
+```
+
+- `ContentState`는 실시간으로 전송되는 페이로드의 형식을 결정합니다. APNs를 통한 원격 업데이트 시 JSON 구조가 이 구조체의 필드와 일치해야 합니다.
+- 고정값인 `orderNumber`와 `restaurantName`은 액티비티 시작 시 1회만 메인 메모리에 할당되므로 매 업데이트마다 불필요한 네트워크 대역폭을 낭비하지 않습니다.
+
+### 3.3 위젯 인터페이스 구현 (`DeliveryLiveActivity.swift`)
+위젯 확장(Widget Extension) 타깃에 선언형 UI를 작성합니다.
+
+```swift
+import SwiftUI
+import WidgetKit
+import ActivityKit
+
+struct DeliveryLiveActivity: Widget {
+    var body: some WidgetConfiguration {
+        // 1. 액티비티 전용 Configuration 선언
+        ActivityConfiguration(for: DeliveryActivityAttributes.self) { context in
+            // 2. 잠금 화면(Lock Screen) 및 AOD 렌더링 뷰
+            LockScreenLiveActivityView(context: context)
+                .activityBackgroundTint(Color.black.opacity(0.8))
+                .activitySystemActionForegroundColor(Color.white)
+        } dynamicIsland: { context in
+            // 3. Dynamic Island 렌더링 구성
+            DynamicIsland {
+                // 3.1 확장(Expanded) 상태 레이아웃
+                DynamicIslandExpandedRegion(.leading) {
+                    Label(context.attributes.restaurantName, systemImage: "bag.fill")
+                        .font(.caption)
+                        .foregroundColor(.primary)
+                }
+                DynamicIslandExpandedRegion(.trailing) {
+                    Text(timerInterval: Date()...context.state.estimatedDeliveryTime, countsDown: true)
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+                DynamicIslandExpandedRegion(.bottom) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(context.state.statusText)
+                            .font(.headline)
+                        ProgressView(value: context.state.progress)
+                            .tint(.orange)
+                    }
+                    .padding(.horizontal)
+                }
+            } compactLeading: {
+                // 3.2 컴팩트 좌측 레이아웃
+                Image(systemName: "bag.fill")
+                    .foregroundColor(.orange)
+            } compactTrailing: {
+                // 3.3 컴팩트 우측 레이아웃
+                Text(context.state.statusText)
+                    .font(.caption2)
+                    .bold()
+            } minimal: {
+                // 3.4 미니멀(원형 축소) 레이아웃
+                Image(systemName: "bag.fill")
+                    .foregroundColor(.orange)
+            }
+            .keylineTint(Color.orange)
+        }
+    }
+}
+
+// 4. 잠금 화면 배너 전용 서브뷰
+struct LockScreenLiveActivityView: View {
+    let context: ActivityViewContext<DeliveryActivityAttributes>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(context.attributes.restaurantName)
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Spacer()
+                Text("주문번호: \(context.attributes.orderNumber)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            
+            HStack {
+                Text(context.state.statusText)
+                    .font(.subheadline)
+                    .foregroundColor(.orange)
+                Spacer()
+                Text(context.state.estimatedDeliveryTime, style: .time)
+                    .font(.subheadline)
+                    .bold()
+                    .foregroundColor(.white)
+            }
+            
+            ProgressView(value: context.state.progress)
+                .progressViewStyle(LinearProgressViewStyle(tint: .orange))
+        }
+        .padding()
+    }
+}
+```
+
+- `ActivityConfiguration(for:)`는 메인 앱이 시작한 액티비티의 데이터 타입과 바인딩되는 진입점입니다.
+- `context.attributes`를 통해 불변 정적 값에 접근하고, `context.state`를 통해 동적으로 갱신되는 상태 값에 접근합니다.
+- `Text(timerInterval:countsDown:)` 뷰를 사용하면 프로세스가 유휴(Idle) 상태에 들어가더라도 시스템 타이머를 통해 초 단위 카운트다운을 자체 렌더링하므로 추가 전력 소모 없이 실시간 UI를 유지합니다.
+
+### 3.4 메인 앱에서의 생명주기 제어 (`DeliveryActivityManager.swift`)
+메인 앱 타깃에서 액티비티를 요청, 갱신, 종료하는 관리 클래스입니다.
+
+```swift
+import Foundation
+import ActivityKit
+
+final class DeliveryActivityManager {
+    static let shared = DeliveryActivityManager()
+    private var currentActivity: Activity<DeliveryActivityAttributes>?
+
+    private init() {}
+
+    // 1. 액티비티 시작 요청
+    func startDeliveryActivity(orderNumber: String, restaurantName: String) {
+        // 1.1 사용자의 라이브 액티비티 허용 여부 사전 검증
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            print("라이브 액티비티가 비활성화되어 있습니다.")
+            return
+        }
+
+        let attributes = DeliveryActivityAttributes(
+            orderNumber: orderNumber,
+            restaurantName: restaurantName
+        )
+        
+        let initialContentState = DeliveryActivityAttributes.ContentState(
+            statusText: "주문 접수 완료",
+            estimatedDeliveryTime: Date().addingTimeInterval(1800), // 30분 후
+            progress: 0.1
+        )
+
+        do {
+            // 1.2 ActivityKit에 액티비티 요청 등록
+            let activity = try Activity<DeliveryActivityAttributes>.request(
+                attributes: attributes,
+                contentState: initialContentState,
+                pushType: .token // 원격 APNs 갱신을 사용할 경우 .token 지정
+            )
+            self.currentActivity = activity
+            print("액티비티 등록 성공 ID: \(activity.id)")
+
+            // 1.3 원격 푸시 토큰 스트림 관찰 (APNs 연동 시 필요)
+            Task {
+                for await pushToken in activity.pushTokenUpdates {
+                    let tokenString = pushToken.map { String(format: "%02x", $0) }.joined()
+                    print("라이브 액티비티 전용 푸시 토큰: \(tokenString)")
+                    // 백엔드 서버로 푸시 토큰을 전송하는 로직을 수행합니다.
+                }
+            }
+        } catch {
+            print("액티비티 시작 실패: \(error.localizedDescription)")
+        }
+    }
+
+    // 2. 액티비티 상태 갱신
+    func updateDeliveryActivity(statusText: String, progress: Double, estimatedTime: Date) {
+        guard let activity = currentActivity else { return }
+
+        let updatedContentState = DeliveryActivityAttributes.ContentState(
+            statusText: statusText,
+            estimatedDeliveryTime: estimatedTime,
+            progress: progress
+        )
+
+        Task {
+            // 2.1 비동기 update 호출로 화면 상태 변경
+            await activity.update(using: updatedContentState)
+            print("액티비티 갱신 완료")
+        }
+    }
+
+    // 3. 액티비티 종료
+    func endDeliveryActivity(dismissalPolicy: ActivityUIDismissalPolicy = .default) {
+        guard let activity = currentActivity else { return }
+
+        let finalContentState = DeliveryActivityAttributes.ContentState(
+            statusText: "배달 완료",
+            estimatedDeliveryTime: Date(),
+            progress: 1.0
+        )
+
+        Task {
+            // 3.1 최종 상태 전달 및 종료 정책(즉시 삭제 or 지연 삭제) 적용
+            await activity.end(using: finalContentState, dismissalPolicy: dismissalPolicy)
+            self.currentActivity = nil
+            print("액티비티 종료 완료")
+        }
+    }
+}
+```
+
+- `ActivityAuthorizationInfo().areActivitiesEnabled`를 사전에 확인하여 사용자가 기기 설정에서 라이브 액티비티 기능을 껐을 때의 예외를 방어합니다.
+- `pushType: .token`을 전달하면 개별 액티비티 세션 전용 푸시 토큰이 비동기로 발급됩니다. 이 토큰을 서버에 등록하면 앱이 완전 종료(Terminated)된 상태에서도 APNs를 통해 `ContentState`를 원격 갱신할 수 있습니다.
+- `activity.end(using:dismissalPolicy:)`에서 `ActivityUIDismissalPolicy`를 지정합니다. `.immediate`는 즉시 화면에서 제거하고, `.default`는 잠금 화면에 기본 15분(최대 4시간) 동안 최종 상태를 유지한 뒤 제거합니다.
+
+---
+
