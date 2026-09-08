@@ -23,3 +23,30 @@ iOS 16.1에서 도입된 라이브 액티비티(Live Activities)는 앱의 최�
 
 ---
 
+## 2. 핵심 개념 설명
+
+### 2.1 라이브 액티비티의 아키텍처 분리
+라이브 액티비티는 메인 앱 타깃(Main App Target)과 위젯 확장 타깃(Widget Extension Target)의 협업으로 동작합니다.
+
+| 역할 | 담당 프레임워크 | 실행 프로세스 | 주요 작업 |
+| :--- | :--- | :--- | :--- |
+| **생명주기 및 데이터 제어** | `ActivityKit` | 메인 앱 프로세스 | 액티비티 시작(request), 갱신(update), 종료(end), APNs 푸시 토큰 발급 |
+| **UI 렌더링** | `WidgetKit`, `SwiftUI` | 위젯 확장 프로세스 | 잠금 화면 배너 뷰, Dynamic Island(Compact, Minimal, Expanded) 뷰 구현 |
+
+메인 앱 프로세스와 위젯 확장 프로세스는 샌드박스가 분리되어 실행됩니다. 메인 앱이 `ActivityKit`을 통해 데이터 모델을 전달하면, 운영체제(SpringBoard)가 해당 데이터를 위젯 확장 타깃으로 넘겨 화면에 렌더링합니다.
+
+### 2.2 데이터 모델링 (`ActivityAttributes`)
+라이브 액티비티의 데이터는 `ActivityAttributes` 프로토콜을 준수하는 구조체로 정의합니다. 데이터는 성격에 따라 두 가지로 분리됩니다.
+
+1. **정적 데이터(Static Data)**: 액티비티가 실행되는 전체 시간 동안 변하지 않는 고유 정보(예: 주문 번호, 식당 상호명, 배달 품목 등). 구조체의 멤버 변수로 선언합니다.
+2. **동적 데이터(Dynamic Data, `ContentState`)**: 실시간으로 갱신되는 가변 정보(예: 배달 단계, 남은 배달 시간, 드라이버의 현재 위치 등). `ActivityAttributes` 프로토콜 내부의 `ContentState` 연관 타입(Associated Type)으로 정의하며, `Codable`과 `Hashable`을 준수해야 합니다.
+
+### 2.3 Dynamic Island 표시 형태
+Dynamic Island 지원 기기에서는 화면 상태와 다른 앱의 실행 여부에 따라 3가지 형태로 자동 적응합니다.
+
+- **Compact(단일 실행 컴팩트)**: 단일 액티비티가 실행 중일 때 섬의 좌측(Leading)과 우측(Trailing) 영역을 나누어 핵심 정보를 간략히 표시합니다.
+- **Minimal(다중 실행 미니멀)**: 둘 이상의 앱이 라이브 액티비티를 실행할 때 우선순위가 낮은 액티비티는 원형의 작은 인디케이터로 축소되어 표시됩니다.
+- **Expanded(확장 뷰)**: 사용자가 Dynamic Island를 길게 탭(Long Press)하면 화면 상단에 큰 팝업 형태로 확장되어 상세 정보와 조작 버튼을 표시합니다.
+
+---
+
