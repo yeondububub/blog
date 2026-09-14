@@ -111,12 +111,20 @@ struct DeliveryLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     Label(context.attributes.restaurantName, systemImage: "bag.fill")
                         .font(.caption)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(timerInterval: Date()...context.state.estimatedDeliveryTime, countsDown: true)
-                        .font(.caption)
-                        .foregroundColor(.orange)
+                    // 완료 또는 과거 시간일 때의 Range 크래시 방어
+                    if context.state.progress >= 1.0 || context.state.estimatedDeliveryTime <= Date() {
+                        Text("배달 완료")
+                            .font(.caption)
+                            .bold()
+                            .foregroundStyle(.green)
+                    } else {
+                        Text(timerInterval: Date()...context.state.estimatedDeliveryTime, countsDown: true)
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -130,7 +138,7 @@ struct DeliveryLiveActivity: Widget {
             } compactLeading: {
                 // 3.2 컴팩트 좌측 레이아웃
                 Image(systemName: "bag.fill")
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
             } compactTrailing: {
                 // 3.3 컴팩트 우측 레이아웃
                 Text(context.state.statusText)
@@ -139,9 +147,9 @@ struct DeliveryLiveActivity: Widget {
             } minimal: {
                 // 3.4 미니멀(원형 축소) 레이아웃
                 Image(systemName: "bag.fill")
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
             }
-            .keylineTint(Color.orange)
+            .keylineTint(.orange)
         }
     }
 }
@@ -151,42 +159,91 @@ struct LockScreenLiveActivityView: View {
     let context: ActivityViewContext<DeliveryActivityAttributes>
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(context.attributes.restaurantName)
-                    .font(.headline)
-                    .foregroundColor(.white)
+        VStack(spacing: 12) {
+            // 상단 헤더: 식당 브랜드 및 주문 번호 뱃지
+            HStack(alignment: .center) {
+                HStack(spacing: 8) {
+                    Image(systemName: "fork.knife.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.orange)
+                    Text(context.attributes.restaurantName)
+                        .font(.headline)
+                        .bold()
+                        .foregroundStyle(.white)
+                }
+                
                 Spacer()
-                Text("주문번호: \(context.attributes.orderNumber)")
-                    .font(.caption)
-                    .foregroundColor(.gray)
+                
+                Text("주문번호 \(context.attributes.orderNumber)")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(0.12))
+                    .clipShape(Capsule())
             }
             
-            HStack {
-                Text(context.state.statusText)
-                    .font(.subheadline)
-                    .foregroundColor(.orange)
+            // 중단 정보: 배달 상태 문구 및 예상/도착 완료 시간
+            HStack(alignment: .lastTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("배달 현황")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.5))
+                    Text(context.state.statusText)
+                        .font(.title3)
+                        .bold()
+                        .foregroundStyle(context.state.progress >= 1.0 ? .green : .orange)
+                }
+                
                 Spacer()
-                Text(context.state.estimatedDeliveryTime, style: .time)
-                    .font(.subheadline)
-                    .bold()
-                    .foregroundColor(.white)
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(context.state.progress >= 1.0 ? "도착 완료" : "도착 예정")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.5))
+                    Text(context.state.estimatedDeliveryTime, style: .time)
+                        .font(.title3)
+                        .bold()
+                        .foregroundStyle(context.state.progress >= 1.0 ? .green : .white)
+                }
             }
             
-            ProgressView(value: context.state.progress)
-                .progressViewStyle(LinearProgressViewStyle(tint: .orange))
+            // 하단 게이지 바 및 단계별 라벨 (접수 -> 조리 -> 배달 -> 완료)
+            VStack(spacing: 6) {
+                ProgressView(value: context.state.progress)
+                    .progressViewStyle(LinearProgressViewStyle(tint: .orange))
+                    .scaleEffect(x: 1, y: 1.8, anchor: .center)
+                    .clipShape(Capsule())
+                
+                HStack {
+                    Text("접수")
+                        .foregroundStyle(context.state.progress >= 0.1 ? .orange : .white.opacity(0.3))
+                    Spacer()
+                    Text("조리")
+                        .foregroundStyle(context.state.progress >= 0.3 ? .orange : .white.opacity(0.3))
+                    Spacer()
+                    Text("배달")
+                        .foregroundStyle(context.state.progress >= 0.7 ? .orange : .white.opacity(0.3))
+                    Spacer()
+                    Text("완료")
+                        .foregroundStyle(context.state.progress >= 1.0 ? .orange : .white.opacity(0.3))
+                }
+                .font(.system(size: 11, weight: .semibold))
+            }
         }
-        .padding()
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
     }
 }
 ```
 
 - `ActivityConfiguration(for:)`는 메인 앱이 시작한 액티비티의 데이터 타입과 바인딩되는 진입점입니다.
 - `context.attributes`를 통해 불변 정적 값에 접근하고, `context.state`를 통해 동적으로 갱신되는 상태 값에 접근합니다.
-- `Text(timerInterval:countsDown:)` 뷰를 사용하면 프로세스가 유휴(Idle) 상태에 들어가더라도 시스템 타이머를 통해 초 단위 카운트다운을 자체 렌더링하므로 추가 전력 소모 없이 실시간 UI를 유지합니다.
+- `Text(timerInterval:countsDown:)` 뷰를 사용하면 시스템 타이머를 통해 초 단위 카운트다운을 자체 렌더링합니다. 단, 배달 완료 시점이나 목표 시각이 현재 시각 이하일 때는 ClosedRange(`Date()...estimatedDeliveryTime`)의 하한값이 상한값보다 커져 위젯 프로세스가 크래시(`assertionFailure`)되는 현상을 방지하기 위해 분기 처리가 필수적입니다.
+- 잠금 화면 카드는 모서리 곡률(Corner Radius)에 의해 콘텐츠가 잘리지 않도록 충분한 내부 여백(`.padding(.horizontal, 20)`, `.padding(.vertical, 16)`)을 지정해야 합니다.
 
 ### 3.4 메인 앱에서의 생명주기 제어 (`DeliveryActivityManager.swift`)
-메인 앱 타깃에서 액티비티를 요청, 갱신, 종료하는 관리 클래스입니다.
+메인 앱 타깃에서 액티비티를 요청, 갱신, 종료하는 관리 클래스입니다. iOS 16.2부터 도입된 최신 `ActivityContent` API 규격을 준수합니다.
 
 ```swift
 import Foundation
@@ -217,11 +274,14 @@ final class DeliveryActivityManager {
             progress: 0.1
         )
 
+        // iOS 16.2+ ActivityContent 래퍼 구성
+        let activityContent = ActivityContent(state: initialContentState, staleDate: nil)
+
         do {
-            // 1.2 ActivityKit에 액티비티 요청 등록
+            // 1.2 ActivityKit에 액티비티 요청 등록 (로컬 테스트 시 pushType: nil 지정)
             let activity = try Activity<DeliveryActivityAttributes>.request(
                 attributes: attributes,
-                contentState: initialContentState,
+                content: activityContent,
                 pushType: .token // 원격 APNs 갱신을 사용할 경우 .token 지정
             )
             self.currentActivity = activity
@@ -232,7 +292,6 @@ final class DeliveryActivityManager {
                 for await pushToken in activity.pushTokenUpdates {
                     let tokenString = pushToken.map { String(format: "%02x", $0) }.joined()
                     print("라이브 액티비티 전용 푸시 토큰: \(tokenString)")
-                    // 백엔드 서버로 푸시 토큰을 전송하는 로직을 수행합니다.
                 }
             }
         } catch {
@@ -250,15 +309,17 @@ final class DeliveryActivityManager {
             progress: progress
         )
 
+        let activityContent = ActivityContent(state: updatedContentState, staleDate: nil)
+
         Task {
             // 2.1 비동기 update 호출로 화면 상태 변경
-            await activity.update(using: updatedContentState)
-            print("액티비티 갱신 완료")
+            await activity.update(activityContent)
+            print("액티비티 갱신 완료: \(statusText)")
         }
     }
 
-    // 3. 액티비티 종료
-    func endDeliveryActivity(dismissalPolicy: ActivityUIDismissalPolicy = .default) {
+    // 3. 액티비티 종료 (기본 1분간 배달 완료 화면 유지 후 자동 소멸)
+    func endDeliveryActivity(dismissalPolicy: ActivityUIDismissalPolicy = .after(Date().addingTimeInterval(60))) {
         guard let activity = currentActivity else { return }
 
         let finalContentState = DeliveryActivityAttributes.ContentState(
@@ -267,19 +328,143 @@ final class DeliveryActivityManager {
             progress: 1.0
         )
 
+        let activityContent = ActivityContent(state: finalContentState, staleDate: nil)
+
         Task {
-            // 3.1 최종 상태 전달 및 종료 정책(즉시 삭제 or 지연 삭제) 적용
-            await activity.end(using: finalContentState, dismissalPolicy: dismissalPolicy)
+            // 3.1 최종 상태 전달 및 지연 종료 정책 적용
+            await activity.end(activityContent, dismissalPolicy: dismissalPolicy)
             self.currentActivity = nil
-            print("액티비티 종료 완료")
+            print("액티비티 종료 완료 (상태 유지 후 자동 제거)")
         }
     }
 }
 ```
 
-- `ActivityAuthorizationInfo().areActivitiesEnabled`를 사전에 확인하여 사용자가 기기 설정에서 라이브 액티비티 기능을 껐을 때의 예외를 방어합니다.
-- `pushType: .token`을 전달하면 개별 액티비티 세션 전용 푸시 토큰이 비동기로 발급됩니다. 이 토큰을 서버에 등록하면 앱이 완전 종료(Terminated)된 상태에서도 APNs를 통해 `ContentState`를 원격 갱신할 수 있습니다.
-- `activity.end(using:dismissalPolicy:)`에서 `ActivityUIDismissalPolicy`를 지정합니다. `.immediate`는 즉시 화면에서 제거하고, `.default`는 잠금 화면에 기본 15분(최대 4시간) 동안 최종 상태를 유지한 뒤 제거합니다.
+- `ActivityContent`는 iOS 16.2부터 권장되는 페이로드 래퍼로, 상태 데이터(`state`)와 데이터 만료 일시(`staleDate`)를 함께 캡슐화합니다.
+- `pushType: .token`을 전달하면 개별 세션 전용 토큰이 비동기로 발급됩니다. 단, 시뮬레이터 로컬 테스트 시에는 APNs 서버 연결 부재로 인한 지연을 피하기 위해 `pushType: nil`로 테스트하는 것이 좋습니다.
+- `endDeliveryActivity`에서 `dismissalPolicy`를 `.immediate`로 호출하면 사용자가 배달 완료 상태를 확인할 틈 없이 즉시 지워지므로, 실무에서는 `.after(Date().addingTimeInterval(60))` 또는 `.default`를 적용하여 완료 상태를 일정 시간 노출한 뒤 시스템이 닫도록 구성합니다.
+
+### 3.5 위젯 번들 등록 및 테스트 시뮬레이션 UI
+
+#### 1) 위젯 번들 등록 (`DeliveryActivityWidgetBundle.swift`)
+Xcode에서 Widget Extension 타깃을 생성하면 기본 템플릿으로 일반 홈 화면 위젯(`DeliveryActivityWidget`)이 함께 등록됩니다. 일반 홈 화면 위젯을 제외하고 라이브 액티비티만 단일 제공하려면 번들 `body`에 `DeliveryLiveActivity()`만 남겨 등록합니다.
+
+```swift
+import WidgetKit
+import SwiftUI
+
+@main
+struct DeliveryActivityWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        DeliveryLiveActivity()
+    }
+}
+```
+
+#### 2) 메인 앱 시뮬레이션 UI (`ContentView.swift`)
+버튼을 눌러 배달 시작, 단계별 상태 갱신, 배달 완료 및 지연 종료 동작을 시뮬레이터에서 직접 제어할 수 있는 테스트 화면입니다.
+
+```swift
+import SwiftUI
+import ActivityKit
+
+struct ContentView: View {
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                VStack(spacing: 8) {
+                    Text("배달 라이브 액티비티 테스트")
+                        .font(.title2)
+                        .bold()
+                    Text("버튼을 누른 후 홈 화면으로 나가거나 잠금 화면, Dynamic Island를 확인해 보세요.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .padding(.top, 40)
+                
+                Spacer()
+                
+                // 1. 배달 시작
+                Button {
+                    DeliveryActivityManager.shared.startDeliveryActivity(
+                        orderNumber: "ORD-2026-001",
+                        restaurantName: "BHC 치킨"
+                    )
+                } label: {
+                    Label("1. 배달 시작 (주문 접수)", systemImage: "play.circle.fill")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                // 2. 조리 중 갱신
+                Button {
+                    DeliveryActivityManager.shared.updateDeliveryActivity(
+                        statusText: "조리 중",
+                        progress: 0.3,
+                        estimatedTime: Date().addingTimeInterval(30 * 60)
+                    )
+                } label: {
+                    Label("2. 상태 갱신 (조리 중 30%)", systemImage: "flame.fill")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.orange)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                // 3. 배달 중 갱신
+                Button {
+                    DeliveryActivityManager.shared.updateDeliveryActivity(
+                        statusText: "배달 중",
+                        progress: 0.7,
+                        estimatedTime: Date().addingTimeInterval(10 * 60)
+                    )
+                } label: {
+                    Label("3. 상태 갱신 (배달 중 70%)", systemImage: "bicycle")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                // 4. 배달 완료 및 지연 종료 (1분간 상태 유지 후 자동 소멸)
+                Button {
+                    DeliveryActivityManager.shared.endDeliveryActivity()
+                } label: {
+                    Label("4. 배달 완료 (1분 유지 후 자동 종료)", systemImage: "checkmark.circle.fill")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                // 5. 라이브 액티비티 즉시 종료 (화면에서 바로 제거)
+                Button {
+                    DeliveryActivityManager.shared.endDeliveryActivity(dismissalPolicy: .immediate)
+                } label: {
+                    Label("5. 즉시 종료 테스트 (0초)", systemImage: "xmark.circle.fill")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.red)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+            .navigationTitle("Live Activity")
+        }
+    }
+}
+```
 
 ---
 
@@ -303,3 +488,11 @@ final class DeliveryActivityManager {
 ## 5. 결론 (해당 기술의 기대효과 요약)
 
 라이브 액티비티는 실시간 상태 정보를 다수의 연속된 푸시 알림으로 파편화하지 않고, 단일 세션 기반의 일관된 위젯 인터페이스로 집약합니다. `ActivityKit`을 통한 간결한 생명주기 제어와 `SwiftUI` 기반의 반응형 선언형 UI를 결합함으로써 잠금 화면과 Dynamic Island 전반에 걸쳐 백그라운드 사용자 경험을 개선할 수 있습니다.
+
+---
+
+## 6. 전체 소스코드 저장소
+
+본 글에서 구현한 전체 Xcode 프로젝트 소스코드는 아래 GitHub 저장소에서 확인 및 실행하실 수 있습니다.
+
+- [GitHub Repository: LiveActivityTutorials](https://github.com/yeondububub/blog-code/tree/main/ios/LiveActivitytutorials)
