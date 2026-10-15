@@ -1,5 +1,10 @@
 [
   {
+    "name": "[20261015]_[Really Not SQL]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20261015]_[Really Not SQL]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20261015]_[Really Not SQL]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md"
+  },
+  {
     "name": "[20260918]_[문장 임베딩과 코사인 유사도 기반 시맨틱 검색 파이프라인 구현]_[AI, NLP]_[thumb1.png]_[Sentence Transformers와 코사인 유사도를 활용한 밀집 검색 메커니즘 및 RAG 검색 모듈 구현 분석].md",
     "path": "ai/[20260918]_[문장 임베딩과 코사인 유사도 기반 시맨틱 검색 파이프라인 구현]_[AI, NLP]_[thumb1.png]_[Sentence Transformers와 코사인 유사도를 활용한 밀집 검색 메커니즘 및 RAG 검색 모듈 구현 분석].md",
     "download_url": "ai/[20260918]_[문장 임베딩과 코사인 유사도 기반 시맨틱 검색 파이프라인 구현]_[AI, NLP]_[thumb1.png]_[Sentence Transformers와 코사인 유사도를 활용한 밀집 검색 메커니즘 및 RAG 검색 모듈 구현 분석].md"
@@ -85,24 +90,24 @@
     "download_url": "backend/[20260806]_[스프링 배치 사용법]_[Spring, Batch]_[spring_batch.png]_[스프링 배치의 사용법에 대해 알아본다].md"
   },
   {
-    "name": "[20260726]_[XOR Board]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260726]_[XOR Board]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260726]_[XOR Board]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260726]_[XOR Board]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260726]_[XOR Board]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260726]_[XOR Board]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260724]_[Recover]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260724]_[Recover]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260724]_[Recover]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260724]_[Recover]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260724]_[Recover]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260724]_[Recover]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260723]_[armop]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260723]_[armop]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260723]_[armop]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260723]_[armop]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260718]_[blindsc]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260718]_[blindsc]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260718]_[blindsc]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260718]_[blindsc]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260718]_[blindsc]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260718]_[blindsc]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
     "name": "[20260717]_[Jackson의 Getter 탐색 규칙과 @JsonIgnore 누락 문제]_[Spring]_[spring.png]_[Jackson 라이브러리의 직렬화 탐색 규칙과 @JsonIgnore를 누락했을 때 발생할 수 있는 예상치 못한 필드 노출 문제].md",
@@ -125,63 +130,63 @@
     "download_url": "backend/[20260713]_[Redis Cache 조회수 캐싱]_[Spring, Redis]_[]_[Spring Boot와 Redis를 활용하여 조회수 데이터를 캐싱하는 방법을 알아봅니다.].md"
   },
   {
-    "name": "[20260704]_[send sig]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260704]_[send sig]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260704]_[send sig]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260704]_[send sig]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260704]_[send sig]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260704]_[send sig]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260701]_[p_rho]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260701]_[p_rho]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260701]_[p_rho]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260701]_[p_rho]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260701]_[p_rho]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260701]_[p_rho]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260604]_[cpp_type_confusion]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260604]_[cpp_type_confusion]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260604]_[cpp_type_confusion]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260604]_[cpp_type_confusion]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260604]_[cpp_type_confusion]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260604]_[cpp_type_confusion]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260520]_[base64-encoder]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260520]_[base64-encoder]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260520]_[base64-encoder]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260520]_[base64-encoder]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260520]_[base64-encoder]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260520]_[base64-encoder]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260516]_[struct person_t]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260516]_[struct person_t]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260516]_[struct person_t]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260516]_[struct person_t]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260516]_[struct person_t]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260516]_[struct person_t]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260514]_[no mov]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260514]_[no mov]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260514]_[no mov]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260514]_[no mov]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260514]_[no mov]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260514]_[no mov]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260511]_[Cherry]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260511]_[Cherry]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260511]_[Cherry]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260511]_[Cherry]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260511]_[Cherry]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260511]_[Cherry]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260508]_[Cat jump]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260508]_[Cat jump]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260508]_[Cat jump]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260508]_[Cat jump]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260508]_[Cat jump]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260508]_[Cat jump]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260507]_[mmapped]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260507]_[mmapped]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260507]_[mmapped]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260507]_[mmapped]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260507]_[mmapped]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260507]_[mmapped]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260506]_[awesome-basics]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260506]_[awesome-basics]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260506]_[awesome-basics]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260506]_[awesome-basics]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260506]_[awesome-basics]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260506]_[awesome-basics]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260504]_[Polar Bear Hunt]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260504]_[Polar Bear Hunt]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260504]_[Polar Bear Hunt]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260504]_[Polar Bear Hunt]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260504]_[Polar Bear Hunt]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260504]_[Polar Bear Hunt]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   },
   {
-    "name": "[20260504]_[cpp string]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "path": "security/[20260504]_[cpp string]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md",
-    "download_url": "security/[20260504]_[cpp string]_[wargame]_[dreamhack.png]_[드림핵 문제풀이].md"
+    "name": "[20260504]_[cpp string]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "path": "security/[20260504]_[cpp string]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md",
+    "download_url": "security/[20260504]_[cpp string]_[wargame_Pwnable]_[dreamhack.png]_[드림핵 문제풀이].md"
   }
 ]
