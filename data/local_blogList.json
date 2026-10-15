@@ -65,9 +65,9 @@
     "download_url": "backend/[20260815]_[Transactional Outbox 패턴]_[Spring, Kafka]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현].md"
   },
   {
-    "name": "[20260814]_[Spring Cloud Stream 입문]_[Spring, Kafka]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현].md",
-    "path": "backend/[20260814]_[Spring Cloud Stream 입문]_[Spring, Kafka]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현].md",
-    "download_url": "backend/[20260814]_[Spring Cloud Stream 입문]_[Spring, Kafka]_[spring.png]_[Spring Cloud Stream과 Kafka Reactive Binder를 활용한 이벤트 스트리밍 및 Outbox 패턴 구현].md"
+    "name": "[20260814]_[Spring Cloud Stream 입문]_[Spring, Kafka]_[spring.png]_[Spring Cloud Stream의 핵심 이점과 선언적 카프카 트랜잭션].md",
+    "path": "backend/[20260814]_[Spring Cloud Stream 입문]_[Spring, Kafka]_[spring.png]_[Spring Cloud Stream의 핵심 이점과 선언적 카프카 트랜잭션].md",
+    "download_url": "backend/[20260814]_[Spring Cloud Stream 입문]_[Spring, Kafka]_[spring.png]_[Spring Cloud Stream의 핵심 이점과 선언적 카프카 트랜잭션].md"
   },
   {
     "name": "[20260813]_[Spring WebFlux 입문]_[Spring, WebFlux]_[spring.png]_[WebFlux와 R2DBC].md",
