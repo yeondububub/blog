@@ -94,34 +94,3 @@ curl -X POST http://host3.dreamhack.games:포트번호/ping \
 ```
 
 서버로부터 반환되는 JSON 응답의 `stderr` 필드에서 플래그를 확인할 수 있습니다.
-
----
-
-## 대응 방안
-
-Command Injection 취약점을 방지하기 위해서는 블랙리스트 방식의 문자 필터링에 의존하지 않고 명령어 실행 구조를 변경해야 합니다.
-
-```python
-@app.route('/ping', methods=['POST'])
-def ping():
-    ip = request.form.get('ip', '').strip()
-    
-    # 1. 화이트리스트 기반의 정규표현식 검증 적용
-    if not is_valid_ip(ip):
-        return jsonify({'error': 'Invalid IP address format'}), 400
-    
-    try:
-        # 2. shell=False(기본값)를 사용하고 명령어와 인자를 리스트 형태로 분리하여 전달
-        cmd = ['ping', '-c', '4', ip]
-        result = subprocess.run(cmd, shell=False, capture_output=True, text=True, timeout=10)
-        
-        return jsonify({
-            'command': ' '.join(cmd),
-            'stdout': result.stdout,
-            'stderr': result.stderr,
-            'returncode': result.returncode
-        })
-```
-
-1. **화이트리스트 검증 적용**: 선언만 되어 있던 `is_valid_ip` 함수를 호출하여 입력값이 IPv4 주소 형식에 부합하는지 검증합니다.
-2. **서브셸 호출 제거**: `subprocess.run` 사용 시 `shell=False`로 설정하고 인자를 리스트(`['ping', '-c', '4', ip]`) 형태로 전달합니다. 이 방식을 사용하면 시스템 셸이 개입하지 않고 프로세스가 실행되므로, 입력값에 백틱이나 `$` 등의 메타 문자가 포함되어 있더라도 명령어로 해석되지 않고 단일 문자열 인자로만 처리됩니다.
