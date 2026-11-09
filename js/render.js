@@ -15,16 +15,13 @@ function search(keyword, kinds) {
   // 카테고리(폴더) 진입 시 상단 배너 노출/숨김 처리
   if (kinds === "folder") {
     const banner = document.getElementById("category-banner");
-    let bannerKey = keyword;
-    if (keyword === "blog") bannerKey = "diary";
-
     if (
       banner &&
       typeof categoryBanners !== "undefined" &&
-      categoryBanners[bannerKey]
+      categoryBanners[keyword]
     ) {
       document.getElementById("category-banner-desc").innerText =
-        categoryBanners[bannerKey].description;
+        categoryBanners[keyword].description;
       banner.classList.remove("hidden");
     } else if (banner) {
       banner.classList.add("hidden");
@@ -176,18 +173,13 @@ async function renderMenu() {
         window.history.pushState({}, "", nextUrl);
       };
 
-      if (menu.name === "Diary.md") {
-        handleFolderMenuClick("blog");
-      } else if (menu.name === "Development.md") {
-        handleFolderMenuClick("development");
-      } else if (menu.name === "AI.md") {
-        handleFolderMenuClick("ai");
-      } else if (menu.name === "Backend.md") {
-        handleFolderMenuClick("backend");
-      } else if (menu.name === "iOS.md") {
-        handleFolderMenuClick("ios");
-      } else if (menu.name === "Security.md") {
-        handleFolderMenuClick("security");
+      const targetFolder =
+        typeof categoryFolderMap !== "undefined"
+          ? categoryFolderMap[menu.name]
+          : null;
+
+      if (targetFolder) {
+        handleFolderMenuClick(targetFolder);
       } else {
         renderOtherContents(menu);
       }
@@ -317,10 +309,8 @@ function createCardElement(fileInfo, index) {
       event.stopPropagation();
       search(cat.toLowerCase(), "category");
       const nextUrl = new URL(origin);
-      if (typeof currentFolder !== "undefined" && currentFolder && typeof categoryFolderMap !== "undefined") {
-        const menuFileName = Object.keys(categoryFolderMap).find(
-          (key) => categoryFolderMap[key] === currentFolder
-        );
+      if (typeof currentFolder !== "undefined" && currentFolder && typeof folderMenuMap !== "undefined") {
+        const menuFileName = folderMenuMap[currentFolder];
         if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
       }
       nextUrl.searchParams.set("search", cat);
@@ -529,10 +519,8 @@ function renderBlogCategory(targetList = blogList) {
     const resetInputButton = document.querySelector(".reset-inp-btn");
     if (resetInputButton) resetInputButton.classList.add("hidden");
 
-    if (currentFolder && typeof categoryFolderMap !== "undefined") {
-      const menuFileName = Object.keys(categoryFolderMap).find(
-        (key) => categoryFolderMap[key] === currentFolder
-      );
+    if (currentFolder && typeof folderMenuMap !== "undefined") {
+      const menuFileName = folderMenuMap[currentFolder];
       if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
       search(currentFolder, "folder");
     } else {
@@ -555,10 +543,8 @@ function renderBlogCategory(targetList = blogList) {
     categoryItem.onclick = () => {
       search(catKey, "category");
       const nextUrl = new URL(origin);
-      if (currentFolder && typeof categoryFolderMap !== "undefined") {
-        const menuFileName = Object.keys(categoryFolderMap).find(
-          (key) => categoryFolderMap[key] === currentFolder
-        );
+      if (currentFolder && typeof folderMenuMap !== "undefined") {
+        const menuFileName = folderMenuMap[currentFolder];
         if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
       }
       nextUrl.searchParams.set("search", item.displayName);

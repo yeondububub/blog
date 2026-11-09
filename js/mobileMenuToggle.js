@@ -42,18 +42,13 @@ window.addEventListener("click", (event) => {
       }
     };
 
-    if (menuName === "Diary.md") {
-      handleMobileMenuClick("blog");
-    } else if (menuName === "Development.md") {
-      handleMobileMenuClick("development");
-    } else if (menuName === "AI.md") {
-      handleMobileMenuClick("ai");
-    } else if (menuName === "Backend.md") {
-      handleMobileMenuClick("backend");
-    } else if (menuName === "iOS.md") {
-      handleMobileMenuClick("ios");
-    } else if (menuName === "Security.md") {
-      handleMobileMenuClick("security");
+    const targetFolder =
+      typeof categoryFolderMap !== "undefined"
+        ? categoryFolderMap[menuName]
+        : null;
+
+    if (targetFolder) {
+      handleMobileMenuClick(targetFolder);
     } else {
       renderOtherContents(menuName);
     }

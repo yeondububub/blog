@@ -172,10 +172,8 @@ function styleMarkdown(kinds, text, title_info = null) {
         document.getElementById("blog-posts").style.display = "grid";
         search(cat.toLowerCase(), "category");
         const nextUrl = new URL(origin);
-        if (typeof currentFolder !== "undefined" && currentFolder && typeof categoryFolderMap !== "undefined") {
-          const menuFileName = Object.keys(categoryFolderMap).find(
-            (key) => categoryFolderMap[key] === currentFolder
-          );
+        if (typeof currentFolder !== "undefined" && currentFolder && typeof folderMenuMap !== "undefined") {
+          const menuFileName = folderMenuMap[currentFolder];
           if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
         }
         nextUrl.searchParams.set("search", cat);
@@ -448,10 +446,8 @@ function styleJupyter(kinds, text, title_info = null) {
         document.getElementById("blog-posts").style.display = "grid";
         search(cat.toLowerCase(), "category");
         const nextUrl = new URL(origin);
-        if (typeof currentFolder !== "undefined" && currentFolder && typeof categoryFolderMap !== "undefined") {
-          const menuFileName = Object.keys(categoryFolderMap).find(
-            (key) => categoryFolderMap[key] === currentFolder
-          );
+        if (typeof currentFolder !== "undefined" && currentFolder && typeof folderMenuMap !== "undefined") {
+          const menuFileName = folderMenuMap[currentFolder];
           if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
         }
         nextUrl.searchParams.set("search", cat);

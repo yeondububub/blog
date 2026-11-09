@@ -57,13 +57,10 @@ async function initDataBlogList() {
 
   // GitHub API 조회 또는 로컬 JSON 로드
   if (siteConfig.username && siteConfig.repositoryName && !localDataUsing) {
-    const folders = [
-      "security",
-      "backend",
-      "development",
-      "ai",
-      "ios",
-    ];
+    const folders =
+      typeof postFolders !== "undefined" && Array.isArray(postFolders)
+        ? postFolders
+        : [];
     try {
       const fetchPromises = folders.map(async (folder) => {
         try {

@@ -36,9 +36,10 @@ python3 update_blog_list.py
 
 ## 2. 메뉴 및 카테고리 관리
 
-- **메뉴 생성**: `menu/` 폴더에 `[메뉴이름].md` (예: `Backend.md`, `Security.md`)를 추가합니다.
-- **메뉴 노출 순서**: `config.js`의 `siteConfig.menuOrder` 배열을 통해 상단 네비게이션 노출 순서를 제어합니다.
-- **카테고리 배너**: `config.js`의 `categoryBanners` 객체에 폴더별 배너 설명을 설정합니다.
+- **통합 카테고리 설정**: `config.js`의 `categoriesConfig` 배열 한 곳에서 메뉴 파일명(`menu`), 실제 포스트 폴더(`folder`), 상단 배너 설명(`description`), 네비게이션 노출 순서를 통합 관리합니다.
+- **새 카테고리 추가 방법**:
+  1. 루트에 새 카테고리 폴더를 생성하고 `menu/` 폴더에 `[메뉴이름].md` 파일을 추가합니다.
+  2. `config.js`의 `categoriesConfig` 배열에 항목을 추가한 뒤 `python3 update_blog_list.py`를 실행합니다.
 
 ---
 

@@ -46,18 +46,6 @@ if (isLocal) {
 }
 
 /**
- * 카테고리(게시판) 메뉴 파일명과 실제 폴더 경로 매핑 테이블
- */
-const categoryFolderMap = {
-  "Diary.md": "blog",
-  "Development.md": "development",
-  "AI.md": "ai",
-  "Backend.md": "backend",
-  "iOS.md": "ios",
-  "Security.md": "security",
-};
-
-/**
  * 브라우저 뒤로가기 / 앞으로가기 네비게이션 이벤트 핸들러
  */
 window.addEventListener("popstate", () => {
