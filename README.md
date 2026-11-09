@@ -23,15 +23,14 @@
   [20260815]_[Transactional Outbox 패턴]_[Spring, Kafka]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현].md
   ```
 
-### 1.2 블로그 목록 등록
-새 글을 작성한 후에는 `data/local_blogList.json` 파일에 해당 포스트 정보를 등록합니다.
+### 1.2 블로그 목록 등록 (자동화)
+새 글을 작성한 후에는 루트 경로의 `update_blog_list.py` 스크립트를 실행하면 각 폴더를 스캔하여 `data/local_blogList.json` 및 `data/local_blogMenu.json`을 자동으로 갱신합니다.
 
-```json
-{
-    "name": "[20260815]_[Transactional Outbox 패턴]_[Spring, Kafka]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현].md",
-    "download_url": "/backend/[20260815]_[Transactional Outbox 패턴]_[Spring, Kafka]_[spring.png]_[분산 시스템 환경에서 이중 쓰기 문제를 해결하는 트랜잭셔널 아웃박스 패턴 구현].md"
-}
+```bash
+python3 update_blog_list.py
 ```
+
+또한 GitHub Actions 워크플로(`.github/workflows/update-blog-list.yml`)가 설정되어 있어, `main` 브랜치에 새 마크다운 파일을 푸시하면 자동으로 JSON 목록이 갱신됩니다.
 
 ---
 

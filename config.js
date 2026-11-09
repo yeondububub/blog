@@ -56,7 +56,7 @@ const users = [
 
 /**
  * 로컬 데이터 강제 사용 플래그
+ * - true: GitHub API를 호출하지 않고 정적 JSON(data/local_blogList.json)을 직접 로드 (Rate Limit 방지 및 로딩 속도 개선)
  * - false: GitHub API를 통한 동적 조회를 우선 시도하며, 실패 시 로컬 JSON으로 Fallback
- * - true: GitHub API를 호출하지 않고 로컬 JSON(data/local_blogList.json)만 사용
  */
-const localDataUsing = false;
+const localDataUsing = true;

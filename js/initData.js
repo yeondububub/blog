@@ -29,18 +29,20 @@ async function initDataBlogList() {
     return blogList;
   }
 
-  // sessionStorage 캐시 확인 (불필요한 네트워크 트래픽 방지)
-  const cachedBlogList = sessionStorage.getItem("blogList");
-  if (cachedBlogList) {
-    try {
-      const parsed = JSON.parse(cachedBlogList);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        blogList = parsed;
-        isInitData = true;
-        return blogList;
+  // GitHub API 모드일 때만 sessionStorage 캐시 사용 (Rate Limit 방지)
+  if (!localDataUsing) {
+    const cachedBlogList = sessionStorage.getItem("blogList");
+    if (cachedBlogList) {
+      try {
+        const parsed = JSON.parse(cachedBlogList);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          blogList = parsed;
+          isInitData = true;
+          return blogList;
+        }
+      } catch (e) {
+        console.error("Failed to parse cached blogList:", e);
       }
-    } catch (e) {
-      console.error("Failed to parse cached blogList:", e);
     }
   }
 
@@ -56,8 +58,6 @@ async function initDataBlogList() {
   // GitHub API 조회 또는 로컬 JSON 로드
   if (siteConfig.username && siteConfig.repositoryName && !localDataUsing) {
     const folders = [
-      "blog",
-      "diary",
       "security",
       "backend",
       "development",
@@ -138,17 +138,19 @@ async function initDataBlogMenu() {
     return blogMenu;
   }
 
-  // sessionStorage 캐시 확인
-  const cachedBlogMenu = sessionStorage.getItem("blogMenu");
-  if (cachedBlogMenu) {
-    try {
-      const parsed = JSON.parse(cachedBlogMenu);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        blogMenu = parsed;
-        return blogMenu;
+  // GitHub API 모드일 때만 sessionStorage 캐시 확인
+  if (!localDataUsing) {
+    const cachedBlogMenu = sessionStorage.getItem("blogMenu");
+    if (cachedBlogMenu) {
+      try {
+        const parsed = JSON.parse(cachedBlogMenu);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          blogMenu = parsed;
+          return blogMenu;
+        }
+      } catch (e) {
+        console.error("Failed to parse cached blogMenu:", e);
       }
-    } catch (e) {
-      console.error("Failed to parse cached blogMenu:", e);
     }
   }
 

@@ -1,0 +1,45 @@
+name: Update Blog List JSON
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "ai/**"
+      - "development/**"
+      - "ios/**"
+      - "security/**"
+      - "blog/**"
+      - "diary/**"
+      - "menu/**"
+      - "update_blog_list.py"
+
+permissions:
+  contents: write
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run blog list generator
+        run: python3 update_blog_list.py
+
+      - name: Commit and push updated JSON files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/local_blogList.json data/local_blogMenu.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update local_blogList.json and local_blogMenu.json"
+            git push
+          fi
+
