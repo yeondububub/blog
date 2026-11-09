@@ -150,6 +150,16 @@ function styleMarkdown(kinds, text, title_info = null) {
 
   // 6. 블로그 포스트 상단 헤더 섹션(카테고리, 제목, 작성자, 날짜, 썸네일) 생성
   if (kinds === "post" && title_info) {
+    // 본문 최상단에 마크다운 대제목(H1)이 작성되어 있는 경우 중복 노출 및 TOC 중복 방지를 위해 제거
+    const firstH1 = tempDiv.querySelector("h1");
+    if (firstH1) {
+      const h1Text = firstH1.textContent.trim().toLowerCase();
+      const metaTitle = (title_info.title || "").trim().toLowerCase();
+      if (h1Text === metaTitle || firstH1 === tempDiv.firstElementChild) {
+        firstH1.remove();
+      }
+    }
+
     const title_section = document.createElement("div");
 
     // 카테고리 태그 목록
@@ -425,6 +435,15 @@ function styleJupyter(kinds, text, title_info = null) {
 
   // 상단 헤더 섹션 생성
   if (kinds === "post" && title_info) {
+    const firstH1 = tempDiv.querySelector("h1");
+    if (firstH1) {
+      const h1Text = firstH1.textContent.trim().toLowerCase();
+      const metaTitle = (title_info.title || "").trim().toLowerCase();
+      if (h1Text === metaTitle || firstH1 === tempDiv.firstElementChild) {
+        firstH1.remove();
+      }
+    }
+
     const title_section = document.createElement("div");
 
     const categoryContainer = document.createElement("div");

@@ -54,18 +54,28 @@ function escapeHtml(text) {
  * @returns {object|null} 추출된 포스트 메타데이터
  */
 function extractFileInfo(filename) {
+  if (!filename) return null;
+  const normalizedFilename = filename.normalize("NFC");
   const regex =
     /^\[(\d{8})\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\](?:\_\[(.*?)\])?\.(md|ipynb)$/;
-  const matches = filename.match(regex);
+  const matches = normalizedFilename.match(regex);
 
   if (matches) {
+    const title = matches[2];
+    // 썸네일이 비어 있을 때 제목 문자열 기반으로 일관된 기본 썸네일(thumb1.png ~ thumb7.png) 매핑
+    const titleCharCodeSum = Array.from(title).reduce(
+      (acc, char) => acc + char.charCodeAt(0),
+      0
+    );
+    const defaultThumbIndex = (titleCharCodeSum % 7) + 1;
+
     return {
       date: matches[1],
-      title: matches[2],
+      title: title,
       category: matches[3],
       thumbnail: matches[4]
         ? "img/" + matches[4]
-        : `img/thumb${Math.floor(Math.random() * 7) + 1}.png`,
+        : `img/thumb${defaultThumbIndex}.png`,
       description: matches[5],
       author: matches[6] ? parseInt(matches[6], 10) : 0,
       fileType: matches[7],

@@ -10,7 +10,7 @@ let currentFolder = "";
  * @param {string} [kinds=""] - 검색 필터 유형 ('category' | 'folder' | '')
  */
 function search(keyword, kinds) {
-  keyword = keyword ? keyword.toLowerCase().trim() : "";
+  keyword = keyword ? keyword.normalize("NFC").toLowerCase().trim() : "";
 
   // 카테고리(폴더) 진입 시 상단 배너 노출/숨김 처리
   if (kinds === "folder") {
@@ -46,9 +46,11 @@ function search(keyword, kinds) {
       renderBlogCategory(blogList);
 
       const searchInput = document.getElementById("search-input");
-      const searchKeyword = searchInput ? searchInput.value.toLowerCase() : "";
+      const searchKeyword = searchInput
+        ? searchInput.value.normalize("NFC").toLowerCase()
+        : "";
       const searchResult = blogList.filter((post) =>
-        post.name.toLowerCase().includes(searchKeyword)
+        post.name.normalize("NFC").toLowerCase().includes(searchKeyword)
       );
       renderBlogList(searchResult);
     } else {
@@ -74,7 +76,7 @@ function search(keyword, kinds) {
             if (postInfo) {
               const categories = postInfo.category
                 .split(",")
-                .map((c) => c.trim().toLowerCase());
+                .map((c) => c.trim().normalize("NFC").toLowerCase());
               if (categories.includes(keyword)) {
                 return post;
               }
@@ -114,7 +116,10 @@ function search(keyword, kinds) {
                       .includes(`/${currentFolder}/`));
                 if (!inCurrentFolder) return false;
               }
-              return post.name.toLowerCase().includes(keyword);
+              return post.name
+                .normalize("NFC")
+                .toLowerCase()
+                .includes(keyword);
             });
             if (fallbackResult.length > 0) {
               searchResult = fallbackResult;
@@ -130,7 +135,7 @@ function search(keyword, kinds) {
         // 일반 텍스트 키워드 검색
         const searchKeyword = keyword.toLowerCase();
         const searchResult = blogList.filter((post) =>
-          post.name.toLowerCase().includes(searchKeyword)
+          post.name.normalize("NFC").toLowerCase().includes(searchKeyword)
         );
         renderBlogList(searchResult);
       }
@@ -154,35 +159,10 @@ async function renderMenu() {
 
     link.onclick = (event) => {
       event.preventDefault();
-
-      const handleFolderMenuClick = (targetFolder) => {
-        const searchInput = document.getElementById("search-input");
-        if (searchInput) searchInput.value = "";
-        const resetInputButton = document.querySelector(".reset-inp-btn");
-        if (resetInputButton) resetInputButton.classList.add("hidden");
-
-        if (blogList.length === 0) {
-          initDataBlogList().then(() => {
-            search(targetFolder, "folder");
-          });
-        } else {
-          search(targetFolder, "folder");
-        }
-        const nextUrl = new URL(origin);
-        nextUrl.searchParams.set("menu", menu.name);
-        window.history.pushState({}, "", nextUrl);
-      };
-
-      const targetFolder =
-        typeof categoryFolderMap !== "undefined"
-          ? categoryFolderMap[menu.name]
-          : null;
-
-      if (targetFolder) {
-        handleFolderMenuClick(targetFolder);
-      } else {
-        renderOtherContents(menu);
-      }
+      const nextUrl = new URL(origin);
+      nextUrl.searchParams.set("menu", menu.name);
+      window.history.pushState({}, "", nextUrl);
+      handleRoute();
     };
     document.getElementById("menu").appendChild(link);
   });
@@ -227,10 +207,24 @@ async function renderMenu() {
 
   // 검색 입력창 엔터 및 클릭 이벤트
   const searchInput = document.getElementById("search-input");
+  const executeSearch = () => {
+    const keyword = searchInput ? searchInput.value.trim() : "";
+    const nextUrl = new URL(origin);
+    if (currentFolder && typeof folderMenuMap !== "undefined") {
+      const menuFileName = folderMenuMap[currentFolder];
+      if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
+    }
+    if (keyword) {
+      nextUrl.searchParams.set("search", keyword);
+    }
+    window.history.pushState({}, "", nextUrl);
+    handleRoute();
+  };
+
   if (searchInput) {
     searchInput.onkeyup = (event) => {
       if (event.key === "Enter") {
-        search();
+        executeSearch();
       }
     };
     searchInput.onclick = (event) => {
@@ -242,7 +236,7 @@ async function renderMenu() {
   if (searchInputButton) {
     searchInputButton.onclick = (event) => {
       event.stopPropagation();
-      search();
+      executeSearch();
     };
   }
 
@@ -259,6 +253,13 @@ async function renderMenu() {
       event.stopPropagation();
       searchInput.value = "";
       resetInputButton.classList.add("hidden");
+      const nextUrl = new URL(origin);
+      if (currentFolder && typeof folderMenuMap !== "undefined") {
+        const menuFileName = folderMenuMap[currentFolder];
+        if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
+      }
+      window.history.pushState({}, "", nextUrl);
+      handleRoute();
     });
   }
 }
@@ -307,7 +308,6 @@ function createCardElement(fileInfo, index) {
 
     category.onclick = (event) => {
       event.stopPropagation();
-      search(cat.toLowerCase(), "category");
       const nextUrl = new URL(origin);
       if (typeof currentFolder !== "undefined" && currentFolder && typeof folderMenuMap !== "undefined") {
         const menuFileName = folderMenuMap[currentFolder];
@@ -315,6 +315,7 @@ function createCardElement(fileInfo, index) {
       }
       nextUrl.searchParams.set("search", cat);
       window.history.pushState({}, "", nextUrl);
+      handleRoute();
     };
     categoryContainer.appendChild(category);
   });
@@ -388,26 +389,10 @@ function renderBlogList(searchResult = null, currentPage = 1) {
 
       cardElement.onclick = (event) => {
         event.preventDefault();
-        document.getElementById("contents").style.display = "block";
-        document.getElementById("blog-posts").style.display = "none";
-        document.getElementById("pagination").style.display = "none";
-
-        const postDownloadUrl = getPostDownloadUrl(post);
-        fetch(postDownloadUrl)
-          .then((response) => response.text())
-          .then((text) =>
-            postInfo.fileType === "md"
-              ? styleMarkdown("post", text, postInfo)
-              : styleJupyter("post", text, postInfo)
-          )
-          .then(() => {
-            const nextUrl = new URL(origin);
-            nextUrl.searchParams.set("post", post.name);
-            window.history.pushState({}, "", nextUrl);
-          })
-          .catch(() => {
-            styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
-          });
+        const nextUrl = new URL(origin);
+        nextUrl.searchParams.set("post", post.name);
+        window.history.pushState({}, "", nextUrl);
+        handleRoute();
       };
       document.getElementById("blog-posts").appendChild(cardElement);
     }
@@ -421,42 +406,11 @@ function renderBlogList(searchResult = null, currentPage = 1) {
  * @param {object|string} menu - 메뉴 객체 또는 메뉴 파일명 문자열
  */
 function renderOtherContents(menu) {
-  const searchInput = document.getElementById("search-input");
-  if (searchInput) searchInput.value = "";
-  const resetInputButton = document.querySelector(".reset-inp-btn");
-  if (resetInputButton) resetInputButton.classList.add("hidden");
-
-  const banner = document.getElementById("category-banner");
-  if (banner) banner.classList.add("hidden");
-
-  document.getElementById("blog-posts").style.display = "none";
-  document.getElementById("contents").style.display = "block";
-  if (document.getElementById("pagination")) {
-    document.getElementById("pagination").style.display = "none";
-    document.getElementById("pagination").innerHTML = "";
-  }
-
-  let menuDownloadUrl;
-  let menuName;
-  if (typeof menu === "string") {
-    menuName = menu.split("/").pop();
-    menuDownloadUrl = getPostDownloadUrl(`menu/${menuName}`);
-  } else {
-    menuName = menu.name;
-    menuDownloadUrl = getPostDownloadUrl(menu.download_url || `menu/${menu.name}`);
-  }
-
-  fetch(menuDownloadUrl)
-    .then((response) => response.text())
-    .then((text) => styleMarkdown("menu", text, undefined))
-    .then(() => {
-      const nextUrl = new URL(origin);
-      nextUrl.searchParams.set("menu", menuName);
-      window.history.pushState({}, "", nextUrl);
-    })
-    .catch(() => {
-      styleMarkdown("menu", "# Error입니다. 파일명을 확인해주세요.", undefined);
-    });
+  const menuName = typeof menu === "string" ? menu.split("/").pop() : menu.name;
+  const nextUrl = new URL(origin);
+  nextUrl.searchParams.set("menu", menuName);
+  window.history.pushState({}, "", nextUrl);
+  handleRoute();
 }
 
 /**
@@ -514,19 +468,12 @@ function renderBlogCategory(targetList = blogList) {
   allItem.textContent = "All";
   allItem.onclick = () => {
     const nextUrl = new URL(origin);
-    const searchInput = document.getElementById("search-input");
-    if (searchInput) searchInput.value = "";
-    const resetInputButton = document.querySelector(".reset-inp-btn");
-    if (resetInputButton) resetInputButton.classList.add("hidden");
-
     if (currentFolder && typeof folderMenuMap !== "undefined") {
       const menuFileName = folderMenuMap[currentFolder];
       if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
-      search(currentFolder, "folder");
-    } else {
-      search();
     }
     window.history.pushState({}, "", nextUrl);
+    handleRoute();
   };
   const allCount = document.createElement("span");
   allCount.classList.add(...categoryItemCountStyle.split(" "));
@@ -541,7 +488,6 @@ function renderBlogCategory(targetList = blogList) {
     categoryItem.classList.add(...categoryItemStyle.split(" "));
     categoryItem.textContent = item.displayName;
     categoryItem.onclick = () => {
-      search(catKey, "category");
       const nextUrl = new URL(origin);
       if (currentFolder && typeof folderMenuMap !== "undefined") {
         const menuFileName = folderMenuMap[currentFolder];
@@ -549,6 +495,7 @@ function renderBlogCategory(targetList = blogList) {
       }
       nextUrl.searchParams.set("search", item.displayName);
       window.history.pushState({}, "", nextUrl);
+      handleRoute();
     };
 
     const categoryCount = document.createElement("span");
@@ -748,9 +695,9 @@ function renderPagination(totalPage, currentPage, targetList = null) {
 }
 
 /**
- * 최초 페이지 진입 시 URL 파라미터를 분석하여 알맞은 화면을 렌더링하는 초기화 함수
+ * URL 파라미터를 분석하여 알맞은 화면(포스트 상세, 카테고리 목록, 검색 결과, 홈)을 렌더링하는 단일 라우터 함수
  */
-async function initialize() {
+async function handleRoute() {
   const currentUrl = new URL(window.location.href);
   const searchParams = currentUrl.searchParams;
 
@@ -758,89 +705,132 @@ async function initialize() {
   const menuParam = searchParams.get("menu");
   const searchParam = searchParams.get("search");
 
-  await initDataBlogMenu();
-  renderMenu();
+  await initDataBlogList();
 
   if (postParam) {
+    // 1. 블로그 상세 포스트 렌더링
     document.getElementById("contents").style.display = "block";
     document.getElementById("blog-posts").style.display = "none";
-    if (document.getElementById("pagination")) {
-      document.getElementById("pagination").style.display = "none";
-      document.getElementById("pagination").innerHTML = "";
+    const paginationEl = document.getElementById("pagination");
+    if (paginationEl) {
+      paginationEl.style.display = "none";
+      paginationEl.innerHTML = "";
     }
-    await initDataBlogList();
+    const banner = document.getElementById("category-banner");
+    if (banner) banner.classList.add("hidden");
 
-    const postNameDecode = decodeURIComponent(postParam).replaceAll(
-      "+",
-      " "
-    );
+    const postNameDecode = decodeURIComponent(postParam)
+      .normalize("NFC")
+      .replaceAll("+", " ");
     const postInfo = extractFileInfo(postNameDecode);
-    const targetPost = blogList.find((p) => p.name === postNameDecode);
+    const targetPost = blogList.find(
+      (p) => p.name.normalize("NFC") === postNameDecode
+    );
     const fetchUrl = targetPost
       ? getPostDownloadUrl(targetPost)
       : getPostDownloadUrl(`blog/${postNameDecode}`);
 
     try {
-      fetch(fetchUrl)
-        .then((response) => response.text())
-        .then((text) =>
-          postInfo && postInfo.fileType === "md"
-            ? styleMarkdown("post", text, postInfo)
-            : styleJupyter("post", text, postInfo)
-        )
-        .catch(() => {
-          styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
-        });
+      const response = await fetch(fetchUrl);
+      const text = await response.text();
+      if (postInfo && postInfo.fileType === "md") {
+        styleMarkdown("post", text, postInfo);
+      } else {
+        styleJupyter("post", text, postInfo);
+      }
+      window.scrollTo(0, 0);
     } catch (error) {
       styleMarkdown("post", "# Error입니다. 파일명을 확인해주세요.");
+      window.scrollTo(0, 0);
     }
   } else if (menuParam && menuParam !== "blog.md") {
+    // 2. 카테고리 게시판(폴더) 또는 단독 마크다운 메뉴(About.md 등)
     if (typeof categoryFolderMap !== "undefined" && categoryFolderMap[menuParam]) {
       document.getElementById("contents").style.display = "none";
-      await initDataBlogList();
+      document.getElementById("blog-posts").style.display = "grid";
+
       const folder = categoryFolderMap[menuParam];
       if (searchParam) {
         currentFolder = folder;
-        const decodedSearch = decodeURIComponent(searchParam).replaceAll("+", " ");
+        const decodedSearch = decodeURIComponent(searchParam)
+          .normalize("NFC")
+          .replaceAll("+", " ");
         const searchInput = document.getElementById("search-input");
         if (searchInput) searchInput.value = decodedSearch;
         const resetInputButton = document.querySelector(".reset-inp-btn");
         if (resetInputButton) resetInputButton.classList.remove("hidden");
         search(decodedSearch.toLowerCase(), "category");
       } else {
+        const searchInput = document.getElementById("search-input");
+        if (searchInput) searchInput.value = "";
+        const resetInputButton = document.querySelector(".reset-inp-btn");
+        if (resetInputButton) resetInputButton.classList.add("hidden");
         search(folder, "folder");
       }
     } else {
+      // 단독 마크다운 메뉴
       document.getElementById("blog-posts").style.display = "none";
       document.getElementById("contents").style.display = "block";
-      if (document.getElementById("pagination")) {
-        document.getElementById("pagination").style.display = "none";
-        document.getElementById("pagination").innerHTML = "";
+      const paginationEl = document.getElementById("pagination");
+      if (paginationEl) {
+        paginationEl.style.display = "none";
+        paginationEl.innerHTML = "";
       }
+      const banner = document.getElementById("category-banner");
+      if (banner) banner.classList.add("hidden");
+
       const menuFetchUrl = getPostDownloadUrl(`menu/${menuParam}`);
-      fetch(menuFetchUrl)
-        .then((response) => response.text())
-        .then((text) => styleMarkdown("menu", text))
-        .catch(() => {
-          styleMarkdown("menu", "# Error입니다. 파일명을 확인해주세요.");
-        });
+      try {
+        const response = await fetch(menuFetchUrl);
+        const text = await response.text();
+        styleMarkdown("menu", text);
+        window.scrollTo(0, 0);
+      } catch (error) {
+        styleMarkdown("menu", "# Error입니다. 파일명을 확인해주세요.");
+        window.scrollTo(0, 0);
+      }
     }
   } else if (searchParam) {
-    // 태그/키워드 검색 상태 복원
+    // 3. 태그 / 키워드 검색
     document.getElementById("contents").style.display = "none";
     document.getElementById("blog-posts").style.display = "grid";
-    await initDataBlogList();
+    const banner = document.getElementById("category-banner");
+    if (banner) banner.classList.add("hidden");
+
     currentFolder = "";
-    const decodedSearch = decodeURIComponent(searchParam).replaceAll("+", " ");
+    const decodedSearch = decodeURIComponent(searchParam)
+      .normalize("NFC")
+      .replaceAll("+", " ");
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = decodedSearch;
     const resetInputButton = document.querySelector(".reset-inp-btn");
     if (resetInputButton) resetInputButton.classList.remove("hidden");
     search(decodedSearch.toLowerCase(), "category");
   } else {
-    await initDataBlogList();
+    // 4. 메인 홈 (전체 포스트 목록)
+    document.getElementById("contents").style.display = "none";
+    document.getElementById("blog-posts").style.display = "grid";
+
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) searchInput.value = "";
+    const resetInputButton = document.querySelector(".reset-inp-btn");
+    if (resetInputButton) resetInputButton.classList.add("hidden");
+
+    const categoryBanner = document.getElementById("category-banner");
+    if (categoryBanner) categoryBanner.classList.add("hidden");
+
+    currentFolder = "";
     search();
   }
+}
+
+/**
+ * 최초 페이지 진입 시 네비게이션 메뉴 및 라우터를 초기화합니다.
+ */
+async function initialize() {
+  await initDataBlogMenu();
+  renderMenu();
+  await handleRoute();
 }
 
 // 애플리케이션 초기화 실행
@@ -877,23 +867,7 @@ if (blogTitle) {
   blogTitle.addEventListener("click", () => {
     const nextUrl = new URL(origin);
     window.history.pushState({}, "", nextUrl);
-
-    // 검색 입력창 및 리셋 버튼 초기화
-    const searchInput = document.getElementById("search-input");
-    if (searchInput) searchInput.value = "";
-    const resetInputButton = document.querySelector(".reset-inp-btn");
-    if (resetInputButton) resetInputButton.classList.add("hidden");
-
-    // 카테고리 배너 닫기
-    const categoryBanner = document.getElementById("category-banner");
-    if (categoryBanner) categoryBanner.classList.add("hidden");
-
-    // 현재 폴더 초기화
-    currentFolder = "";
-
-    document.getElementById("contents").style.display = "none";
-    document.getElementById("blog-posts").style.display = "grid";
-    search();
+    handleRoute();
   });
 }
 

@@ -24,39 +24,14 @@ window.addEventListener("click", (event) => {
   } else if (mobileMenu && event.target.parentNode === mobileMenu) {
     // 모바일 메뉴 항목 클릭 시 해당 카테고리/페이지로 이동
     event.preventDefault();
-
     const menuName = event.target.innerText.trim() + ".md";
-
-    const handleMobileMenuClick = (targetFolder) => {
-      const searchInput = document.getElementById("search-input");
-      if (searchInput) searchInput.value = "";
-      const resetInputButton = document.querySelector(".reset-inp-btn");
-      if (resetInputButton) resetInputButton.classList.add("hidden");
-
-      if (blogList.length === 0) {
-        initDataBlogList().then(() => {
-          search(targetFolder, "folder");
-        });
-      } else {
-        search(targetFolder, "folder");
-      }
-    };
-
-    const targetFolder =
-      typeof categoryFolderMap !== "undefined"
-        ? categoryFolderMap[menuName]
-        : null;
-
-    if (targetFolder) {
-      handleMobileMenuClick(targetFolder);
-    } else {
-      renderOtherContents(menuName);
-    }
-
     const nextUrl = new URL(origin);
     nextUrl.searchParams.set("menu", menuName);
     window.history.pushState({}, "", nextUrl);
     mobileMenu.innerHTML = "";
+    if (typeof handleRoute === "function") {
+      handleRoute();
+    }
   } else {
     // 메뉴 바깥 클릭 시 메뉴 닫기
     if (mobileMenu) {
