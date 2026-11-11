@@ -7,6 +7,7 @@ data/local_blogList.json 및 data/local_blogMenu.json 파일을 자동 생성하
 import json
 import os
 import re
+import sys
 import unicodedata
 from pathlib import Path
 
@@ -15,6 +16,9 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 CONFIG_PATH = BASE_DIR / "config.js"
 MENU_FOLDER = "menu"
+
+# Linux ext4(GitHub Actions ubuntu-latest) 단일 파일명 최대 바이트 제한
+MAX_FILENAME_UTF8_BYTES = 255
 
 # 포스트 파일명 정규식 패턴: [YYYYMMDD]_[제목]_[카테고리]_[썸네일]_[설명](_[저자ID]).(md|ipynb)
 POST_FILENAME_REGEX = re.compile(
@@ -70,6 +74,7 @@ def load_config_from_js() -> tuple[list[str], list[str]]:
 def generate_blog_list(post_folders: list[str]) -> list[dict[str, str]]:
     """카테고리 폴더를 순회하며 유효한 블로그 포스트 목록을 생성합니다."""
     posts: list[dict[str, str]] = []
+    oversized_files: list[tuple[str, int]] = []
 
     for folder in post_folders:
         folder_path = BASE_DIR / folder
@@ -82,6 +87,10 @@ def generate_blog_list(post_folders: list[str]) -> list[dict[str, str]]:
                 continue
 
             relative_path = f"{folder}/{filename}"
+            byte_length = len(filename.encode("utf-8"))
+            if byte_length > MAX_FILENAME_UTF8_BYTES:
+                oversized_files.append((relative_path, byte_length))
+
             posts.append(
                 {
                     "name": filename,
@@ -89,6 +98,15 @@ def generate_blog_list(post_folders: list[str]) -> list[dict[str, str]]:
                     "download_url": relative_path,
                 }
             )
+
+    if oversized_files:
+        for path, byte_length in oversized_files:
+            print(
+                f"ERROR: '{path}' 파일명이 UTF-8 기준 {byte_length} bytes로 "
+                f"Linux 제한({MAX_FILENAME_UTF8_BYTES} bytes)을 초과했습니다.",
+                file=sys.stderr,
+            )
+        sys.exit(1)
 
     # 파일명 기준 내림차순 정렬 (최신 작성일 포스트가 상단에 위치)
     posts.sort(key=lambda item: item["name"], reverse=True)
