@@ -10,22 +10,72 @@ Combine의 `Publisher`는 시간에 따라 값을 방출하는 생산자 역할�
 
 iOS 프레임워크 전반에서 사용되던 기존 이벤트 처리 방식은 수동 메모리 관리와 타입 불투명성의 문제를 동반했습니다.
 
-```mermaid
-flowchart LR
-    subgraph Classic ["기존 옵저버 패턴 (NotificationCenter)"]
-        direction TB
-        Add["addObserver 등록"] --> Selector["@objc 핸들러 실행"]
-        Selector --> Remove["removeObserver 수동 해제 누락 위험"]
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="publisher-observer-comp-title publisher-observer-comp-desc" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+  <title id="publisher-observer-comp-title">기존 NotificationCenter 옵저버 패턴과 Combine Publisher 방식 비교</title>
+  <desc id="publisher-observer-comp-desc">addObserver 등록 후 수동 removeObserver 해제가 필요한 기존 방식과 NotificationCenter.publisher 및 AnyCancellable을 통해 수명주기를 자동 관리하는 방식을 비교하는 다이어그램</desc>
+  <defs>
+    <marker id="arr-pub-comp-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-pub-comp-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph PublisherPattern ["Combine Publisher 방식"]
-        direction TB
-        Pub["NotificationCenter.publisher"] --> Pipeline["연산자 체인"]
-        Pipeline --> Store["AnyCancellable 자동 수명주기 해제"]
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="320" fill="#f5f5f5" rx="8"/>
 
-    Classic -->|"안전성 및 간결성 개선"| PublisherPattern
-```
+  <!-- Left Zone: 기존 옵저버 패턴 -->
+  <rect x="24" y="24" width="380" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 기존 옵저버 패턴 (NotificationCenter)</text>
+
+  <!-- Right Zone: Combine Publisher 방식 -->
+  <rect x="556" y="24" width="380" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="576" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. Combine Publisher 방식</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Cross-zone arrow -->
+  <line x1="404" y1="160" x2="556" y2="160" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-pub-comp-accent)"/>
+  <rect x="412" y="132" width="136" height="20" rx="2" fill="#f5f5f5"/>
+  <text x="480" y="146" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">안전성 및 간결성 개선</text>
+
+  <!-- Left Zone Internal Arrows -->
+  <line x1="214" y1="116" x2="214" y2="144" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-pub-comp-ink)"/>
+  <line x1="214" y1="192" x2="214" y2="220" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-pub-comp-ink)"/>
+
+  <!-- Right Zone Internal Arrows -->
+  <line x1="746" y1="116" x2="746" y2="144" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-pub-comp-ink)"/>
+  <line x1="746" y1="192" x2="746" y2="220" stroke="#bf4520" stroke-width="1.5" marker-end="url(#arr-pub-comp-accent)"/>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="64" y="68" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="90" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">옵저버 등록</text>
+  <text x="214" y="106" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">addObserver(_:selector:name:)</text>
+
+  <rect x="64" y="144" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="166" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">이벤트 콜백 실행</text>
+  <text x="214" y="182" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">@objc selector handler</text>
+
+  <rect x="64" y="220" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="242" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">수동 해제 누락 위험</text>
+  <text x="214" y="258" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">removeObserver(_:) 필수</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="596" y="68" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="746" y="90" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">알림 스트림 생성</text>
+  <text x="746" y="106" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">NotificationCenter.publisher</text>
+
+  <rect x="596" y="144" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="746" y="166" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">선언형 연산자 체인</text>
+  <text x="746" y="182" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">compactMap -&gt; receive(on:)</text>
+
+  <rect x="596" y="220" width="300" height="48" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="746" y="242" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">자동 수명주기 해제</text>
+  <text x="746" y="258" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">AnyCancellable.store(in:)</text>
+</svg>
+</div>
 
 ### 1.1 NotificationCenter의 수동 수명 주기 관리
 전통적인 `NotificationCenter.default.addObserver`는 옵저버 등록 후 `deinit` 또는 `viewWillDisappear`에서 `removeObserver`를 수동으로 호출해야 했습니다. 해제를 누락할 경우 댕글링 포인터(Dangling Pointer)나 불필요한 이벤트 중복 수신이 발생했습니다.
@@ -39,30 +89,84 @@ flowchart LR
 
 ### 2.1 주요 Publisher 분류
 
-```mermaid
-flowchart LR
-    subgraph System ["시스템 내장 Publisher"]
-        NC["NotificationCenter.Publisher"]
-        URL["URLSession.DataTaskPublisher"]
-        TimerP["Timer.TimerPublisher"]
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="combine-publisher-taxonomy-title combine-publisher-taxonomy-desc" viewBox="0 0 960 360" xmlns="http://www.w3.org/2000/svg">
+  <title id="combine-publisher-taxonomy-title">Combine 주요 Publisher 분류 및 타입 소거 구조</title>
+  <desc id="combine-publisher-taxonomy-desc">시스템 내장 Publisher, @Published 프로퍼티 래퍼, 편의 Publisher(Just, Empty, Fail, Future, Sequence), 그리고 AnyPublisher 타입 지우기 계층의 분류 다이어그램</desc>
+  <defs>
+    <marker id="arr-pub-tax-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph Property ["프로퍼티 래퍼"]
-        PubWrapper["@Published (클래스 상태 프로퍼티)"]
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="360" fill="#f5f5f5" rx="8"/>
 
-    subgraph Convenience ["편의 Publisher (Convenience)"]
-        J["Just (단일 값)"]
-        E["Empty (빈 스트림)"]
-        F["Fail (즉시 실패)"]
-        Fut["Future (비동기 클로저 래핑)"]
-        Seq["Publishers.Sequence (컬렉션 순회)"]
-    end
+  <!-- Zone 1: 시스템 내장 Publisher -->
+  <rect x="24" y="24" width="292" height="224" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 시스템 내장 Publisher</text>
 
-    subgraph Erasure ["타입 지우기 (Type Erasure)"]
-        AnyP["AnyPublisher (제네릭 단순화)"]
-    end
-```
+  <!-- Zone 2: 프로퍼티 래퍼 -->
+  <rect x="336" y="24" width="248" height="224" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="356" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. 프로퍼티 래퍼</text>
+
+  <!-- Zone 3: 편의 Publisher -->
+  <rect x="604" y="24" width="332" height="224" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="624" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">3. 편의 Publisher (Convenience)</text>
+
+  <!-- Zone 4: 타입 지우기 (Type Erasure) -->
+  <rect x="24" y="268" width="912" height="68" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="306" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">4. 타입 지우기 (Type Erasure)</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <line x1="460" y1="248" x2="460" y2="278" stroke="#bf4520" stroke-width="1.5" marker-end="url(#arr-pub-tax-accent)"/>
+
+  <!-- 2. NODES -->
+  <!-- Zone 1 Nodes -->
+  <rect x="44" y="64" width="252" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="170" y="86" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">시스템 알림</text>
+  <text x="170" y="102" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">NotificationCenter.Publisher</text>
+
+  <rect x="44" y="124" width="252" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="170" y="146" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">네트워크 응답</text>
+  <text x="170" y="162" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">URLSession.DataTaskPublisher</text>
+
+  <rect x="44" y="184" width="252" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="170" y="206" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">주기적 타이머</text>
+  <text x="170" y="222" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Timer.TimerPublisher</text>
+
+  <!-- Zone 2 Nodes -->
+  <rect x="356" y="112" width="208" height="68" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="460" y="140" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">클래스 상태 프로퍼티</text>
+  <text x="460" y="160" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">@Published ($property)</text>
+
+  <!-- Zone 3 Nodes -->
+  <rect x="624" y="64" width="140" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="694" y="86" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">단일 값 방출</text>
+  <text x="694" y="102" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Just</text>
+
+  <rect x="776" y="64" width="140" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="846" y="86" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">빈 스트림</text>
+  <text x="846" y="102" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Empty</text>
+
+  <rect x="624" y="124" width="140" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="694" y="146" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">즉시 실패</text>
+  <text x="694" y="162" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Fail</text>
+
+  <rect x="776" y="124" width="140" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="846" y="146" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">비동기 래핑</text>
+  <text x="846" y="162" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Future</text>
+
+  <rect x="624" y="184" width="292" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="770" y="206" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">컬렉션 요소 순차 방출</text>
+  <text x="770" y="222" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Publishers.Sequence</text>
+
+  <!-- Zone 4 Node (Focal Accent) -->
+  <rect x="260" y="278" width="656" height="48" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="588" y="300" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">중첩 제네릭 은닉 및 단일 인터페이스 추상화</text>
+  <text x="588" y="316" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">AnyPublisher&lt;Output, Failure&gt; / eraseToAnyPublisher()</text>
+</svg>
+</div>
 
 ### 2.2 @Published 프로퍼티 래퍼
 - 클래스의 프로퍼티에 선언하여 해당 변수의 값이 변경될 때마다 이벤트를 방출합니다.

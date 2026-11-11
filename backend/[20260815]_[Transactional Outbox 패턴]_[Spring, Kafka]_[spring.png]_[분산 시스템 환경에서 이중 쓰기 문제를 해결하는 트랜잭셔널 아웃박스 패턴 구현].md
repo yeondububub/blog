@@ -14,21 +14,67 @@
 
 전통적인 애플리케이션에서 비즈니스 로직 처리와 메시지 발행을 결합할 때 시도되는 대표적인 안티 패턴과 한계점은 다음과 같습니다.
 
-```mermaid
-flowchart LR
-    subgraph AntiPattern1 ["시나리오 A: 트랜잭션 내부에서 메시지 발행"]
-        direction TB
-        DB1["1. DB 엔티티 수정"] --> Pub1["2. Kafka 메시지 발행"]
-        Pub1 --> Commit1["3. DB 트랜잭션 커밋 시도 (실패/롤백)"]
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="dual-write-antipattern-title dual-write-antipattern-desc" viewBox="0 0 960 340" xmlns="http://www.w3.org/2000/svg">
+  <title id="dual-write-antipattern-title">이중 쓰기(Dual Write) 안티 패턴 시나리오 비교</title>
+  <desc id="dual-write-antipattern-desc">트랜잭션 내부에서 메시지를 발행할 때 발생하는 유령 이벤트 문제와 트랜잭션 커밋 후 발행할 때 발생하는 메시지 유실 문제를 비교하는 다이어그램</desc>
+  <defs>
+    <marker id="ob1-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="ob1-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph AntiPattern2 ["시나리오 B: 트랜잭션 커밋 후 메시지 발행"]
-        direction TB
-        DB2["1. DB 엔티티 수정 및 커밋"] --> Pub2["2. Kafka 메시지 발행 시도 (네트워크 장애/서버 다운)"]
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="340" fill="#f5f5f5" rx="8"/>
 
-    AntiPattern1 ~~~ AntiPattern2
-```
+  <!-- Left Zone: 시나리오 A -->
+  <rect x="24" y="24" width="444" height="292" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">시나리오 A: 트랜잭션 내부에서 메시지 발행</text>
+
+  <!-- Right Zone: 시나리오 B -->
+  <rect x="492" y="24" width="444" height="292" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="512" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">시나리오 B: 트랜잭션 커밋 후 메시지 발행</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Left Zone Arrows -->
+  <line x1="246" y1="120" x2="246" y2="152" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#ob1-arr-ink)"/>
+  <line x1="246" y1="204" x2="246" y2="236" stroke="#bf4520" stroke-width="1.5" marker-end="url(#ob1-arr-accent)"/>
+
+  <!-- Right Zone Arrows -->
+  <line x1="714" y1="120" x2="714" y2="152" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#ob1-arr-ink)"/>
+  <line x1="714" y1="204" x2="714" y2="236" stroke="#bf4520" stroke-width="1.5" marker-end="url(#ob1-arr-accent)"/>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="86" y="68" width="320" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="246" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">1. DB 엔티티 수정</text>
+  <text x="246" y="108" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Uncommitted Transaction</text>
+
+  <rect x="86" y="152" width="320" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="246" y="176" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">2. Kafka 메시지 발행</text>
+  <text x="246" y="192" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">kafkaTemplate.send()</text>
+
+  <rect x="86" y="236" width="320" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="246" y="260" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">3. DB 트랜잭션 커밋 실패 및 롤백</text>
+  <text x="246" y="278" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Phantom Event (유령 이벤트 발생)</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="554" y="68" width="320" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="714" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">1. DB 엔티티 수정 및 커밋 완료</text>
+  <text x="714" y="108" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Transaction Committed</text>
+
+  <rect x="554" y="152" width="320" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="714" y="176" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">2. Kafka 메시지 발행 시도</text>
+  <text x="714" y="192" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">afterCommit() 호출</text>
+
+  <rect x="554" y="236" width="320" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="714" y="260" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">3. 네트워크 장애 및 서버 다운</text>
+  <text x="714" y="278" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Message Loss (이벤트 영구 유실)</text>
+</svg>
+</div>
 
 ### 1.1 이중 쓰기(Dual Write) 문제와 2PC(Two-Phase Commit)의 한계
 데이터베이스와 메시지 브로커는 서로 다른 분산 시스템 리소스입니다. 과거에는 분산 트랜잭션 처리를 위해 XA 기반 2PC 프로토콜을 사용하였으나, 다음과 같은 치명적인 한계로 인해 현대 클라우드 네이티브 환경에서는 적합하지 않습니다.
@@ -48,26 +94,91 @@ DB 커밋이 완료된 직후(`TransactionSynchronization.afterCommit()`) 메시
 
 Transactional Outbox 패턴은 분산 시스템 간 원자성 보장의 한계를 **동일한 RDB의 로컬 ACID 트랜잭션**으로 우회하여 해결합니다.
 
-```mermaid
-flowchart TD
-    Client["클라이언트 요청"] --> App["애플리케이션 서비스"]
-    
-    subgraph RDB_Transaction ["단일 RDB 로컬 트랜잭션 (원자성 보장)"]
-        App --> WriteEntity["1. 비즈니스 엔티티 저장 (Orders)"]
-        App --> WriteOutbox["2. Outbox 이벤트 레코드 저장 (Outbox Table)"]
-    end
-    
-    WriteEntity -. Commit .-> RDB[(관계형 데이터베이스)]
-    WriteOutbox -. Commit .-> RDB
-    
-    subgraph Message_Relay ["비동기 메시지 릴레이"]
-        Relay["3. Outbox 레코드 폴링 또는 CDC 감지"] --> RDB
-        Relay --> Publish["4. Kafka 메시지 브로커로 이벤트 발행"]
-        Publish --> Ack["5. Outbox 상태 'PUBLISHED' 갱신 또는 삭제"]
-    end
-    
-    Publish --> Kafka["Kafka Topic"]
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="outbox-pattern-flow-title outbox-pattern-flow-desc" viewBox="0 0 960 360" xmlns="http://www.w3.org/2000/svg">
+  <title id="outbox-pattern-flow-title">Transactional Outbox 패턴 아키텍처 및 메시지 릴레이 흐름</title>
+  <desc id="outbox-pattern-flow-desc">단일 RDB 로컬 트랜잭션으로 비즈니스 엔티티와 Outbox 레코드를 원자적으로 저장하고 비동기 메시지 릴레이가 Kafka 브로커로 이벤트를 발행하는 다이어그램</desc>
+  <defs>
+    <marker id="ob2-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2d3142"/>
+    </marker>
+    <marker id="ob2-arr-muted" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="ob2-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="360" fill="#f5f5f5" rx="8"/>
+
+  <!-- Left Zone: 단일 RDB 로컬 트랜잭션 -->
+  <rect x="24" y="24" width="400" height="312" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 단일 RDB 로컬 트랜잭션 (원자성 보장)</text>
+
+  <!-- Right Zone: 비동기 메시지 릴레이 -->
+  <rect x="468" y="24" width="468" height="312" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="488" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. 비동기 메시지 릴레이 (Message Relay)</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- App -> WriteEntity & WriteOutbox -->
+  <path d="M 164 120 L 164 136 Q 164 144 156 144 L 138 144 Q 130 144 130 152 L 130 168" fill="none" stroke="#2d3142" stroke-width="1.25" marker-end="url(#ob2-arr-ink)"/>
+  <path d="M 284 120 L 284 136 Q 284 144 292 144 L 310 144 Q 318 144 318 152 L 318 168" fill="none" stroke="#bf4520" stroke-width="1.5" marker-end="url(#ob2-arr-accent)"/>
+
+  <!-- WriteEntity & WriteOutbox -> RDB -->
+  <path d="M 130 224 L 130 236 Q 130 244 138 244 L 156 244 Q 164 244 164 252 L 164 264" fill="none" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#ob2-arr-muted)"/>
+  <path d="M 318 224 L 318 236 Q 318 244 310 244 L 292 244 Q 284 244 284 252 L 284 264" fill="none" stroke="#bf4520" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#ob2-arr-accent)"/>
+
+  <!-- RDB -> Relay Step 3 (Polling / CDC) -->
+  <path d="M 394 278 L 438 278 Q 446 278 446 270 L 446 104 Q 446 96 454 96 L 496 96" fill="none" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#ob2-arr-muted)"/>
+
+  <!-- Relay Step 3 -> Step 4 -> Step 5 -->
+  <line x1="612" y1="124" x2="612" y2="168" stroke="#bf4520" stroke-width="1.5" marker-end="url(#ob2-arr-accent)"/>
+  <line x1="612" y1="224" x2="612" y2="264" stroke="#2d3142" stroke-width="1.25" marker-end="url(#ob2-arr-ink)"/>
+
+  <!-- Relay Step 4 -> Kafka Topic -->
+  <line x1="728" y1="196" x2="768" y2="196" stroke="#bf4520" stroke-width="1.75" marker-end="url(#ob2-arr-accent)"/>
+
+  <!-- Relay Step 5 -> RDB (Mark PUBLISHED) -->
+  <line x1="496" y1="302" x2="394" y2="302" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#ob2-arr-muted)"/>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="54" y="68" width="340" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="224" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">애플리케이션 서비스 (OrderService)</text>
+  <text x="224" y="108" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">@Transactional</text>
+
+  <rect x="44" y="168" width="172" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="130" y="192" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">1. 비즈니스 엔티티 저장</text>
+  <text x="130" y="210" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Orders Table</text>
+
+  <rect x="232" y="168" width="172" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="318" y="192" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">2. Outbox 이벤트 저장</text>
+  <text x="318" y="210" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Outbox Table (INIT)</text>
+
+  <rect x="54" y="264" width="340" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="224" y="288" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">관계형 데이터베이스 (RDBMS)</text>
+  <text x="224" y="304" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">ACID Atomic Commit</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="496" y="68" width="232" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="612" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">3. 미발행 레코드 폴링 / CDC</text>
+  <text x="612" y="110" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">SELECT status = INIT</text>
+
+  <rect x="496" y="168" width="232" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="612" y="192" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">4. 메시지 브로커 이벤트 발행</text>
+  <text x="612" y="210" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">kafkaTemplate.send()</text>
+
+  <rect x="496" y="264" width="232" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="612" y="288" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">5. Outbox 상태 완료 갱신</text>
+  <text x="612" y="304" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">status = PUBLISHED</text>
+
+  <rect x="768" y="168" width="148" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="842" y="192" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Kafka Topic</text>
+  <text x="842" y="210" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">order-events</text>
+</svg>
+</div>
 
 ### 2.1 아웃박스 패턴의 동작 메커니즘
 1. **원자적 동시 저장**: 주문 생성 등 비즈니스 로직을 수행할 때, 발생한 도메인 이벤트를 직렬화하여 동일한 데이터베이스 내의 `outbox` 테이블에 함께 `INSERT`합니다. 단일 DB 트랜잭션이므로 둘 중 하나만 성공하는 일은 발생하지 않습니다.

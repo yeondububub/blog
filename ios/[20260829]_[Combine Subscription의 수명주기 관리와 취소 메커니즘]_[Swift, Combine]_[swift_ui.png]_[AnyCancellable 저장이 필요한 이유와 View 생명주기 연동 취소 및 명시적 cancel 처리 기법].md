@@ -10,25 +10,60 @@ Combine 파이프라인에서 Publisher와 Subscriber가 연결되는 순간, �
 
 기존 `URLSession.dataTask`나 `Timer` 기반의 비동기 작업에서는 취소 처리를 위해 각 객체의 전용 메서드(`task.cancel()`, `timer.invalidate()`)를 수동으로 호출해야 했습니다.
 
-```mermaid
-flowchart LR
-    subgraph Legacy ["기존 방식의 취소 처리 파편화"]
-        direction TB
-        T1["URLSessionDataTask.cancel()"]
-        T2["Timer.invalidate()"]
-        T3["NotificationCenter.removeObserver()"]
-        T4["OperationQueue.cancelAllOperations()"]
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="subscription-cancel-comp-title subscription-cancel-comp-desc" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+  <title id="subscription-cancel-comp-title">기존 비동기 취소 인터페이스 파편화와 Combine 통합 취소 비교</title>
+  <desc id="subscription-cancel-comp-desc">URLSessionDataTask, Timer, NotificationCenter, OperationQueue별로 상이했던 취소 메서드를 AnyCancellable과 Set.removeAll() 단일 규격으로 표준화하는 다이어그램</desc>
+  <defs>
+    <marker id="arr-sub-cancel-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph Combine ["Combine 방식의 통합 취소"]
-        direction TB
-        C1["AnyCancellable.cancel()"]
-        C2["cancellables.removeAll()"]
-        C1 ~~~ C2
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="320" fill="#f5f5f5" rx="8"/>
 
-    Legacy -->|"취소 인터페이스 표준화"| Combine
-```
+  <!-- Left Zone: 기존 방식의 취소 처리 파편화 -->
+  <rect x="24" y="24" width="380" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 기존 방식의 취소 처리 파편화</text>
+
+  <!-- Right Zone: Combine 방식의 통합 취소 -->
+  <rect x="556" y="24" width="380" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="576" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. Combine 방식의 통합 취소</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <line x1="404" y1="160" x2="556" y2="160" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-sub-cancel-accent)"/>
+  <rect x="412" y="132" width="136" height="20" rx="2" fill="#f5f5f5"/>
+  <text x="480" y="146" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">취소 인터페이스 표준화</text>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="64" y="64" width="300" height="44" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="84" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">네트워크 작업 취소</text>
+  <text x="214" y="100" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">URLSessionDataTask.cancel()</text>
+
+  <rect x="64" y="120" width="300" height="44" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="140" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">타이머 무효화</text>
+  <text x="214" y="156" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Timer.invalidate()</text>
+
+  <rect x="64" y="176" width="300" height="44" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="196" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">알림 옵저버 해제</text>
+  <text x="214" y="212" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">NotificationCenter.removeObserver()</text>
+
+  <rect x="64" y="232" width="300" height="44" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="252" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">연산 큐 일괄 취소</text>
+  <text x="214" y="268" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">OperationQueue.cancelAllOperations()</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="596" y="92" width="300" height="64" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="746" y="118" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">단일 구독 취소 및 자동 해제</text>
+  <text x="746" y="138" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">AnyCancellable.cancel() / deinit</text>
+
+  <rect x="596" y="180" width="300" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="746" y="206" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">다중 구독 컬렉션 일괄 취소</text>
+  <text x="746" y="226" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">cancellables.removeAll()</text>
+</svg>
+</div>
 
 ### 1.1 비동기 작업별로 파편화된 취소 인터페이스
 각기 다른 비동기 API는 취소 방법도 달랐습니다. 뷰 컨트롤러가 하나의 화면에서 타이머, 네트워크 요청, 알림 옵저버를 동시에 관리할 경우, 화면이 사라지는 시점에 개별 취소 메서드를 모두 수동으로 호출해야 했습니다. 취소 코드의 누락은 곧바로 댕글링 참조(Dangling Reference)와 리소스 낭비로 이어집니다.

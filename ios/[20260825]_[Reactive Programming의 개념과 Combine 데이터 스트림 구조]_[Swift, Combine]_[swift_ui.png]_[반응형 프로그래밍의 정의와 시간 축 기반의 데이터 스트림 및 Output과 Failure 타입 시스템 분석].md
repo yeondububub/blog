@@ -12,25 +12,65 @@ Combine 프레임워크는 이러한 파편화된 비동기 인터페이스를 *
 
 전통적인 명령형(Imperative) 프로그래밍 방식에서는 데이터를 필요로 하는 소비자(Consumer)가 능동적으로 상태를 조회하거나(Pull 방식), 이벤트 발생 시점에 콜백 메서드를 수동으로 호출하여 UI를 동기화했습니다.
 
-```mermaid
-flowchart LR
-    subgraph Imperative ["기존 명령형 (Pull / 분산된 비동기 API)"]
-        direction TB
-        TargetAction["Target-Action (버튼 이벤트)"]
-        KVO["KVO (프로퍼티 변화 감지)"]
-        TimerOld["Timer (반복 틱 수동 핸들링)"]
-        TargetAction ~~~ KVO ~~~ TimerOld
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="reactive-paradigm-title reactive-paradigm-desc" viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg">
+  <title id="reactive-paradigm-title">기존 명령형 비동기 API와 반응형 스트림 패러다임 비교</title>
+  <desc id="reactive-paradigm-desc">Target-Action, KVO, Timer 등으로 파편화된 기존 명령형 비동기 처리 방식을 단일 Publisher 데이터 스트림과 Subscriber의 Push 구조로 일원화하는 다이어그램</desc>
+  <defs>
+    <marker id="arr-reactive-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-reactive-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph Reactive ["반응형 스트림 (Push 기반 일원화)"]
-        direction TB
-        Stream["단일 Publisher 데이터 스트림<br/>(시간 축에 따른 연속 이벤트)"]
-        Sub["Subscriber<br/>(데이터 수신 및 자동 반응)"]
-        Stream -->|"이벤트 Push"| Sub
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="300" fill="#f5f5f5" rx="8"/>
 
-    Imperative -->|"패러다임 통합"| Reactive
-```
+  <!-- Left Zone: 기존 명령형 -->
+  <rect x="24" y="24" width="380" height="252" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 기존 명령형 (분산된 비동기 API)</text>
+
+  <!-- Right Zone: 반응형 스트림 -->
+  <rect x="556" y="24" width="380" height="252" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="576" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. 반응형 스트림 (Push 기반 일원화)</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Cross-zone arrow -->
+  <line x1="404" y1="150" x2="556" y2="150" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-reactive-accent)"/>
+  <rect x="424" y="122" width="112" height="20" rx="2" fill="#f5f5f5"/>
+  <text x="480" y="136" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">패러다임 통합</text>
+
+  <!-- Right Zone Internal Arrow -->
+  <line x1="746" y1="132" x2="746" y2="188" stroke="#bf4520" stroke-width="1.5" marker-end="url(#arr-reactive-accent)"/>
+  <rect x="686" y="148" width="120" height="20" rx="2" fill="#ececec"/>
+  <text x="746" y="162" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#bf4520">이벤트 Push 전파</text>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="64" y="68" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="90" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Target-Action (버튼 이벤트)</text>
+  <text x="214" y="106" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">UIControl Event Handling</text>
+
+  <rect x="64" y="132" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="154" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">KVO (프로퍼티 변화 감지)</text>
+  <text x="214" y="170" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Key-Value Observing</text>
+
+  <rect x="64" y="196" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="218" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Timer (반복 틱 수동 핸들링)</text>
+  <text x="214" y="234" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Timer.scheduledTimer</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="596" y="76" width="300" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="746" y="100" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">단일 Publisher 데이터 스트림</text>
+  <text x="746" y="118" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">시간 축에 따른 연속 이벤트</text>
+
+  <rect x="596" y="188" width="300" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="746" y="212" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Subscriber (구독자)</text>
+  <text x="746" y="230" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">데이터 수신 및 자동 반응</text>
+</svg>
+</div>
 
 ### 1.1 비동기 이벤트 처리 인터페이스의 파편화
 각기 다른 비동기 기술마다 에러 처리 방식, 데이터 전달 시그니처, 스레드 제어 규칙이 상이했습니다. 동일한 데이터 흐름 내에서 타이머와 네트워크 응답, 사용자 입력을 결합할 경우 복잡한 중첩 콜백과 상태 변수(State Flags)가 불가피하게 증가했습니다.
@@ -50,14 +90,49 @@ Reactive Programming은 **비동기 데이터 스트림(Asynchronous Data Stream
 ### 2.2 Stream의 구조
 Stream은 시간의 흐름에 따라 연속적으로 방출되는 일련의 이벤트 시퀀스입니다. Combine 스트림은 다음 세 가지 이벤트 중 하나를 방출합니다.
 
-```mermaid
-timeline
-    title Combine 스트림의 수명 주기
-    시간 축 (Timeline) : 값 방출 1 (Output)
-                    : 값 방출 2 (Output)
-                    : 값 방출 3 (Output)
-                    : 완료 이벤트 (.finished 또는 .failure)
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="combine-stream-timeline-title combine-stream-timeline-desc" viewBox="0 0 960 220" xmlns="http://www.w3.org/2000/svg">
+  <title id="combine-stream-timeline-title">시간 축에 따른 Combine 데이터 스트림의 수명 주기</title>
+  <desc id="combine-stream-timeline-desc">시간의 흐름에 따라 연속적인 값 방출(Output 1, 2, 3)이 이어진 후 완료 이벤트(.finished 또는 .failure)로 스트림이 종료되는 타임라인 구조</desc>
+  <defs>
+    <marker id="arr-timeline-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-timeline-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="220" fill="#f5f5f5" rx="8"/>
+
+  <!-- Timeline Outer Container -->
+  <rect x="24" y="24" width="912" height="172" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">Combine 스트림의 수명 주기: 시간 축 (Timeline) 기반 이벤트 시퀀스</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <line x1="216" y1="120" x2="268" y2="120" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#arr-timeline-ink)"/>
+  <line x1="436" y1="120" x2="488" y2="120" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#arr-timeline-ink)"/>
+  <line x1="656" y1="120" x2="708" y2="120" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-timeline-accent)"/>
+
+  <!-- 2. NODES -->
+  <rect x="48" y="88" width="168" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="132" y="114" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">값 방출 1</text>
+  <text x="132" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Output (t = 1)</text>
+
+  <rect x="268" y="88" width="168" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="352" y="114" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">값 방출 2</text>
+  <text x="352" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Output (t = 2)</text>
+
+  <rect x="488" y="88" width="168" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="572" y="114" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">값 방출 3</text>
+  <text x="572" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Output (t = 3)</text>
+
+  <rect x="708" y="88" width="204" height="64" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="810" y="114" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">완료 이벤트 (종료)</text>
+  <text x="810" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">.finished | .failure(Error)</text>
+</svg>
+</div>
 
 1. **값 방출 (Value Event)**: 0개 이상의 `Output` 데이터를 지속적으로 방출합니다.
 2. **정상 완료 (Completion Finished)**: 더 이상 방출할 데이터가 없음을 알리고 스트림을 종료합니다.

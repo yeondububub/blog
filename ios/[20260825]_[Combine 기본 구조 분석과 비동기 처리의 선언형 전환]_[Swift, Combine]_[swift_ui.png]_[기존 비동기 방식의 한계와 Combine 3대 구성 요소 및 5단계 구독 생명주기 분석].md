@@ -25,11 +25,45 @@ iOS 애플리케이션 개발에서 비동기 데이터 처리는 UI 반응성 �
 
 Combine은 모든 비동기 이벤트를 시간 축에 따라 순차적으로 방출되는 **데이터 스트림(Data Stream)으로** 추상화합니다.
 
-```mermaid
-flowchart LR
-    Pub["Publisher<br/>(생산자: 이벤트 발행)"] -- "Output: Data<br/>Failure: Error" --> Op["Operator Chain<br/>(가공: map -> decode -> receive)"]
-    Op -- "Output: Transformed<br/>Failure: Error" --> Sub["Subscriber<br/>(소비자: 최종 소비 및 UI 반영)"]
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="combine-core-flow-title combine-core-flow-desc" viewBox="0 0 960 200" xmlns="http://www.w3.org/2000/svg">
+  <title id="combine-core-flow-title">Combine 데이터 스트림 3대 핵심 구성 요소 파이프라인</title>
+  <desc id="combine-core-flow-desc">Publisher가 Output과 Failure 이벤트를 방출하고 Operator Chain을 거쳐 가공된 데이터가 Subscriber로 전달되는 선언형 파이프라인 구조</desc>
+  <defs>
+    <marker id="arr-combine-core-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-combine-core-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="200" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <line x1="256" y1="104" x2="368" y2="104" stroke="#4f5d75" stroke-width="1.5" marker-end="url(#arr-combine-core-ink)"/>
+  <rect x="262" y="76" width="100" height="20" rx="2" fill="#f5f5f5"/>
+  <text x="312" y="90" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#4f5d75">Output / Failure</text>
+
+  <line x1="592" y1="104" x2="704" y2="104" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-combine-core-accent)"/>
+  <rect x="598" y="76" width="100" height="20" rx="2" fill="#f5f5f5"/>
+  <text x="648" y="90" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Transformed</text>
+
+  <!-- 2. NODES -->
+  <rect x="40" y="68" width="216" height="72" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="148" y="98" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Publisher (발행자)</text>
+  <text x="148" y="118" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Output: Data, Failure: Error</text>
+
+  <rect x="368" y="68" width="224" height="72" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="480" y="98" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">Operator Chain (연산자 체인)</text>
+  <text x="480" y="118" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">map -&gt; decode -&gt; receive(on:)</text>
+
+  <rect x="704" y="68" width="216" height="72" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="812" y="98" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Subscriber (구독자)</text>
+  <text x="812" y="118" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">sink / assign (UI 반영)</text>
+</svg>
+</div>
 
 ### 2.1 Combine의 3대 핵심 구성 요소
 

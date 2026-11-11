@@ -12,13 +12,45 @@ Java 객체를 JSON 문자열로 변환하는 직렬화(Serialization) 과정에
 
 개발자가 DTO(Data Transfer Object) 클래스 내부에 비즈니스 편의 메서드를 추가했을 때 발생하는 전형적인 직렬화 오류 시나리오는 다음과 같습니다.
 
-```mermaid
-flowchart LR
-    DTO["CouponResponse DTO<br/>(isExpired() 편의 메서드 포함)"] --> Jackson["Jackson 직렬화 엔진<br/>(Getter 탐색 수행)"]
-    Jackson --> JSON["JSON 응답 생성<br/>('expired': true 필드 자동 생성)"]
-    
-    style JSON fill:#ffcccc,stroke:#333,stroke-width:2px;
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="jackson-unexpected-field-title jackson-unexpected-field-desc" viewBox="0 0 960 200" xmlns="http://www.w3.org/2000/svg">
+  <title id="jackson-unexpected-field-title">Jackson 직렬화 시 편의 메서드로 인한 의도치 않은 JSON 필드 노출</title>
+  <desc id="jackson-unexpected-field-desc">DTO 내부의 isExpired() 편의 메서드를 Jackson 직렬화 엔진이 Getter 프로퍼티로 인식하여 JSON 응답에 expired 필드를 자동 생성하는 현상</desc>
+  <defs>
+    <marker id="arr-juf-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-juf-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="200" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS -->
+  <line x1="272" y1="84" x2="368" y2="84" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-juf-ink)"/>
+  <rect x="280" y="60" width="80" height="18" fill="#f5f5f5"/>
+  <text x="320" y="73" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#5a6580">직렬화 수행</text>
+
+  <line x1="592" y1="84" x2="688" y2="84" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-juf-accent)"/>
+  <rect x="600" y="60" width="80" height="18" fill="#f5f5f5"/>
+  <text x="640" y="73" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">필드 노출</text>
+
+  <!-- 2. NODES -->
+  <rect x="44" y="56" width="228" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="158" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">CouponResponse DTO</text>
+  <text x="158" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">isExpired() 편의 메서드 포함</text>
+
+  <rect x="368" y="56" width="224" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="480" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Jackson 직렬화 엔진</text>
+  <text x="480" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">public Getter 리플렉션 탐색</text>
+
+  <rect x="688" y="56" width="228" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="802" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">오염된 JSON 응답 생성</text>
+  <text x="802" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">"expired": true 자동 포함</text>
+</svg>
+</div>
 
 ### 1.1 암묵적 프로퍼티 생성으로 인한 API 스펙 오염
 DTO 객체 내부에서 만료 여부를 판별하기 위해 `public boolean isExpired()`와 같은 도메인 로직 메서드를 추가할 경우, Jackson 직렬화 엔진은 이를 데이터 접근자(Getter)로 인식하여 원본 데이터베이스나 API 명세에 존재하지 않던 `expired` 필드를 JSON 결과에 강제로 추가합니다.
@@ -32,14 +64,58 @@ DTO 객체 내부에서 만료 여부를 판별하기 위해 `public boolean isE
 
 Jackson의 `ObjectMapper`는 리플렉션(Reflection)을 기반으로 객체의 메타데이터를 수집하며 다음과 같은 프로퍼티 탐색 규칙을 가집니다.
 
-```mermaid
-flowchart LR
-    Method["public 메서드 탐색"] --> CheckPrefix{"접두사 검사"}
-    CheckPrefix -- "get* (파라미터 없음)" --> StripGet["'get' 제거 & 소문자 변환<br/>(예: getOrderNo -> orderNo)"]
-    CheckPrefix -- "is* (boolean 반환)" --> StripIs["'is' 제거 & 소문자 변환<br/>(예: isExpired -> expired)"]
-    StripGet --> Property["JSON Key 등록"]
-    StripIs --> Property
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="jackson-getter-introspection-title jackson-getter-introspection-desc" viewBox="0 0 960 240" xmlns="http://www.w3.org/2000/svg">
+  <title id="jackson-getter-introspection-title">Jackson ObjectMapper의 Getter 프로퍼티 탐색 및 JSON Key 변환 규칙</title>
+  <desc id="jackson-getter-introspection-desc">public 메서드의 접두사(get*, is*)를 검사하여 접두사를 제거하고 첫 글자를 소문자로 변환해 JSON Key로 등록하는 과정</desc>
+  <defs>
+    <marker id="arr-jgi-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-jgi-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="240" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS -->
+  <line x1="188" y1="120" x2="224" y2="120" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-jgi-ink)"/>
+
+  <path d="M 384 106 L 400 106 Q 408 106 408 98 L 408 80 Q 408 72 416 72 L 520 72" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-jgi-ink)"/>
+  <rect x="418" y="48" width="92" height="18" fill="#f5f5f5"/>
+  <text x="464" y="61" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">get* (인자 없음)</text>
+
+  <path d="M 384 134 L 400 134 Q 408 134 408 142 L 408 160 Q 408 168 416 168 L 520 168" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-jgi-ink)"/>
+  <rect x="418" y="144" width="92" height="18" fill="#f5f5f5"/>
+  <text x="464" y="157" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">is* (boolean)</text>
+
+  <path d="M 736 72 L 748 72 Q 756 72 756 80 L 756 98 Q 756 106 764 106 L 776 106" fill="none" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-jgi-accent)"/>
+  <path d="M 736 168 L 748 168 Q 756 168 756 160 L 756 142 Q 756 134 764 134 L 776 134" fill="none" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-jgi-accent)"/>
+
+  <!-- 2. NODES -->
+  <rect x="28" y="92" width="160" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="108" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">public 메서드 탐색</text>
+  <text x="108" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">POJOPropertiesCollector</text>
+
+  <rect x="224" y="92" width="160" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="304" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">접두사 규약 검사</text>
+  <text x="304" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">JavaBeans Naming</text>
+
+  <rect x="520" y="44" width="216" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="628" y="68" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">'get' 제거 및 소문자 변환</text>
+  <text x="628" y="86" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">getOrderNo -> "orderNo"</text>
+
+  <rect x="520" y="140" width="216" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="628" y="164" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">'is' 제거 및 소문자 변환</text>
+  <text x="628" y="182" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">isExpired -> "expired"</text>
+
+  <rect x="776" y="92" width="156" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="854" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">JSON Key 등록</text>
+  <text x="854" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">BeanPropertyWriter</text>
+</svg>
+</div>
 
 ### 2.1 Jackson 기본 프로퍼티 탐색 규칙
 1. **`get*` 메서드**: 매개변수가 없는 `public` 메서드 중 `get`으로 시작하는 경우, 접두사를 제거하고 카멜케이스(CamelCase) 규칙에 따라 첫 글자를 소문자로 변환한 문자열을 JSON Key로 간주합니다.

@@ -12,24 +12,85 @@
 
 클라이언트와 서버 간의 통신에서 네트워크 타임아웃이 발생하면, 클라이언트는 서버에서 실제 비즈니스 로직이 체결되었는지 여부를 알 수 없습니다. 이로 인해 자동 재시도 로직이 동작하면서 중복 요청이 서버로 인입됩니다.
 
-```mermaid
-flowchart LR
-    subgraph Non_Idempotent ["기존 DB 유니크 제약 기반 방식"]
-        direction TB
-        Req1["요청 1 (정상 처리 중)"] --> DB_Lock["DB 트랜잭션 시작<br/>(커넥션 점유)"]
-        Req2["요청 2 (중복 인입)"] --> DB_Conflict["DB Insert 시도 시<br/>Unique Index 충돌 (500 Error)"]
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="idempotency-compare-title idempotency-compare-desc" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+  <title id="idempotency-compare-title">DB 유니크 제약 기반 방식과 Idempotency-Key 캐싱 방식 비교</title>
+  <desc id="idempotency-compare-desc">중복 요청 시 DB 커넥션을 점유하고 500 에러를 반환하는 기존 방식과 Redis SET NX 및 결과 캐싱으로 멱등 응답을 즉시 반환하는 방식을 비교하는 다이어그램</desc>
+  <defs>
+    <marker id="id1-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="id1-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph Idempotent_Pattern ["Idempotency-Key & Redis 캐싱 방식"]
-        direction TB
-        I_Req1["요청 1 (Key: UUID-1)"] --> SetNX["Redis SET NX 성공<br/>(IN_PROGRESS)"]
-        SetNX --> Execute["비즈니스 로직 수행 &<br/>결과 캐싱 (COMPLETED)"]
-        I_Req2["요청 2 (Key: UUID-1)"] --> CheckCache["Redis 키 조회: COMPLETED"]
-        CheckCache --> CachedReturn["이전 결과 즉시 반환 (200 OK)"]
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="320" fill="#f5f5f5" rx="8"/>
 
-    Non_Idempotent ~~~ Idempotent_Pattern
-```
+  <!-- Left Zone: 기존 DB 유니크 제약 기반 방식 -->
+  <rect x="24" y="24" width="444" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 기존 DB 유니크 제약 기반 방식</text>
+
+  <!-- Right Zone: Idempotency-Key & Redis 캐싱 방식 -->
+  <rect x="492" y="24" width="444" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="512" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. Idempotency-Key &amp; Redis 캐싱 방식</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Left Zone Arrows -->
+  <line x1="188" y1="120" x2="224" y2="120" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#id1-arr-ink)"/>
+  <line x1="188" y1="224" x2="224" y2="224" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#id1-arr-ink)"/>
+
+  <!-- Right Zone Arrows -->
+  <line x1="628" y1="120" x2="652" y2="120" stroke="#bf4520" stroke-width="1.5" marker-end="url(#id1-arr-accent)"/>
+  <line x1="772" y1="120" x2="796" y2="120" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#id1-arr-ink)"/>
+  <line x1="628" y1="224" x2="652" y2="224" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#id1-arr-ink)"/>
+  <line x1="772" y1="224" x2="796" y2="224" stroke="#bf4520" stroke-width="1.5" marker-end="url(#id1-arr-accent)"/>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="44" y="92" width="144" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="116" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">요청 1 (정상 처리)</text>
+  <text x="116" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">First Request</text>
+
+  <rect x="224" y="92" width="224" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="336" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">DB 트랜잭션 시작</text>
+  <text x="336" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">커넥션 점유 · Row Lock</text>
+
+  <rect x="44" y="196" width="144" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="116" y="220" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">요청 2 (중복 인입)</text>
+  <text x="116" y="238" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Duplicate Retry</text>
+
+  <rect x="224" y="196" width="224" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="336" y="220" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Unique Index 충돌</text>
+  <text x="336" y="238" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">500 Internal Server Error</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="512" y="92" width="116" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="570" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">요청 1</text>
+  <text x="570" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Key: UUID-1</text>
+
+  <rect x="652" y="92" width="120" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="712" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">SET NX 선점</text>
+  <text x="712" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">IN_PROGRESS</text>
+
+  <rect x="796" y="92" width="120" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="856" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">로직 수행 · 캐싱</text>
+  <text x="856" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">COMPLETED</text>
+
+  <rect x="512" y="196" width="116" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="570" y="220" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">요청 2 (재시도)</text>
+  <text x="570" y="238" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Key: UUID-1</text>
+
+  <rect x="652" y="196" width="120" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="712" y="220" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">캐시 상태 조회</text>
+  <text x="712" y="238" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Hit: COMPLETED</text>
+
+  <rect x="796" y="196" width="120" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="856" y="220" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">직전 결과 반환</text>
+  <text x="856" y="238" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">200 OK (멱등 응답)</text>
+</svg>
+</div>
 
 ### 1.1 데이터베이스 유니크 제약조건(Unique Constraint)의 한계
 데이터베이스 수준에서 `order_id`나 `transaction_id` 컬럼에 유니크 인덱스를 설정하는 방식은 최후의 방어선으로 유효하지만 다음과 같은 구조적 한계를 가집니다.
@@ -46,19 +107,80 @@ flowchart LR
 
 IETF 표준 드래프트(draft-ietf-httpapi-idempotency-key-header)에 명시된 멱등성 키의 핵심은 **상태 머신(State Machine)** 과 **응답 캐싱(Response Caching)** 입니다.
 
-```mermaid
-flowchart LR
-    Client["클라이언트"] --> Filter["Idempotency Filter / AOP"]
-    
-    Filter -- "1. Key 조회" --> Redis[("Redis 분산 저장소")]
-    
-    Redis -- "Key 없음: SET NX (IN_PROGRESS)" --> Biz["비즈니스 서비스 로직"]
-    Biz --> CacheResult["결과 캐시 저장 (COMPLETED)"]
-    CacheResult --> Redis
-    
-    Redis -- "Key 있음: IN_PROGRESS" --> Conflict["409 Conflict 반환"]
-    Redis -- "Key 있음: COMPLETED" --> CacheHit["캐시된 직전 응답 반환"]
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="idempotency-state-machine-title idempotency-state-machine-desc" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+  <title id="idempotency-state-machine-title">Idempotency-Key 상태 머신 및 응답 캐싱 흐름</title>
+  <desc id="idempotency-state-machine-desc">Idempotency AOP가 Redis 분산 저장소를 조회하여 키 상태(신규, IN_PROGRESS, COMPLETED)에 따라 비즈니스 로직 실행, 409 Conflict 반환, 캐시 응답 반환을 분기하는 다이어그램</desc>
+  <defs>
+    <marker id="id2-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2d3142"/>
+    </marker>
+    <marker id="id2-arr-muted" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="id2-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="320" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Client -> Filter -->
+  <line x1="132" y1="160" x2="164" y2="160" stroke="#2d3142" stroke-width="1.25" marker-end="url(#id2-arr-ink)"/>
+
+  <!-- Filter -> Redis -->
+  <line x1="324" y1="160" x2="416" y2="160" stroke="#bf4520" stroke-width="1.5" marker-end="url(#id2-arr-accent)"/>
+  <rect x="330" y="134" width="80" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="370" y="147" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#bf4520">Key 조회</text>
+
+  <!-- Branch 1: Redis -> Biz (Key 없음: SET NX) -->
+  <path d="M 540 128 L 540 76 Q 540 68 548 68 L 736 68" fill="none" stroke="#bf4520" stroke-width="1.5" marker-end="url(#id2-arr-accent)"/>
+  <rect x="556" y="42" width="168" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="640" y="55" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#bf4520">Key 없음: SET NX 선점</text>
+
+  <!-- Return: Biz -> Redis (COMPLETED 캐시 저장) -->
+  <path d="M 836 40 L 836 26 Q 836 18 828 18 L 468 18 Q 460 18 460 26 L 460 128" fill="none" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#id2-arr-muted)"/>
+
+  <!-- Branch 2: Redis -> 409 Conflict (IN_PROGRESS) -->
+  <line x1="584" y1="160" x2="736" y2="160" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#id2-arr-muted)"/>
+  <rect x="592" y="134" width="136" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="660" y="147" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#4f5d75">Hit: IN_PROGRESS</text>
+
+  <!-- Branch 3: Redis -> CacheHit (COMPLETED) -->
+  <path d="M 540 192 L 540 248 Q 540 256 548 256 L 736 256" fill="none" stroke="#2d3142" stroke-width="1.25" marker-end="url(#id2-arr-ink)"/>
+  <rect x="564" y="230" width="156" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="642" y="243" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#2d3142">Hit: COMPLETED</text>
+
+  <!-- 2. NODES -->
+  <rect x="24" y="132" width="108" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="78" y="156" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">클라이언트</text>
+  <text x="78" y="174" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">HTTP POST</text>
+
+  <rect x="164" y="132" width="160" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="244" y="156" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Idempotency AOP</text>
+  <text x="244" y="174" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">@Idempotent</text>
+
+  <!-- Focal Node: Redis -->
+  <rect x="416" y="128" width="168" height="64" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="500" y="156" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">Redis 분산 저장소</text>
+  <text x="500" y="174" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">State &amp; Response Cache</text>
+
+  <!-- Right Outcome Nodes -->
+  <rect x="736" y="40" width="200" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="836" y="64" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">비즈니스 수행 및 캐시 저장</text>
+  <text x="836" y="82" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">COMPLETED 갱신</text>
+
+  <rect x="736" y="132" width="200" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="836" y="156" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">동시 요청 차단</text>
+  <text x="836" y="174" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">409 Conflict 반환</text>
+
+  <rect x="736" y="228" width="200" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="836" y="252" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">캐시된 직전 응답 반환</text>
+  <text x="836" y="270" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">200 OK (재실행 생략)</text>
+</svg>
+</div>
 
 ### 2.1 멱등성 키의 생명주기 및 상태 전이
 - **`IN_PROGRESS` (처리 진행 중)**: 최초 요청 인입 시 Redis의 `SET key value NX EX` 명령을 사용하여 원자적으로 락을 획득합니다. 이 상태에서 동일한 키로 요청이 들어오면 `409 Conflict`를 반환하여 동시 실행을 차단합니다.

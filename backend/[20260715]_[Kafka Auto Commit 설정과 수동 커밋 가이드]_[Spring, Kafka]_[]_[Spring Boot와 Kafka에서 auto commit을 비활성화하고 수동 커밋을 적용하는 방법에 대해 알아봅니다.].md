@@ -12,19 +12,73 @@
 
 카프카 컨슈머의 기본 설정(`enable.auto.commit = true`)은 일정 주기(`auto.commit.interval.ms`, 기본값 5초)마다 백그라운드 스레드가 최근 `poll()`로 수신한 최신 오프셋을 자동 커밋합니다.
 
-```mermaid
-sequenceDiagram
-    participant Broker as Kafka Broker
-    participant Consumer as Kafka Consumer
-    participant Worker as 비즈니스 로직 스레드
-    
-    Consumer->>Broker: poll() 메시지 배치 수신 (Offset 100~105)
-    Note over Consumer: 백그라운드 타이머에 의해 Offset 105 자동 커밋
-    Consumer->>Broker: Commit Offset 105
-    Consumer->>Worker: Offset 102 처리 중 OOM 또는 서버 비정상 종료 발생
-    Note over Worker: Offset 102~105 비즈니스 처리 실패
-    Note over Broker: 서버 재시작 후 컨슈머는 Offset 106부터 수신 (메시지 유실 발생)
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="kafka-auto-commit-loss-title kafka-auto-commit-loss-desc" viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg">
+  <title id="kafka-auto-commit-loss-title">Kafka Auto Commit 활성화 시 비정상 종료로 인한 메시지 유실 시퀀스</title>
+  <desc id="kafka-auto-commit-loss-desc">컨슈머가 메시지 배치를 수신한 후 비즈니스 로직 처리가 끝나기 전에 백그라운드 타이머가 오프셋을 자동 커밋하여 장애 발생 시 미처리 메시지가 유실되는 과정</desc>
+  <defs>
+    <marker id="arr-kac-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2d3142"/>
+    </marker>
+    <marker id="arr-kac-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="400" fill="#f5f5f5" rx="8"/>
+
+  <!-- Lifelines -->
+  <line x1="170" y1="76" x2="170" y2="376" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="3 4"/>
+  <line x1="480" y1="76" x2="480" y2="376" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="3 4"/>
+  <line x1="790" y1="76" x2="790" y2="376" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="3 4"/>
+
+  <!-- Activation Bars -->
+  <rect x="166" y="100" width="8" height="120" rx="1" fill="#ececec" stroke="#2d3142" stroke-width="1"/>
+  <rect x="476" y="100" width="8" height="28" rx="1" fill="#ececec" stroke="#2d3142" stroke-width="1"/>
+  <rect x="476" y="188" width="8" height="72" rx="1" fill="#ececec" stroke="#2d3142" stroke-width="1"/>
+  <rect x="786" y="232" width="8" height="28" rx="1" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1"/>
+
+  <!-- 1. SEQUENCE MESSAGES -->
+  <!-- Step 1: Consumer -> Broker -->
+  <line x1="476" y1="116" x2="174" y2="116" stroke="#2d3142" stroke-width="1.25" marker-end="url(#arr-kac-ink)"/>
+  <rect x="193" y="92" width="264" height="18" fill="#f5f5f5"/>
+  <text x="325" y="105" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#2d3142">1. poll() 배치 수신 (Offset 100~105)</text>
+
+  <!-- Step 2: Consumer -> Broker (Auto Commit) -->
+  <line x1="476" y1="204" x2="174" y2="204" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-kac-accent)"/>
+  <rect x="215" y="180" width="220" height="18" fill="#f5f5f5"/>
+  <text x="325" y="193" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">2. Offset 105 조기 자동 커밋</text>
+
+  <!-- Step 3: Consumer -> Worker -->
+  <line x1="484" y1="244" x2="786" y2="244" stroke="#2d3142" stroke-width="1.25" marker-end="url(#arr-kac-ink)"/>
+  <rect x="515" y="220" width="240" height="18" fill="#f5f5f5"/>
+  <text x="635" y="233" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#2d3142">3. Offset 102 처리 중 비정상 종료</text>
+
+  <!-- 2. NOTES & PARTICIPANT HEADERS -->
+  <rect x="336" y="136" width="288" height="32" rx="4" fill="#ececec" stroke="#bfc0c0" stroke-width="1"/>
+  <text x="480" y="156" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#4f5d75">백그라운드 타이머 도래 (5초 주기)</text>
+
+  <rect x="644" y="268" width="292" height="36" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.25"/>
+  <text x="790" y="290" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">Offset 102~105 비즈니스 처리 실패</text>
+
+  <rect x="24" y="320" width="292" height="36" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.25"/>
+  <text x="170" y="342" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">재기동 시 Offset 106부터 수신 (유실)</text>
+
+  <!-- Participant Boxes -->
+  <rect x="80" y="24" width="180" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="170" y="46" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Kafka Broker</text>
+  <text x="170" y="64" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">__consumer_offsets</text>
+
+  <rect x="390" y="24" width="180" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="480" y="46" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Kafka Consumer</text>
+  <text x="480" y="64" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">enable.auto.commit=true</text>
+
+  <rect x="700" y="24" width="180" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="790" y="46" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">비즈니스 로직 스레드</text>
+  <text x="790" y="64" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Worker Thread</text>
+</svg>
+</div>
 
 ### 1.1 비동기 타이밍 불일치로 인한 메시지 유실 (Message Loss)
 컨슈머가 `poll()`을 통해 다수의 메시지를 가져온 후 실제 데이터베이스 저장이나 외부 API 연동과 같은 비즈니스 로직을 수행하는 도중에 백그라운드 타이머에 의해 오프셋이 먼저 커밋될 수 있습니다. 이 상태에서 컨슈머 프로세스가 강제 종료되면 브로커에는 해당 메시지가 처리 완료된 것으로 기록되어, 재기동 후 미처리된 메시지가 영구히 유실됩니다.
@@ -38,12 +92,53 @@ sequenceDiagram
 
 메시지 유실을 완벽히 차단하고 At-Least-Once 전달을 보장하기 위해서는 비즈니스 로직이 완전히 성공적으로 종료된 시점에만 개발자가 명시적으로 오프셋을 커밋하는 **수동 커밋(Manual Commit)** 체계가 필수적입니다.
 
-```mermaid
-flowchart TD
-    Poll["1. poll() 메시지 수신"] --> Biz["2. 비즈니스 로직 실행 (DB 트랜잭션 등)"]
-    Biz -- "성공" --> Ack["3. Acknowledgment.acknowledge() 호출 (오프셋 커밋)"]
-    Biz -- "실패 / 예외 발생" --> Retry["3. 커밋 생략 -> 재시도 또는 DLQ 이관"]
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="kafka-manual-commit-flow-title kafka-manual-commit-flow-desc" viewBox="0 0 960 240" xmlns="http://www.w3.org/2000/svg">
+  <title id="kafka-manual-commit-flow-title">Spring Kafka 수동 커밋(AckMode.MANUAL) 처리 흐름</title>
+  <desc id="kafka-manual-commit-flow-desc">메시지 수신 후 비즈니스 로직 성공 시에만 Acknowledgment.acknowledge()를 호출하여 오프셋을 커밋하고 실패 시 커밋을 생략하여 재시도하는 흐름</desc>
+  <defs>
+    <marker id="arr-kmc-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-kmc-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="240" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS -->
+  <line x1="220" y1="120" x2="264" y2="120" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-kmc-ink)"/>
+
+  <!-- Success Branch -->
+  <path d="M 468 106 L 500 106 Q 508 106 508 98 L 508 80 Q 508 72 516 72 L 620 72" fill="none" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-kmc-accent)"/>
+  <rect x="524" y="48" width="80" height="18" fill="#f5f5f5"/>
+  <text x="564" y="61" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">처리 성공</text>
+
+  <!-- Failure Branch -->
+  <path d="M 468 134 L 500 134 Q 508 134 508 142 L 508 160 Q 508 168 516 168 L 620 168" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-kmc-ink)"/>
+  <rect x="524" y="144" width="80" height="18" fill="#f5f5f5"/>
+  <text x="564" y="157" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#5a6580">예외 발생</text>
+
+  <!-- 2. NODES -->
+  <rect x="36" y="92" width="184" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="128" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">1. poll() 메시지 수신</text>
+  <text x="128" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">enable-auto-commit: false</text>
+
+  <rect x="264" y="92" width="204" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="366" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">2. 비즈니스 로직 실행</text>
+  <text x="366" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">DB 트랜잭션 및 외부 연동</text>
+
+  <rect x="620" y="44" width="300" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="770" y="68" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">3. 수동 오프셋 커밋 실행</text>
+  <text x="770" y="86" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Acknowledgment.acknowledge()</text>
+
+  <rect x="620" y="140" width="300" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="770" y="164" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">3. 커밋 생략 및 재시도 처리</text>
+  <text x="770" y="182" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Retry / Dead Letter Queue 이관</text>
+</svg>
+</div>
 
 ### 2.1 Spring Kafka의 `AckMode` 추상화
 Spring Kafka는 카프카의 저수준(Java Native) 컨슈머 API를 추상화하여 메시지 리스너 컨테이너(`ConcurrentMessageListenerContainer`)를 통해 오프셋 커밋 타이밍을 세밀하게 제어할 수 있는 `AckMode`를 제공합니다.

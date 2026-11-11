@@ -45,17 +45,75 @@ $$\text{Cosine Similarity}(A, B) = \frac{A \cdot B}{\|A\|_2 \|B\|_2} = \frac{\su
 ### 1.5 RAG(Retrieval-Augmented Generation) 시스템 내 검색기(Retriever) 구조
 RAG 아키텍처에서 밀집 검색기는 지식 베이스와 생성 모델을 연결하는 핵심 인터페이스입니다.
 
-```mermaid
-flowchart LR
-    A["지식 문서 집합 (Documents)"] --> B["Sentence Transformer (인코딩)"]
-    B --> C["문서 임베딩 행렬 (N x 384)"]
-    D["사용자 질의 (Query)"] --> E["Sentence Transformer (인코딩)"]
-    E --> F["질의 벡터 (1 x 384)"]
-    C --> G["코사인 유사도 매트릭스 연산"]
-    F --> G
-    G --> H["최고 유사도 인덱스 도출 (Top-1)"]
-    H --> I["관련 문서 컨텍스트 추출"]
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="semantic-search-rag-title semantic-search-rag-desc" viewBox="0 0 960 280" xmlns="http://www.w3.org/2000/svg">
+  <title id="semantic-search-rag-title">문장 임베딩과 코사인 유사도 기반 RAG 밀집 검색 파이프라인</title>
+  <desc id="semantic-search-rag-desc">지식 문서 집합과 사용자 질의를 각각 Sentence Transformer로 인코딩한 후 코사인 유사도 행렬 연산을 통해 최고 유사도 문서를 추출하는 과정</desc>
+  <defs>
+    <marker id="arr-rag-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-rag-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="280" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <line x1="172" y1="84" x2="196" y2="84" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rag-ink)"/>
+  <line x1="368" y1="84" x2="396" y2="84" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rag-ink)"/>
+  <line x1="172" y1="196" x2="196" y2="196" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rag-ink)"/>
+  <line x1="368" y1="196" x2="396" y2="196" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rag-ink)"/>
+
+  <path d="M 552 84 L 564 84 Q 572 84 572 92 L 572 120 Q 572 128 580 128 L 592 128" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rag-ink)"/>
+  <path d="M 552 196 L 564 196 Q 572 196 572 188 L 572 160 Q 572 152 580 152 L 592 152" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rag-ink)"/>
+  <path d="M 752 140 L 760 140 Q 768 140 768 132 L 768 92 Q 768 84 776 84 L 784 84" fill="none" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-rag-accent)"/>
+  <line x1="860" y1="112" x2="860" y2="168" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rag-ink)"/>
+
+  <!-- 2. NODES -->
+  <!-- Offline Document Indexing Row -->
+  <rect x="24" y="56" width="148" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="98" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">지식 문서 집합</text>
+  <text x="98" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Documents (N)</text>
+
+  <rect x="196" y="56" width="172" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="282" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">트랜스포머 인코더</text>
+  <text x="282" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">SentenceTransformer</text>
+
+  <rect x="396" y="56" width="156" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="474" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">문서 임베딩 행렬</text>
+  <text x="474" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Matrix (N x 384)</text>
+
+  <!-- Online Query Retrieval Row -->
+  <rect x="24" y="168" width="148" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="98" y="192" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">사용자 질의</text>
+  <text x="98" y="210" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Query (1)</text>
+
+  <rect x="196" y="168" width="172" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="282" y="192" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">트랜스포머 인코더</text>
+  <text x="282" y="210" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">SentenceTransformer</text>
+
+  <rect x="396" y="168" width="156" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="474" y="192" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">질의 밀집 벡터</text>
+  <text x="474" y="210" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Vector (1 x 384)</text>
+
+  <!-- Cosine Similarity Focal Node -->
+  <rect x="592" y="112" width="160" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="672" y="136" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">코사인 유사도 연산</text>
+  <text x="672" y="154" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">cosine_similarity()</text>
+
+  <!-- Output Context Extraction -->
+  <rect x="784" y="56" width="152" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="860" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">최고 유사도 인덱스</text>
+  <text x="860" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">argmax (Top-1)</text>
+
+  <rect x="784" y="168" width="152" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="860" y="192" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">관련 문서 컨텍스트</text>
+  <text x="860" y="210" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">RAG Context 추출</text>
+</svg>
+</div>
 
 1. **오프라인 색인(Offline Indexing)**: 지식 베이스 문서를 사전 로드하여 384차원 임베딩 행렬($N \times 384$)로 변환 후 적재합니다.
 2. **온라인 검색(Online Retrieval)**: 런타임에 유입된 사용자 질의를 단일 벡터($1 \times 384$)로 인코딩한 뒤, 행렬 곱셈을 통해 문서 집합과의 유사도 벡터($1 \times N$)를 산출합니다.

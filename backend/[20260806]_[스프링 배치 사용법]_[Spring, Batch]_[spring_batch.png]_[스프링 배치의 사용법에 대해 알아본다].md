@@ -12,15 +12,45 @@
 
 대량의 데이터를 일반 웹 서버 로직에서 처리할 때 마주치는 기술적 한계점은 다음과 같습니다.
 
-```mermaid
-flowchart LR
-    API["단일 REST API 호출"] --> Memory["수백만 건 데이터 메모리 일괄 적재"]
-    Memory --> OOM["JVM Out Of Memory (OOM) 발생"]
-    Memory --> Lock["장시간 DB 트랜잭션 락으로 서비스 마비"]
-    
-    style OOM fill:#ffcccc,stroke:#333,stroke-width:2px;
-    style Lock fill:#ffcccc,stroke:#333,stroke-width:2px;
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="spring-batch-monolithic-limit-title spring-batch-monolithic-limit-desc" viewBox="0 0 960 240" xmlns="http://www.w3.org/2000/svg">
+  <title id="spring-batch-monolithic-limit-title">단일 REST API에서 대용량 데이터를 일괄 처리할 때 발생하는 한계</title>
+  <desc id="spring-batch-monolithic-limit-desc">단일 API 호출로 수백만 건의 데이터를 메모리에 일괄 적재할 때 JVM Out Of Memory 에러와 장시간 DB 트랜잭션 락이 발생하는 구조</desc>
+  <defs>
+    <marker id="arr-sbm-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-sbm-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="240" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS -->
+  <line x1="232" y1="120" x2="292" y2="120" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-sbm-ink)"/>
+  <path d="M 528 106 L 564 106 Q 572 106 572 98 L 572 80 Q 572 72 580 72 L 628 72" fill="none" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-sbm-accent)"/>
+  <path d="M 528 134 L 564 134 Q 572 134 572 142 L 572 160 Q 572 168 580 168 L 628 168" fill="none" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-sbm-accent)"/>
+
+  <!-- 2. NODES -->
+  <rect x="44" y="92" width="188" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="138" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">단일 REST API 호출</text>
+  <text x="138" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">동기식 웹 요청 처리</text>
+
+  <rect x="292" y="92" width="236" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="410" y="116" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">수백만 건 메모리 일괄 적재</text>
+  <text x="410" y="134" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">findAll() 단일 트랜잭션</text>
+
+  <rect x="628" y="44" width="288" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="772" y="68" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">JVM Out Of Memory 발생</text>
+  <text x="772" y="86" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Heap 메모리 고갈 및 프로세스 종료</text>
+
+  <rect x="628" y="140" width="288" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="772" y="164" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">장시간 DB 트랜잭션 락 점유</text>
+  <text x="772" y="182" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">커넥션 고갈 및 실패 시 전체 롤백</text>
+</svg>
+</div>
 
 ### 1.1 메모리 자원 고갈 (Out Of Memory)
 수백만 건의 레코드를 한 번에 메모리에 로드하여 가공할 경우 힙 메모리 임계치를 초과하여 JVM 프로세스가 비정상 종료됩니다.
@@ -37,19 +67,69 @@ flowchart LR
 
 Spring Batch는 대용량 처리를 견고하게 통제하기 위해 **Job -> Step -> ItemReader / ItemProcessor / ItemWriter** 계층 구조를 갖습니다.
 
-```mermaid
-flowchart TD
-    Job["Job (정산 배치 작업)"] --> Step1["Step 1: 정산 집계 (Chunk Step)"]
-    Job --> Step2["Step 2: 관리자 알림 발송 (Tasklet Step)"]
-    
-    subgraph Chunk_Flow ["Chunk 기반 처리 흐름"]
-        Reader["ItemReader<br/>(1건씩 DB 페이징 조회)"] --> Processor["ItemProcessor<br/>(1건씩 수수료 3% 계산)"]
-        Processor --> Buffer["메모리 버퍼 적재"]
-        Buffer -- "Chunk Size 도달 시 (예: 1,000건)" --> Writer["ItemWriter<br/>(1,000건 일괄 INSERT 및 커밋)"]
-    end
-    
-    Step1 --- Chunk_Flow
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="spring-batch-chunk-architecture-title spring-batch-chunk-architecture-desc" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+  <title id="spring-batch-chunk-architecture-title">Spring Batch Job/Step 계층과 Chunk 지향 처리 아키텍처</title>
+  <desc id="spring-batch-chunk-architecture-desc">정산 배치 Job이 Chunk Step과 Tasklet Step으로 구성되며 Chunk Step 내부에서 ItemReader, ItemProcessor, 메모리 버퍼, ItemWriter가 1,000건 단위로 트랜잭션을 처리하는 구조</desc>
+  <defs>
+    <marker id="arr-sbc-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-sbc-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="320" fill="#f5f5f5" rx="8"/>
+
+  <!-- Bottom Zone: Chunk 기반 처리 흐름 -->
+  <rect x="24" y="136" width="912" height="160" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="160" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">Chunk 기반 처리 흐름 (Chunk Size = 1,000건 단위 분할 트랜잭션)</text>
+
+  <!-- 1. ARROWS -->
+  <line x1="232" y1="60" x2="292" y2="60" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-sbc-ink)"/>
+  <line x1="516" y1="60" x2="576" y2="60" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-sbc-ink)"/>
+  <path d="M 404 88 L 404 108 Q 404 116 396 116 L 144 116 Q 136 116 136 124 L 136 196" fill="none" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#arr-sbc-ink)"/>
+
+  <line x1="228" y1="228" x2="260" y2="228" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-sbc-ink)"/>
+  <line x1="444" y1="228" x2="476" y2="228" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-sbc-ink)"/>
+  <line x1="640" y1="228" x2="728" y2="228" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-sbc-accent)"/>
+  <rect x="646" y="204" width="76" height="18" fill="#ececec"/>
+  <text x="684" y="217" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">1,000건 도달</text>
+
+  <!-- 2. NODES -->
+  <!-- Top Job/Step Row -->
+  <rect x="44" y="32" width="188" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="138" y="56" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Job (정산 배치 작업)</text>
+  <text x="138" y="74" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">settlementJob</text>
+
+  <rect x="292" y="32" width="224" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="404" y="56" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Step 1: 정산 집계</text>
+  <text x="404" y="74" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Chunk-Oriented Step</text>
+
+  <rect x="576" y="32" width="224" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="688" y="56" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Step 2: 관리자 알림 발송</text>
+  <text x="688" y="74" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Tasklet Step</text>
+
+  <!-- Chunk Zone Nodes -->
+  <rect x="44" y="196" width="184" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="136" y="224" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">ItemReader</text>
+  <text x="136" y="242" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">1건씩 DB 페이징 조회</text>
+
+  <rect x="260" y="196" width="184" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="352" y="224" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">ItemProcessor</text>
+  <text x="352" y="242" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">1건씩 수수료 3% 계산</text>
+
+  <rect x="476" y="196" width="164" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="558" y="224" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">메모리 버퍼 적재</text>
+  <text x="558" y="242" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Chunk Buffer</text>
+
+  <rect x="728" y="196" width="188" height="64" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="822" y="224" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">ItemWriter</text>
+  <text x="822" y="242" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">1,000건 일괄 쓰기 및 커밋</text>
+</svg>
+</div>
 
 ### 2.1 Chunk 지향 처리 (Chunk-Oriented Processing)
 Chunk 단위(예: 1,000건)로 트랜잭션을 분할하여 처리하는 메커니즘입니다.

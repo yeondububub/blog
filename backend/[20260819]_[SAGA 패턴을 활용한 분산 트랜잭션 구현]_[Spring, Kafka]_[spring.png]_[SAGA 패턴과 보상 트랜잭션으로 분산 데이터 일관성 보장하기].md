@@ -14,25 +14,87 @@
 
 전통적인 모놀리식 아키텍처에서는 주문, 결제, 재고 차감 로직을 단일 데이터베이스의 `@Transactional` 경계 내에서 원자적으로 처리하였습니다. 그러나 각 도메인이 독립된 마이크로서비스로 분리되면 다음과 같은 기술적 한계에 직면합니다.
 
-```mermaid
-flowchart LR
-    subgraph Traditional_2PC ["2PC (Two-Phase Commit) 분산 트랜잭션"]
-        direction TB
-        Coord["트랜잭션 코디네이터"] --> P1["1단계: 전체 서비스 Prepare 요청<br/>(Order, Payment, Inventory)"]
-        P1 --> Lock["모든 노드 DB Lock 유지 (블로킹)"]
-        Lock --> P2["2단계: 전체 서비스 Commit 확정"]
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="twopc-vs-saga-title twopc-vs-saga-desc" viewBox="0 0 960 360" xmlns="http://www.w3.org/2000/svg">
+  <title id="twopc-vs-saga-title">2PC 분산 트랜잭션과 SAGA 패턴 보상 트랜잭션 비교</title>
+  <desc id="twopc-vs-saga-desc">모든 노드의 DB Lock을 블로킹 유지하는 2PC 방식과 비동기 로컬 트랜잭션 체인 및 역순 보상 트랜잭션으로 최종 일관성을 달성하는 SAGA 패턴을 비교하는 다이어그램</desc>
+  <defs>
+    <marker id="sg1-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="sg1-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph SAGA_Flow ["SAGA 패턴 (비동기 로컬 트랜잭션 체인)"]
-        direction TB
-        T1["1. Order 로컬 커밋"] --> T2["2. Payment 로컬 커밋 (계좌 출금)"]
-        T2 --> T3["3. Inventory 로컬 커밋 (재고 부족 실패)"]
-        T3 -. "보상 트랜잭션 트리거" .-> C2["2'. Payment 취소 커밋 (계좌 환불 입금)"]
-        C2 -.-> C1["1'. Order 취소 커밋 (주문 CANCELLED)"]
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="360" fill="#f5f5f5" rx="8"/>
 
-    Traditional_2PC ~~~ SAGA_Flow
-```
+  <!-- Left Zone: 2PC 분산 트랜잭션 -->
+  <rect x="24" y="24" width="380" height="312" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 2PC (Two-Phase Commit) 분산 트랜잭션</text>
+
+  <!-- Right Zone: SAGA 패턴 -->
+  <rect x="428" y="24" width="508" height="312" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="448" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. SAGA 패턴 (비동기 로컬 트랜잭션 체인)</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Left Zone Arrows -->
+  <line x1="214" y1="112" x2="214" y2="132" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sg1-arr-ink)"/>
+  <line x1="214" y1="180" x2="214" y2="200" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sg1-arr-ink)"/>
+  <line x1="214" y1="248" x2="214" y2="268" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sg1-arr-ink)"/>
+
+  <!-- Right Zone Arrows: Forward T1 -> T2 -> T3 -->
+  <line x1="554" y1="124" x2="554" y2="156" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sg1-arr-ink)"/>
+  <line x1="554" y1="212" x2="554" y2="244" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sg1-arr-ink)"/>
+
+  <!-- Right Zone Arrows: Compensation T3 -> C2 -> C1 -->
+  <path d="M 660 272 L 802 272 Q 810 272 810 264 L 810 212" fill="none" stroke="#bf4520" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#sg1-arr-accent)"/>
+  <rect x="680" y="280" width="152" height="20" rx="2" fill="#ececec"/>
+  <text x="756" y="294" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#bf4520">보상 트랜잭션 트리거</text>
+
+  <line x1="810" y1="156" x2="810" y2="124" stroke="#bf4520" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#sg1-arr-accent)"/>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="64" y="64" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="85" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">트랜잭션 코디네이터</text>
+  <text x="214" y="101" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Transaction Coordinator</text>
+
+  <rect x="64" y="132" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="153" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">1단계: 전체 서비스 Prepare 요청</text>
+  <text x="214" y="169" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Order · Payment · Inventory</text>
+
+  <rect x="64" y="200" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="221" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">모든 노드 DB Lock 유지 (블로킹)</text>
+  <text x="214" y="237" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Synchronous Lock Contention</text>
+
+  <rect x="64" y="268" width="300" height="48" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="214" y="289" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">2단계: 전체 서비스 Commit 확정</text>
+  <text x="214" y="305" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Global Commit</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="448" y="68" width="212" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="554" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">1. Order 로컬 커밋</text>
+  <text x="554" y="110" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">주문 생성 (PENDING)</text>
+
+  <rect x="448" y="156" width="212" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="554" y="180" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">2. Payment 로컬 커밋</text>
+  <text x="554" y="198" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">계좌 출금 완료</text>
+
+  <rect x="448" y="244" width="212" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="554" y="268" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">3. Inventory 로컬 실패</text>
+  <text x="554" y="286" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">재고 부족 예외 발생</text>
+
+  <rect x="704" y="156" width="212" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="810" y="180" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">2'. Payment 취소 커밋</text>
+  <text x="810" y="198" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">계좌 환불 재입금</text>
+
+  <rect x="704" y="68" width="212" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="810" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">1'. Order 취소 커밋</text>
+  <text x="810" y="110" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">주문 CANCELLED 전환</text>
+</svg>
+</div>
 
 ### 1.1 2PC(Two-Phase Commit)의 성능 및 가용성 한계
 - **동기식 블로킹 오버헤드**: 2PC는 모든 참여 서비스가 응답할 때까지 데이터베이스 락(Lock)을 유지하므로, 네트워크 레이턴시가 누적되어 전체 시스템의 처리량(Throughput)이 급격히 저하됩니다.
@@ -51,19 +113,76 @@ SAGA 패턴은 분산 비즈니스 프로세스를 여러 개의 로컬 트랜�
 - **정상 흐름**: $T_1 \rightarrow T_2 \rightarrow \dots \rightarrow T_n$ (전체 성공 시 트랜잭션 완료)
 - **실패 및 롤백 흐름**: $T_1 \rightarrow T_2 \rightarrow T_3(\text{실패}) \rightarrow C_2 \rightarrow C_1$ (역순으로 보상 트랜잭션을 실행하여 원복)
 
-```mermaid
-flowchart LR
-    Orch["OrderSagaOrchestrator<br/>(중앙 제어 상태 머신)"]
-    
-    Orch -- "1. 결제 명령 (Command)" --> PaySvc["Payment Service<br/>(계좌 잔액 출금)"]
-    PaySvc -- "2. 결제 완료 이벤트" --> Orch
-    
-    Orch -- "3. 재고 차감 명령 (Command)" --> InvSvc["Inventory Service<br/>(상품 재고 차감)"]
-    InvSvc -- "4. 재고 부족 실패 이벤트" --> Orch
-    
-    Orch -. "5. 결제 취소 명령 (Compensate: 계좌 환불)" .-> PaySvc
-    Orch -. "6. 주문 취소 명령 (Compensate)" .-> OrderSvc["Order Service (CANCELLED)"]
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="saga-orchestrator-seq-title saga-orchestrator-seq-desc" viewBox="0 0 960 400" xmlns="http://www.w3.org/2000/svg">
+  <title id="saga-orchestrator-seq-title">OrderSagaOrchestrator 중앙 제어 및 보상 트랜잭션 흐름</title>
+  <desc id="saga-orchestrator-seq-desc">OrderSagaOrchestrator가 Payment Service와 Inventory Service로 명령을 전달하고 재고 부족 실패 시 역순으로 결제 취소 및 주문 취소 보상 명령을 발행하는 다이어그램</desc>
+  <defs>
+    <marker id="sg2-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2d3142"/>
+    </marker>
+    <marker id="sg2-arr-muted" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="sg2-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="400" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- 1. 결제 명령 -->
+  <line x1="284" y1="60" x2="648" y2="60" stroke="#2d3142" stroke-width="1.25" marker-end="url(#sg2-arr-ink)"/>
+  <rect x="336" y="36" width="260" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="466" y="49" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#2d3142">1. 결제 명령 (Command)</text>
+
+  <!-- 2. 결제 완료 이벤트 -->
+  <line x1="648" y1="106" x2="284" y2="106" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#sg2-arr-muted)"/>
+  <rect x="336" y="82" width="260" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="466" y="95" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#4f5d75">2. 결제 완료 이벤트 (PAYMENT_SUCCESS)</text>
+
+  <!-- 5. 결제 취소 명령 (Compensate) -->
+  <line x1="284" y1="152" x2="648" y2="152" stroke="#bf4520" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#sg2-arr-accent)"/>
+  <rect x="326" y="128" width="280" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="466" y="141" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">5. 결제 취소 보상 명령 (계좌 환불)</text>
+
+  <!-- 3. 재고 차감 명령 -->
+  <line x1="284" y1="220" x2="648" y2="220" stroke="#2d3142" stroke-width="1.25" marker-end="url(#sg2-arr-ink)"/>
+  <rect x="336" y="196" width="260" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="466" y="209" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#2d3142">3. 재고 차감 명령 (Command)</text>
+
+  <!-- 4. 재고 부족 실패 이벤트 -->
+  <line x1="648" y1="264" x2="284" y2="264" stroke="#bf4520" stroke-width="1.5" marker-end="url(#sg2-arr-accent)"/>
+  <rect x="336" y="240" width="260" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="466" y="253" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">4. 재고 부족 실패 이벤트 (FAILED)</text>
+
+  <!-- 6. 주문 취소 명령 (Compensate) -->
+  <line x1="284" y1="340" x2="648" y2="340" stroke="#bf4520" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#sg2-arr-accent)"/>
+  <rect x="326" y="316" width="280" height="18" rx="2" fill="#f5f5f5"/>
+  <text x="466" y="329" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">6. 주문 취소 보상 명령 (Compensate)</text>
+
+  <!-- 2. NODES -->
+  <!-- Focal Node: OrderSagaOrchestrator -->
+  <rect x="36" y="36" width="248" height="328" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="160" y="194" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">OrderSagaOrchestrator</text>
+  <text x="160" y="214" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">중앙 제어 상태 머신 (State Machine)</text>
+
+  <!-- Right Column Service Nodes -->
+  <rect x="648" y="36" width="276" height="136" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="786" y="98" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Payment Service</text>
+  <text x="786" y="116" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">계좌 잔액 출금 (debit) · 환불 (credit)</text>
+
+  <rect x="648" y="192" width="276" height="96" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="786" y="234" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Inventory Service</text>
+  <text x="786" y="252" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">상품 재고 차감 (decreaseStock)</text>
+
+  <rect x="648" y="308" width="276" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="786" y="332" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Order Service</text>
+  <text x="786" y="350" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">주문 상태 전환 (CANCELLED)</text>
+</svg>
+</div>
 
 ### 2.1 코레오그래피(Choreography) vs 오케스트레이션(Orchestration)
 

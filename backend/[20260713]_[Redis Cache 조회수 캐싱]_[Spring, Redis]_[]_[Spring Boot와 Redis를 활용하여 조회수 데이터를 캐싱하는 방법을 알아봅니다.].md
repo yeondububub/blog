@@ -12,13 +12,45 @@
 
 전통적인 방식에서 사용자 조회 요청마다 데이터베이스 또는 원격 조회수 서비스를 직접 호출할 때 직면하는 구조적 문제는 다음과 같습니다.
 
-```mermaid
-flowchart LR
-    User["클라이언트 (N개 요청)"] --> App["애플리케이션 서버"]
-    App --> DB[(데이터베이스 / 원격 집계 API)]
-    
-    style DB fill:#ffcccc,stroke:#333,stroke-width:2px;
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="redis-cache-bottleneck-title redis-cache-bottleneck-desc" viewBox="0 0 960 200" xmlns="http://www.w3.org/2000/svg">
+  <title id="redis-cache-bottleneck-title">기존 조회수 직접 호출 방식의 성능 병목</title>
+  <desc id="redis-cache-bottleneck-desc">클라이언트의 대량 조회 요청이 캐시 없이 애플리케이션 서버를 거쳐 데이터베이스 및 원격 집계 API를 직접 호출하여 병목이 발생하는 구조</desc>
+  <defs>
+    <marker id="arr-rcb-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-rcb-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="200" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS -->
+  <line x1="248" y1="84" x2="368" y2="84" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rcb-ink)"/>
+  <rect x="260" y="60" width="96" height="18" fill="#f5f5f5"/>
+  <text x="308" y="73" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#5a6580">N건 조회 요청</text>
+
+  <line x1="576" y1="84" x2="696" y2="84" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-rcb-accent)"/>
+  <rect x="588" y="60" width="96" height="18" fill="#f5f5f5"/>
+  <text x="636" y="73" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">N건 동기 호출</text>
+
+  <!-- 2. NODES -->
+  <rect x="48" y="56" width="200" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="148" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">클라이언트 (N개 요청)</text>
+  <text x="148" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">High Read Traffic</text>
+
+  <rect x="368" y="56" width="208" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="472" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">애플리케이션 서버</text>
+  <text x="472" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Spring Boot Instance</text>
+
+  <rect x="696" y="56" width="216" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="804" y="80" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">DB / 원격 집계 API</text>
+  <text x="804" y="98" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">I/O 병목 및 커넥션 풀 고갈</text>
+</svg>
+</div>
 
 ### 1.1 데이터베이스 I/O 병목 및 커넥션 고갈
 초당 수천 건 이상의 조회 요청이 들어올때 매 요청마다 `SELECT` 및 `UPDATE` 쿼리를 실행하면 데이터베이스의 디스크 I/O가 급증하고 커넥션 풀(Connection Pool)이 빠르게 고갈됩니다.
@@ -35,16 +67,60 @@ flowchart LR
 
 Spring Framework는 비즈니스 로직에 특정 캐시 벤더 기술을 종속시키지 않고 선언적으로 캐시를 제어할 수 있도록 **Spring Cache 추상화 레이어를** 제공합니다.
 
-```mermaid
-flowchart LR
-    Client["1. 조회 요청"] --> Cache{"2. Spring Cache AOP<br/>(@Cacheable)"}
-    
-    Cache -- "Cache Hit" --> ReturnHit["Redis 캐시 즉시 반환"]
-    
-    Cache -- "Cache Miss" --> Remote["3. 외부 조회수 API 호출"]
-    Remote --> Store["4. Redis 1초 TTL 적재"]
-    Store --> ReturnHit
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="redis-cache-flow-title redis-cache-flow-desc" viewBox="0 0 960 260" xmlns="http://www.w3.org/2000/svg">
+  <title id="redis-cache-flow-title">Spring Cache AOP와 Redis 1초 TTL 기반 조회수 캐싱 흐름</title>
+  <desc id="redis-cache-flow-desc">조회 요청 시 Spring Cache AOP가 개입하여 Cache Hit 시 Redis 데이터를 즉시 반환하고 Cache Miss 시에만 외부 API를 호출하여 1초 TTL로 적재하는 과정</desc>
+  <defs>
+    <marker id="arr-rcf-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-rcf-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="260" fill="#f5f5f5" rx="8"/>
+
+  <!-- 1. ARROWS -->
+  <line x1="172" y1="130" x2="204" y2="130" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rcf-ink)"/>
+
+  <!-- Cache Hit Path -->
+  <path d="M 292 102 L 292 80 Q 292 72 300 72 L 768 72" fill="none" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-rcf-accent)"/>
+  <rect x="480" y="48" width="100" height="18" fill="#f5f5f5"/>
+  <text x="530" y="61" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Cache Hit</text>
+
+  <!-- Cache Miss Path -->
+  <path d="M 292 158 L 292 180 Q 292 188 300 188 L 440 188" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rcf-ink)"/>
+  <rect x="316" y="164" width="100" height="18" fill="#f5f5f5"/>
+  <text x="366" y="177" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Cache Miss</text>
+
+  <line x1="604" y1="188" x2="632" y2="188" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rcf-ink)"/>
+  <path d="M 784 188 L 842 188 Q 850 188 850 180 L 850 100" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-rcf-ink)"/>
+
+  <!-- 2. NODES -->
+  <rect x="28" y="102" width="144" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="100" y="126" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">1. 조회 요청</text>
+  <text x="100" y="144" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">ViewClient.count()</text>
+
+  <rect x="204" y="102" width="176" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="292" y="126" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">2. Spring Cache AOP</text>
+  <text x="292" y="144" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">@Cacheable(sync=true)</text>
+
+  <rect x="440" y="160" width="164" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="522" y="184" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">3. 외부 API 호출</text>
+  <text x="522" y="202" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">RestClient GET</text>
+
+  <rect x="632" y="160" width="152" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="708" y="184" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">4. Redis 적재</text>
+  <text x="708" y="202" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">TTL 1초 설정</text>
+
+  <rect x="768" y="44" width="164" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="850" y="68" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Redis 캐시 즉시 반환</text>
+  <text x="850" y="86" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">In-Memory Response</text>
+</svg>
+</div>
 
 ### 2.1 Spring Cache 추상화와 Redis의 결합
 - **`spring-boot-starter-cache`**: AOP 프록시 기반으로 `@Cacheable`, `@CachePut`, `@CacheEvict` 어노테이션을 해석하여 캐시 인터셉터를 동작시킵니다.

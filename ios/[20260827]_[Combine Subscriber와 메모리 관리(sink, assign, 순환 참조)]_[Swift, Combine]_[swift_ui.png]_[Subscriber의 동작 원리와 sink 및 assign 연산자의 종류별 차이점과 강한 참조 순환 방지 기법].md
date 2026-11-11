@@ -10,23 +10,75 @@ Combine 파이프라인의 종단점인 `Subscriber`는 `Publisher`가 방출한
 
 클래스 내부에서 Combine 스트림을 구독하고 결과를 해당 클래스의 프로퍼티에 할당할 때, 메모리 관리 규칙을 정확히 이해하지 못하면 심각한 메모리 누수로 이어집니다.
 
-```mermaid
-flowchart LR
-    subgraph RetainCycle ["assign(to:on:) 사용 시의 강한 참조 순환"]
-        direction TB
-        Instance["MyClass 인스턴스"] -->|"소유 (강한 참조)"| CancellableSet["Set<AnyCancellable>"]
-        CancellableSet -->|"소유 (강한 참조)"| AssignSub["Subscribers.Assign"]
-        AssignSub -->|"target object retaining (강한 참조)"| Instance
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="subscriber-retain-cycle-title subscriber-retain-cycle-desc" viewBox="0 0 960 340" xmlns="http://www.w3.org/2000/svg">
+  <title id="subscriber-retain-cycle-title">assign(to:on:) 강한 참조 순환 구조와 assign(to:) 안전 바인딩 비교</title>
+  <desc id="subscriber-retain-cycle-desc">assign(to:on:) 사용 시 MyClass 인스턴스, Set&lt;AnyCancellable&gt;, Subscribers.Assign 간에 발생하는 강한 참조 순환과 assign(to: &amp;$property)를 통한 안전한 수명주기 일치 구조를 비교하는 다이어그램</desc>
+  <defs>
+    <marker id="arr-sub-mem-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-sub-mem-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph FixedBinding ["assign(to: &self.$text) 적용"]
-        direction TB
-        Instance2["MyClass 인스턴스"] -->|"내부 바인딩 (수명주기 일치)"| PublishedProp["@Published 프로퍼티"]
-        PublishedProp -.->|"AnyCancellable 불필요"| Stream["Publisher 스트림"]
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="340" fill="#f5f5f5" rx="8"/>
 
-    RetainCycle ~~~ FixedBinding
-```
+  <!-- Left Zone: assign(to:on:) 강한 참조 순환 -->
+  <rect x="24" y="24" width="444" height="292" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. assign(to:on:) 사용 시의 강한 참조 순환</text>
+
+  <!-- Right Zone: assign(to: &$text) 적용 -->
+  <rect x="492" y="24" width="444" height="292" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="512" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. assign(to: &amp;$property) 적용 (순환 참조 차단)</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Left Zone Arrows -->
+  <line x1="184" y1="120" x2="184" y2="152" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-sub-mem-ink)"/>
+  <line x1="184" y1="204" x2="184" y2="236" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-sub-mem-ink)"/>
+  <path d="M 296 262 L 420 262 Q 428 262 428 254 L 428 102 Q 428 94 420 94 L 296 94" fill="none" stroke="#bf4520" stroke-width="1.75" marker-end="url(#arr-sub-mem-accent)"/>
+
+  <!-- Left Zone Arrow Label Mask -->
+  <rect x="320" y="166" width="128" height="22" rx="2" fill="#ececec"/>
+  <text x="384" y="181" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">강한 참조 (Retain)</text>
+
+  <!-- Right Zone Arrows -->
+  <line x1="714" y1="128" x2="714" y2="168" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-sub-mem-ink)"/>
+  <line x1="714" y1="236" x2="714" y2="288" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#arr-sub-mem-ink)"/>
+
+  <!-- Right Zone Arrow Label Mask -->
+  <rect x="614" y="138" width="200" height="20" rx="2" fill="#ececec"/>
+  <text x="714" y="152" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#4f5d75">내부 바인딩 (수명주기 일치)</text>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="72" y="68" width="224" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="184" y="90" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">MyClass 인스턴스</text>
+  <text x="184" y="108" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">self (Target Object)</text>
+
+  <rect x="72" y="152" width="224" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="184" y="174" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">구독 토큰 컬렉션</text>
+  <text x="184" y="192" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Set&lt;AnyCancellable&gt;</text>
+
+  <rect x="72" y="236" width="224" height="52" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="184" y="258" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">강한 참조 구독자</text>
+  <text x="184" y="276" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Subscribers.Assign</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="574" y="76" width="280" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="714" y="98" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">MyClass 인스턴스</text>
+  <text x="714" y="116" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">AnyCancellable 보관 불필요</text>
+
+  <rect x="574" y="168" width="280" height="68" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="714" y="194" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">@Published 프로퍼티</text>
+  <text x="714" y="216" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">assign(to: &amp;$timestamp)</text>
+
+  <rect x="574" y="260" width="280" height="40" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="714" y="284" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Publisher 스트림 자동 해제</text>
+</svg>
+</div>
 
 ### 1.1 `assign(to:on:)`의 강한 참조(Retain) 특성
 Apple 공식 문서에 명시된 바와 같이, `assign(to:on:)` 연산자는 스트림이 완료되거나 취소될 때까지 대상 객체(`object`)를 **강하게 유지(retaining the target object)** 합니다. 만약 대상 객체가 `AnyCancellable`을 자신의 프로퍼티로 들고 있다면, `인스턴스 -> AnyCancellable -> Subscriber -> 인스턴스`로 이어지는 삼각 참조 순환이 형성되어 객체가 영구히 `deinit`되지 않습니다.

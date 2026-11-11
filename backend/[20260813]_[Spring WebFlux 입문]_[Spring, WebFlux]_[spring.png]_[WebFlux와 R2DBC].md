@@ -12,25 +12,95 @@
 
 전통적인 Spring MVC 기반 블로킹 I/O 모델과 WebFlux의 논블로킹 I/O 모델을 비교 분석한 내용은 다음과 같습니다.
 
-```mermaid
-flowchart LR
-    subgraph Spring_MVC ["Spring MVC (Blocking I/O)"]
-        direction TB
-        Req1["Request 1"] --> T1["Thread 1 (Blocked during I/O)"]
-        Req2["Request 2"] --> T2["Thread 2 (Blocked during I/O)"]
-        Req3["Request 3"] --> T3["Thread Pool Exhaustion (대기 큐 지연)"]
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="mvc-vs-webflux-title mvc-vs-webflux-desc" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+  <title id="mvc-vs-webflux-title">Spring MVC 블로킹 모델과 Spring WebFlux 논블로킹 모델 비교</title>
+  <desc id="mvc-vs-webflux-desc">요청마다 스레드를 점유하여 블로킹되는 Spring MVC와 단일 이벤트 루프 스레드로 다중 요청을 처리하고 비동기 I/O를 위임하는 Spring WebFlux를 비교하는 다이어그램</desc>
+  <defs>
+    <marker id="wf1-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="wf1-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph Spring_WebFlux ["Spring WebFlux (Non-Blocking I/O)"]
-        direction TB
-        W_Req1["Request 1"] --> EL["Event Loop Thread (CPU Core 최적화)"]
-        W_Req2["Request 2"] --> EL
-        W_Req3["Request 3"] --> EL
-        EL -. 비동기 I/O 위임 .-> IO["DB / PG Network I/O"]
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="320" fill="#f5f5f5" rx="8"/>
 
-    Spring_MVC ~~~ Spring_WebFlux
-```
+  <!-- Left Zone: Spring MVC (Blocking I/O) -->
+  <rect x="24" y="24" width="444" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. Spring MVC (Blocking I/O)</text>
+
+  <!-- Right Zone: Spring WebFlux (Non-Blocking I/O) -->
+  <rect x="492" y="24" width="444" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="512" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. Spring WebFlux (Non-Blocking I/O)</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Left Zone Arrows -->
+  <line x1="164" y1="94" x2="212" y2="94" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#wf1-arr-ink)"/>
+  <line x1="164" y1="162" x2="212" y2="162" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#wf1-arr-ink)"/>
+  <line x1="164" y1="230" x2="212" y2="230" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#wf1-arr-ink)"/>
+
+  <!-- Right Zone Arrows -->
+  <line x1="628" y1="94" x2="680" y2="94" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#wf1-arr-ink)"/>
+  <path d="M 628 162 L 644 162 Q 652 162 652 154 L 652 116 Q 652 108 660 108 L 680 108" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#wf1-arr-ink)"/>
+  <path d="M 628 230 L 652 230 Q 660 230 660 222 L 660 130 Q 660 122 668 122 L 680 122" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#wf1-arr-ink)"/>
+
+  <!-- Event Loop -> Async I/O -->
+  <line x1="798" y1="140" x2="798" y2="204" stroke="#bf4520" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#wf1-arr-accent)"/>
+  <rect x="808" y="162" width="112" height="20" rx="2" fill="#ececec"/>
+  <text x="864" y="176" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#bf4520">비동기 I/O 위임</text>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="44" y="68" width="120" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="104" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Request 1</text>
+  <text x="104" y="108" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">HTTP Call</text>
+
+  <rect x="44" y="136" width="120" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="104" y="160" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Request 2</text>
+  <text x="104" y="176" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">HTTP Call</text>
+
+  <rect x="44" y="204" width="120" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="104" y="228" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Request 3</text>
+  <text x="104" y="244" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">HTTP Call</text>
+
+  <rect x="212" y="68" width="236" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="330" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Thread 1 (점유 대기)</text>
+  <text x="330" y="108" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Blocked during I/O</text>
+
+  <rect x="212" y="136" width="236" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="330" y="160" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Thread 2 (점유 대기)</text>
+  <text x="330" y="176" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Blocked during I/O</text>
+
+  <rect x="212" y="204" width="236" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="330" y="228" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">스레드 풀 고갈 (대기 큐 지연)</text>
+  <text x="330" y="244" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Thread Pool Exhaustion</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="512" y="68" width="116" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="570" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Request 1</text>
+  <text x="570" y="108" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Reactive</text>
+
+  <rect x="512" y="136" width="116" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="570" y="160" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Request 2</text>
+  <text x="570" y="176" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Reactive</text>
+
+  <rect x="512" y="204" width="116" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="570" y="228" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Request 3</text>
+  <text x="570" y="244" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Reactive</text>
+
+  <!-- Event Loop Thread (Focal) -->
+  <rect x="680" y="68" width="236" height="72" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="798" y="98" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">Event Loop Thread</text>
+  <text x="798" y="116" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Netty Non-Blocking (CPU 최적화)</text>
+
+  <rect x="680" y="204" width="236" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="798" y="228" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">DB / PG Network I/O</text>
+  <text x="798" y="244" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">R2DBC · WebClient</text>
+</svg>
+</div>
 
 ### 1.1 Thread-per-request 모델의 스레드 고갈
 Spring MVC는 요청마다 톰캣(Tomcat) 스레드 풀에서 작업 스레드를 1개씩 할당합니다. 외부 PG사 응답 지연이나 DB 쿼리 대기 시간 동안 해당 스레드는 아무런 작업을 하지 못하고 블로킹(Blocked) 상태로 대기하므로, 동시 요청이 증가하면 스레드 풀이 고갈되고 컨텍스트 스위칭(Context Switching) 오버헤드가 급증합니다.

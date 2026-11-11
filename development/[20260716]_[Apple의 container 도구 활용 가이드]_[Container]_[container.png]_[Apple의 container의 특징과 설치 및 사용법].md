@@ -12,26 +12,79 @@ Apple이 공식 공개한 오픈소스 도구인 **`apple/container`는** macOS 
 
 전통적인 macOS 컨테이너 구동 방식과 Apple 네이티브 컨테이너 방식의 아키텍처 비교는 다음과 같습니다.
 
-```mermaid
-flowchart LR
-    subgraph Traditional ["전통적 Docker Desktop 방식"]
-        direction TB
-        M1["macOS Host"] --> VM1["단일 대형 Linux VM (상시 점유)"]
-        VM1 --> C1["Container A"]
-        VM1 --> C2["Container B"]
-        VM1 --> C3["Container C"]
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="apple-container-arch-title apple-container-arch-desc" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+  <title id="apple-container-arch-title">전통적 Docker Desktop 방식과 Apple container 아키텍처 비교</title>
+  <desc id="apple-container-arch-desc">단일 대형 Linux VM 내부에서 다수의 컨테이너가 커널을 공유하는 전통적 방식과 컨테이너마다 독립된 초경량 마이크로 VM을 구동하는 Apple container 아키텍처를 비교하는 다이어그램</desc>
+  <defs>
+    <marker id="arr-container-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="arr-container-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph Apple_Container ["Apple container 아키텍처"]
-        direction TB
-        M2["macOS Host (Virtualization.framework)"]
-        M2 --> DVM1["Micro VM 1 (Container A)"]
-        M2 --> DVM2["Micro VM 2 (Container B)"]
-        M2 --> DVM3["Micro VM 3 (Container C)"]
-    end
+  <!-- Canvas Background -->
+  <rect width="960" height="320" fill="#f5f5f5" rx="8"/>
 
-    Traditional ~~~ Apple_Container
-```
+  <!-- Left Zone: 전통적 Docker Desktop 방식 -->
+  <rect x="24" y="24" width="444" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 전통적 Docker Desktop 방식 (단일 VM 공유)</text>
+
+  <!-- Right Zone: Apple container 아키텍처 -->
+  <rect x="492" y="24" width="444" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="512" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. Apple container 아키텍처 (독립 Micro VM)</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Left Zone Arrows -->
+  <line x1="246" y1="116" x2="246" y2="148" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-container-ink)"/>
+  <path d="M 196 204 L 196 212 Q 196 220 188 220 L 112 220 Q 104 220 104 228 L 104 236" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-container-ink)"/>
+  <line x1="246" y1="204" x2="246" y2="236" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-container-ink)"/>
+  <path d="M 296 204 L 296 212 Q 296 220 304 220 L 380 220 Q 388 220 388 228 L 388 236" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#arr-container-ink)"/>
+
+  <!-- Right Zone Arrows -->
+  <path d="M 656 124 L 656 156 Q 656 164 648 164 L 580 164 Q 572 164 572 172 L 572 204" fill="none" stroke="#bf4520" stroke-width="1.5" marker-end="url(#arr-container-accent)"/>
+  <line x1="714" y1="124" x2="714" y2="204" stroke="#bf4520" stroke-width="1.5" marker-end="url(#arr-container-accent)"/>
+  <path d="M 772 124 L 772 156 Q 772 164 780 164 L 848 164 Q 856 164 856 172 L 856 204" fill="none" stroke="#bf4520" stroke-width="1.5" marker-end="url(#arr-container-accent)"/>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="136" y="64" width="220" height="52" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="246" y="86" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">macOS Host</text>
+  <text x="246" y="104" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Hypervisor Layer</text>
+
+  <rect x="116" y="148" width="260" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="246" y="172" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">단일 대형 Linux VM</text>
+  <text x="246" y="190" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Shared Kernel / Fixed RAM</text>
+
+  <rect x="44" y="236" width="120" height="44" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="104" y="262" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Container A</text>
+
+  <rect x="186" y="236" width="120" height="44" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="246" y="262" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Container B</text>
+
+  <rect x="328" y="236" width="120" height="44" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="388" y="262" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Container C</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="574" y="68" width="280" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="714" y="92" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">macOS Host</text>
+  <text x="714" y="110" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Virtualization.framework</text>
+
+  <rect x="508" y="204" width="128" height="60" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="572" y="228" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Micro VM 1</text>
+  <text x="572" y="248" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Container A</text>
+
+  <rect x="650" y="204" width="128" height="60" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="714" y="228" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Micro VM 2</text>
+  <text x="714" y="248" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Container B</text>
+
+  <rect x="792" y="204" width="128" height="60" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="856" y="228" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Micro VM 3</text>
+  <text x="856" y="248" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Container C</text>
+</svg>
+</div>
 
 ### 1.1 대형 단일 VM의 상시 자원 점유 (Resource Overhead)
 기존 솔루션은 컨테이너 구동 여부와 무관하게 수 기가바이트(GB)의 메모리와 복수의 CPU 코어를 Linux VM에 고정 할당하여 호스트 머신의 리소스를 지속적으로 낭비합니다.

@@ -12,27 +12,78 @@
 
 모놀리식 아키텍처에서 마이크로서비스 환경으로 전환할 때 엔지니어링 관점에서 직면하는 핵심 한계점은 다음과 같습니다.
 
-```mermaid
-flowchart TD
-    subgraph Monolith["모놀리식 아키텍처"]
-        M_App["단일 프로세스<br/>(User + Order + Payment)"]
-        M_DB[(단일 DB)]
-        M_App --> M_DB
-    end
+<div class="diagram-container">
+<svg role="img" aria-labelledby="monolith-vs-msa-title monolith-vs-msa-desc" viewBox="0 0 960 320" xmlns="http://www.w3.org/2000/svg">
+  <title id="monolith-vs-msa-title">모놀리식 아키텍처와 분산 마이크로서비스 환경 비교</title>
+  <desc id="monolith-vs-msa-desc">단일 프로세스와 단일 DB로 구성된 모놀리식 아키텍처와 API Gateway 및 다중 서비스 인스턴스 간 네트워크 통신으로 구성된 마이크로서비스 환경을 비교하는 다이어그램</desc>
+  <defs>
+    <marker id="sc1-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="sc1-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
 
-    subgraph MSA["분산 마이크로서비스 환경"]
-        GW["API Gateway"]
-        U_Svc["User Service (x3)"]
-        O_Svc["Order Service (x5)"]
-        P_Svc["Payment Service (x2)"]
-        
-        GW --> U_Svc
-        GW --> O_Svc
-        GW --> P_Svc
-        O_Svc -. 네트워크 통신 .-> P_Svc
-        O_Svc -. 네트워크 통신 .-> U_Svc
-    end
-```
+  <!-- Canvas Background -->
+  <rect width="960" height="320" fill="#f5f5f5" rx="8"/>
+
+  <!-- Left Zone: 모놀리식 아키텍처 -->
+  <rect x="24" y="24" width="348" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="44" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">1. 모놀리식 아키텍처 (단일 프로세스)</text>
+
+  <!-- Right Zone: 분산 마이크로서비스 환경 -->
+  <rect x="396" y="24" width="540" height="272" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="416" y="48" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">2. 분산 마이크로서비스 환경 (네트워크 I/O)</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Left Zone Arrow -->
+  <line x1="198" y1="136" x2="198" y2="204" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sc1-arr-ink)"/>
+  <rect x="208" y="158" width="136" height="20" rx="2" fill="#ececec"/>
+  <text x="276" y="172" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#5a6580">인메모리 직접 호출</text>
+
+  <!-- Right Zone Arrows: Gateway -> Services -->
+  <path d="M 552 152 L 568 152 Q 576 152 576 144 L 576 96 Q 576 88 584 88 L 600 88" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sc1-arr-ink)"/>
+  <line x1="552" y1="166" x2="600" y2="166" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sc1-arr-ink)"/>
+  <path d="M 552 180 L 568 180 Q 576 180 576 188 L 576 236 Q 576 244 584 244 L 600 244" fill="none" stroke="#4f5d75" stroke-width="1.25" marker-end="url(#sc1-arr-ink)"/>
+
+  <!-- Right Zone Arrows: Inter-service network calls -->
+  <path d="M 768 156 L 792 156 Q 800 156 800 148 L 800 96 Q 800 88 792 88 L 768 88" fill="none" stroke="#bf4520" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#sc1-arr-accent)"/>
+  <path d="M 768 176 L 792 176 Q 800 176 800 184 L 800 236 Q 800 244 792 244 L 768 244" fill="none" stroke="#bf4520" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#sc1-arr-accent)"/>
+
+  <!-- Right Zone Label Mask & Text -->
+  <rect x="810" y="148" width="114" height="36" rx="2" fill="#ececec"/>
+  <text x="867" y="164" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">네트워크 통신</text>
+  <text x="867" y="179" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Network I/O</text>
+
+  <!-- 2. NODES -->
+  <!-- Left Zone Nodes -->
+  <rect x="62" y="80" width="272" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="198" y="104" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">단일 프로세스 애플리케이션</text>
+  <text x="198" y="122" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">User + Order + Payment</text>
+
+  <rect x="62" y="204" width="272" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="198" y="228" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">단일 데이터베이스</text>
+  <text x="198" y="246" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Shared RDBMS</text>
+
+  <!-- Right Zone Nodes -->
+  <rect x="416" y="138" width="136" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="484" y="162" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">API Gateway</text>
+  <text x="484" y="180" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Routing · Auth</text>
+
+  <rect x="600" y="60" width="168" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="684" y="84" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">User Service</text>
+  <text x="684" y="102" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Scale-out (x3)</text>
+
+  <rect x="600" y="138" width="168" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="684" y="162" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">Order Service</text>
+  <text x="684" y="180" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">Scale-out (x5)</text>
+
+  <rect x="600" y="216" width="168" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="684" y="240" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Payment Service</text>
+  <text x="684" y="258" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Scale-out (x2)</text>
+</svg>
+</div>
 
 ### 1.1 동적 인스턴스 위치 추적의 한계
 클라우드 및 컨테이너 환경에서는 오토스케일링과 롤링 배포로 인해 각 서비스 인스턴스의 IP 주소와 포트 번호가 동적으로 변경됩니다. 호출 대상 서버의 IP를 정적으로 설정 파일에 기록하는 기존 방식은 인스턴스 증감이나 비정상 종료 상황에 유연하게 대응할 수 없습니다.
@@ -57,34 +108,93 @@ Spring Cloud는 Spring Boot를 기반으로 분산 시스템의 필수 아키텍
 
 Spring Boot가 **단일 애플리케이션을 신속하게 빌드하고 실행하는 단위 도구**라면, Spring Cloud는 **독립된 서비스 인스턴스들을 하나의 유기적인 분산 시스템으로 연결하고 제어하는 오케스트레이션 계층** 역할을 수행합니다.
 
-```mermaid
-flowchart LR
-    Client["Client (Web/Mobile)"] --> Gateway["Spring Cloud Gateway<br/>(단일 진입점, 라우팅, 인증)"]
-    
-    subgraph Control_Plane["인프라 제어 계층"]
-        Eureka["Eureka Server<br/>(Service Registry)"]
-        Config["Config Server<br/>(중앙 집중식 환경 설정)"]
-    end
-    
-    subgraph Microservices["마이크로서비스 계층"]
-        UserService["User Service<br/>(Eureka Client)"]
-        OrderService["Order Service<br/>(OpenFeign + Circuit Breaker)"]
-        PaymentService["Payment Service<br/>(Eureka Client)"]
-    end
-    
-    Gateway --> Eureka
-    UserService --> Eureka
-    OrderService --> Eureka
-    PaymentService --> Eureka
-    
-    UserService --> Config
-    OrderService --> Config
-    PaymentService --> Config
-    
-    Gateway --> UserService
-    Gateway --> OrderService
-    OrderService -- OpenFeign 호출 --> PaymentService
-```
+<div class="diagram-container">
+<svg role="img" aria-labelledby="spring-cloud-arch-title spring-cloud-arch-desc" viewBox="0 0 960 360" xmlns="http://www.w3.org/2000/svg">
+  <title id="spring-cloud-arch-title">Spring Cloud 핵심 생태계 및 분산 시스템 아키텍처</title>
+  <desc id="spring-cloud-arch-desc">Client 요청이 Spring Cloud Gateway를 통해 라우팅되고 Eureka Server와 Config Server가 마이크로서비스 계층을 제어하는 아키텍처 다이어그램</desc>
+  <defs>
+    <marker id="sc2-arr-ink" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2d3142"/>
+    </marker>
+    <marker id="sc2-arr-muted" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4f5d75"/>
+    </marker>
+    <marker id="sc2-arr-accent" viewBox="0 0 10 7" refX="9" refY="3.5" markerWidth="7" markerHeight="5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#bf4520"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="960" height="360" fill="#f5f5f5" rx="8"/>
+
+  <!-- Middle Zone: 마이크로서비스 계층 -->
+  <rect x="404" y="40" width="236" height="296" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="424" y="64" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">마이크로서비스 계층</text>
+
+  <!-- Right Zone: 인프라 제어 계층 -->
+  <rect x="700" y="40" width="236" height="296" rx="6" fill="#ececec" stroke="#bfc0c0" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="720" y="64" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#4f5d75">인프라 제어 계층</text>
+
+  <!-- 1. ARROWS (Drawn before boxes) -->
+  <!-- Client -> Gateway -->
+  <line x1="140" y1="192" x2="176" y2="192" stroke="#2d3142" stroke-width="1.25" marker-end="url(#sc2-arr-ink)"/>
+
+  <!-- Gateway -> Eureka Server (via top corridor y=20, x=668) -->
+  <path d="M 268 164 L 268 28 Q 268 20 276 20 L 660 20 Q 668 20 668 28 L 668 88 Q 668 96 676 96 L 720 96" fill="none" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#sc2-arr-muted)"/>
+  <rect x="380" y="10" width="144" height="20" rx="2" fill="#f5f5f5"/>
+  <text x="452" y="24" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="500" fill="#5a6580">레지스트리 조회</text>
+
+  <!-- Gateway -> User Service & Order Service -->
+  <path d="M 360 178 L 376 178 Q 384 178 384 170 L 384 116 Q 384 108 392 108 L 424 108" fill="none" stroke="#bf4520" stroke-width="1.5" marker-end="url(#sc2-arr-accent)"/>
+  <line x1="360" y1="192" x2="424" y2="192" stroke="#bf4520" stroke-width="1.5" marker-end="url(#sc2-arr-accent)"/>
+
+  <!-- Order Service -> Payment Service (OpenFeign) -->
+  <line x1="522" y1="220" x2="522" y2="260" stroke="#bf4520" stroke-width="1.5" marker-end="url(#sc2-arr-accent)"/>
+  <rect x="532" y="230" width="96" height="18" rx="2" fill="#ececec"/>
+  <text x="580" y="242" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">OpenFeign</text>
+
+  <!-- Microservices -> Eureka Server -->
+  <line x1="620" y1="112" x2="720" y2="112" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#sc2-arr-muted)"/>
+  <path d="M 620 180 L 660 180 Q 668 180 668 172 L 668 144 Q 668 136 676 136 L 720 136" fill="none" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#sc2-arr-muted)"/>
+
+  <!-- Microservices -> Config Server -->
+  <path d="M 620 204 L 660 204 Q 668 204 668 212 L 668 236 Q 668 244 676 244 L 720 244" fill="none" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#sc2-arr-muted)"/>
+  <line x1="620" y1="276" x2="720" y2="276" stroke="#4f5d75" stroke-width="1.25" stroke-dasharray="5 3" marker-end="url(#sc2-arr-muted)"/>
+
+  <!-- 2. NODES -->
+  <!-- Client -->
+  <rect x="24" y="164" width="116" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="82" y="188" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Client</text>
+  <text x="82" y="206" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Web / Mobile</text>
+
+  <!-- Spring Cloud Gateway (Focal) -->
+  <rect x="176" y="164" width="184" height="56" rx="4" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.75"/>
+  <text x="268" y="188" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#bf4520">Spring Cloud Gateway</text>
+  <text x="268" y="206" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#bf4520">단일 진입점 · 라우팅</text>
+
+  <!-- Microservices Nodes -->
+  <rect x="424" y="80" width="196" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="522" y="104" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">User Service</text>
+  <text x="522" y="122" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Eureka Client</text>
+
+  <rect x="424" y="164" width="196" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="522" y="188" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Order Service</text>
+  <text x="522" y="206" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">OpenFeign · CircuitBreaker</text>
+
+  <rect x="424" y="260" width="196" height="56" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="522" y="284" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Payment Service</text>
+  <text x="522" y="302" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Eureka Client</text>
+
+  <!-- Control Plane Nodes -->
+  <rect x="720" y="84" width="196" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="818" y="112" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Eureka Server</text>
+  <text x="818" y="130" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Service Registry</text>
+
+  <rect x="720" y="224" width="196" height="64" rx="4" fill="#ffffff" stroke="#2d3142" stroke-width="1.25"/>
+  <text x="818" y="252" text-anchor="middle" font-family="'Geist', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2d3142">Config Server</text>
+  <text x="818" y="270" text-anchor="middle" font-family="'Geist Mono', monospace" font-size="9" fill="#5a6580">Centralized Config</text>
+</svg>
+</div>
 
 ### 아키텍처 상호작용 메커니즘
 1. **설정 중앙화**: 마이크로서비스는 기동 시점에 **Spring Cloud Config Server**에 접속하여 실행 환경(`dev`, `prod`)에 맞는 설정 정보를 주입받습니다.
