@@ -1,5 +1,10 @@
 [
   {
+    "name": "[20261111]_[Spring Kafka를 활용한 메시지 전송과 수신 구현]_[Spring, Kafka]_[spring.png]_[KafkaTemplate 전송과 KafkaListener 수신 구성 분석].md",
+    "path": "backend/[20261111]_[Spring Kafka를 활용한 메시지 전송과 수신 구현]_[Spring, Kafka]_[spring.png]_[KafkaTemplate 전송과 KafkaListener 수신 구성 분석].md",
+    "download_url": "backend/[20261111]_[Spring Kafka를 활용한 메시지 전송과 수신 구현]_[Spring, Kafka]_[spring.png]_[KafkaTemplate 전송과 KafkaListener 수신 구성 분석].md"
+  },
+  {
     "name": "[20261110]_[ApplicationEventPublisher와 TransactionalEventPublisher를 활용한 리액티브 트랜잭션 이벤트 발행]_[Spring, WebFlux]_[spring.png]_[리액티브 트랜잭션 이벤트 발행 원리 분석].md",
     "path": "backend/[20261110]_[ApplicationEventPublisher와 TransactionalEventPublisher를 활용한 리액티브 트랜잭션 이벤트 발행]_[Spring, WebFlux]_[spring.png]_[리액티브 트랜잭션 이벤트 발행 원리 분석].md",
     "download_url": "backend/[20261110]_[ApplicationEventPublisher와 TransactionalEventPublisher를 활용한 리액티브 트랜잭션 이벤트 발행]_[Spring, WebFlux]_[spring.png]_[리액티브 트랜잭션 이벤트 발행 원리 분석].md"
