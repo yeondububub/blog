@@ -1,5 +1,10 @@
 [
   {
+    "name": "[20261110]_[ApplicationEventPublisher와 TransactionalEventPublisher를 활용한 리액티브 트랜잭션 이벤트 발행]_[Spring, WebFlux]_[spring.png]_[Spring WebFlux 환경에서 ApplicationEventPublisher와 TransactionalEventPublisher의 동작 원리 및 트랜잭션 결합 제어 분석].md",
+    "path": "backend/[20261110]_[ApplicationEventPublisher와 TransactionalEventPublisher를 활용한 리액티브 트랜잭션 이벤트 발행]_[Spring, WebFlux]_[spring.png]_[Spring WebFlux 환경에서 ApplicationEventPublisher와 TransactionalEventPublisher의 동작 원리 및 트랜잭션 결합 제어 분석].md",
+    "download_url": "backend/[20261110]_[ApplicationEventPublisher와 TransactionalEventPublisher를 활용한 리액티브 트랜잭션 이벤트 발행]_[Spring, WebFlux]_[spring.png]_[Spring WebFlux 환경에서 ApplicationEventPublisher와 TransactionalEventPublisher의 동작 원리 및 트랜잭션 결합 제어 분석].md"
+  },
+  {
     "name": "[20261106]_[baby-union]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md",
     "path": "security/[20261106]_[baby-union]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md",
     "download_url": "security/[20261106]_[baby-union]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md"

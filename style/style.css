@@ -386,22 +386,52 @@ html.dark .hljs-link {
 }
 
 /* ==========================================================================
-   Mermaid Diagram Card Styles (Light & Dark Mode)
+   Diagram Design (.diagram-container) & Mermaid Diagram Styles
    ========================================================================== */
+.diagram-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(45, 49, 66, 0.12);
+  background-color: #f5f5f5;
+}
+
+html.dark .diagram-container {
+  border-color: rgba(245, 245, 245, 0.15);
+}
+
+.diagram-container svg {
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+  display: block;
+}
+
+@media print {
+  .diagram-container {
+    overflow-x: visible;
+  }
+  .diagram-container svg {
+    min-width: 0;
+  }
+}
+
 .mermaid {
-  background-color: #ffffff !important;
-  border-radius: 0.75rem !important;
-  padding: 1.5rem 1rem !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  background-color: #f5f5f5 !important;
+  border-radius: 8px !important;
+  padding: 1.5rem 1.25rem !important;
+  border: 1px solid rgba(45, 49, 66, 0.12) !important;
+  box-shadow: none !important;
   margin-top: 1.5rem !important;
   margin-bottom: 1.5rem !important;
 }
 
 html.dark .mermaid {
-  background-color: #ffffff !important;
-  border: 1px solid #374151 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  background-color: #f5f5f5 !important;
+  border: 1px solid rgba(245, 245, 245, 0.15) !important;
+  box-shadow: none !important;
 }
 
 .mermaid svg {

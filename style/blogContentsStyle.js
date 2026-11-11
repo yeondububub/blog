@@ -13,52 +13,71 @@ function styleMarkdown(kinds, text, title_info = null) {
   const html = marked.parse(text);
   tempDiv.innerHTML = html;
 
+  // 다이어그램(.diagram-container, .diagram-card, .mermaid, svg) 내부 요소는 본문 타이포그래피 스타일 주입에서 제외
+  const isInsideDiagram = (el) =>
+    Boolean(el.closest(".diagram-container, .diagram-card, .mermaid, svg"));
+
   // 1. 헤딩 태그(H1 ~ H6) 스타일 적용
-  tempDiv
-    .querySelectorAll("h1")
-    .forEach((h1) => h1.classList.add(...posth1Style.split(" ")));
-  tempDiv
-    .querySelectorAll("h2")
-    .forEach((h2) => h2.classList.add(...posth2Style.split(" ")));
-  tempDiv
-    .querySelectorAll("h3")
-    .forEach((h3) => h3.classList.add(...posth3Style.split(" ")));
-  tempDiv
-    .querySelectorAll("h4")
-    .forEach((h4) => h4.classList.add(...posth4Style.split(" ")));
-  tempDiv
-    .querySelectorAll("h5")
-    .forEach((h5) => h5.classList.add(...posth5Style.split(" ")));
-  tempDiv
-    .querySelectorAll("h6")
-    .forEach((h6) => h6.classList.add(...posth6Style.split(" ")));
+  tempDiv.querySelectorAll("h1").forEach((h1) => {
+    if (!isInsideDiagram(h1)) h1.classList.add(...posth1Style.split(" "));
+  });
+  tempDiv.querySelectorAll("h2").forEach((h2) => {
+    if (!isInsideDiagram(h2)) h2.classList.add(...posth2Style.split(" "));
+  });
+  tempDiv.querySelectorAll("h3").forEach((h3) => {
+    if (!isInsideDiagram(h3)) h3.classList.add(...posth3Style.split(" "));
+  });
+  tempDiv.querySelectorAll("h4").forEach((h4) => {
+    if (!isInsideDiagram(h4)) h4.classList.add(...posth4Style.split(" "));
+  });
+  tempDiv.querySelectorAll("h5").forEach((h5) => {
+    if (!isInsideDiagram(h5)) h5.classList.add(...posth5Style.split(" "));
+  });
+  tempDiv.querySelectorAll("h6").forEach((h6) => {
+    if (!isInsideDiagram(h6)) h6.classList.add(...posth6Style.split(" "));
+  });
 
   // 2. 기본 인라인/블록 요소 스타일 적용
-  tempDiv
-    .querySelectorAll("p")
-    .forEach((p) => p.classList.add(...postpStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("img")
-    .forEach((img) => img.classList.add(...postimgStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("a")
-    .forEach((a) => a.classList.add(...postaStyle.split(" ")));
+  tempDiv.querySelectorAll("p").forEach((p) => {
+    if (!isInsideDiagram(p)) p.classList.add(...postpStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("img").forEach((img) => {
+    if (!isInsideDiagram(img)) img.classList.add(...postimgStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("a").forEach((a) => {
+    if (!isInsideDiagram(a)) a.classList.add(...postaStyle.split(" "));
+  });
 
-  tempDiv
-    .querySelectorAll("ul")
-    .forEach((ul) => ul.classList.add(...postulStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("ol")
-    .forEach((ol) => ol.classList.add(...postolStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("li")
-    .forEach((li) => li.classList.add(...postliStyle.split(" ")));
+  tempDiv.querySelectorAll("ul").forEach((ul) => {
+    if (!isInsideDiagram(ul)) ul.classList.add(...postulStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("ol").forEach((ol) => {
+    if (!isInsideDiagram(ol)) ol.classList.add(...postolStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("li").forEach((li) => {
+    if (!isInsideDiagram(li)) li.classList.add(...postliStyle.split(" "));
+  });
 
-  tempDiv
-    .querySelectorAll("blockquote")
-    .forEach((blockquote) =>
-      blockquote.classList.add(...postblockquoteStyle.split(" "))
-    );
+  tempDiv.querySelectorAll("blockquote").forEach((blockquote) => {
+    if (!isInsideDiagram(blockquote)) {
+      blockquote.classList.add(...postblockquoteStyle.split(" "));
+    }
+  });
+
+  // 2-1. 단독 인라인 SVG 다이어그램을 반응형 .diagram-container 래퍼로 자동 감싸기
+  tempDiv.querySelectorAll("svg").forEach((svg) => {
+    if (
+      !svg.closest(
+        ".diagram-container, .diagram-card, .mermaid, a, button, #title_section"
+      ) &&
+      !svg.parentElement?.closest("svg")
+    ) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "diagram-container";
+      svg.parentNode.insertBefore(wrapper, svg);
+      wrapper.appendChild(svg);
+    }
+  });
 
   // 3. Mermaid 다이어그램 코드 블록 변환
   tempDiv.querySelectorAll("code").forEach((codeEl) => {
@@ -110,10 +129,9 @@ function styleMarkdown(kinds, text, title_info = null) {
     .forEach((code) => code.classList.add(...postcodeStyle.split(" ")));
 
   // 5. 테이블(Table) 반응형 래퍼 및 스타일 적용
-  tempDiv
-    .querySelectorAll("table")
-    .forEach((table) => table.classList.add(...posttableStyle.split(" ")));
   tempDiv.querySelectorAll("table").forEach((table) => {
+    if (isInsideDiagram(table)) return;
+    table.classList.add(...posttableStyle.split(" "));
     const tableWrapper = document.createElement("div");
     tableWrapper.classList.add(
       "w-auto",
@@ -125,28 +143,31 @@ function styleMarkdown(kinds, text, title_info = null) {
     tableWrapper.appendChild(table);
   });
 
-  tempDiv
-    .querySelectorAll("thead")
-    .forEach((thead) => thead.classList.add(...posttheadStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("th")
-    .forEach((th) => th.classList.add(...postthStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("tbody")
-    .forEach((tbody) => tbody.classList.add(...posttbodyStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("td")
-    .forEach((td) => td.classList.add(...posttdStyle.split(" ")));
+  tempDiv.querySelectorAll("thead").forEach((thead) => {
+    if (!isInsideDiagram(thead))
+      thead.classList.add(...posttheadStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("th").forEach((th) => {
+    if (!isInsideDiagram(th)) th.classList.add(...postthStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("tbody").forEach((tbody) => {
+    if (!isInsideDiagram(tbody))
+      tbody.classList.add(...posttbodyStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("td").forEach((td) => {
+    if (!isInsideDiagram(td)) td.classList.add(...posttdStyle.split(" "));
+  });
 
-  tempDiv
-    .querySelectorAll("hr")
-    .forEach((hr) => hr.classList.add(...posthrStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("em")
-    .forEach((em) => em.classList.add(...postemStyle.split(" ")));
-  tempDiv
-    .querySelectorAll("strong")
-    .forEach((strong) => strong.classList.add(...poststrongStyle.split(" ")));
+  tempDiv.querySelectorAll("hr").forEach((hr) => {
+    if (!isInsideDiagram(hr)) hr.classList.add(...posthrStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("em").forEach((em) => {
+    if (!isInsideDiagram(em)) em.classList.add(...postemStyle.split(" "));
+  });
+  tempDiv.querySelectorAll("strong").forEach((strong) => {
+    if (!isInsideDiagram(strong))
+      strong.classList.add(...poststrongStyle.split(" "));
+  });
 
   // 6. 블로그 포스트 상단 헤더 섹션(카테고리, 제목, 작성자, 날짜, 썸네일) 생성
   if (kinds === "post" && title_info) {
@@ -593,12 +614,15 @@ function renderTOC() {
   asideContainer.className = "";
   asideContainer.classList.add(...tocContainerStyle.split(" "));
 
-  // 본문(#contents) 내 헤딩 태그 추출 (#title_section의 대제목 제외)
+  // 본문(#contents) 내 헤딩 태그 추출 (#title_section 및 다이어그램 내부 헤딩 제외)
   const allHeadings = Array.from(
     document.querySelectorAll(
       "#contents h1, #contents h2, #contents h3, #contents h4, #contents h5, #contents h6"
     )
-  ).filter((h) => !h.closest("#title_section"));
+  ).filter(
+    (h) =>
+      !h.closest("#title_section, .diagram-container, .diagram-card, .mermaid, svg")
+  );
 
   if (allHeadings.length === 0) {
     const emptyMsg = document.createElement("div");

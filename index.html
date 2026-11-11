@@ -8,10 +8,10 @@
   <link rel="icon" href="img/icon/favicon.png" type="image/png" />
   <title>ydbb</title>
 
-  <!-- google fonts (JetBrains Mono) & Pretendard -->
+  <!-- google fonts (JetBrains Mono, Geist, Geist Mono, Instrument Serif, Noto Sans/Serif KR) & Pretendard -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&display=swap" rel="stylesheet">
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
   <!-- marked -->
@@ -22,11 +22,61 @@
   <script src="./library/highlight_highlight.min.js"></script>
   <link rel="stylesheet" href="./library/highlight_ally-light.min.css" />
 
-  <!-- mermaid -->
+  <!-- mermaid (editorial diagram-design theme variables) -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script>
     if (window.mermaid) {
-      mermaid.initialize({ startOnLoad: false, theme: 'default' });
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        themeVariables: {
+          background: '#f5f5f5',
+          primaryColor: '#ffffff',
+          primaryTextColor: '#2d3142',
+          primaryBorderColor: '#2d3142',
+          secondaryColor: '#ececec',
+          secondaryTextColor: '#2d3142',
+          secondaryBorderColor: '#4f5d75',
+          tertiaryColor: '#f5f5f5',
+          tertiaryTextColor: '#2d3142',
+          tertiaryBorderColor: '#bfc0c0',
+          lineColor: '#4f5d75',
+          textColor: '#2d3142',
+          mainBkg: '#ffffff',
+          nodeBorder: '#2d3142',
+          clusterBkg: '#ececec',
+          clusterBorder: '#bfc0c0',
+          titleColor: '#2d3142',
+          edgeLabelBackground: '#f5f5f5',
+          actorBkg: '#ffffff',
+          actorBorder: '#2d3142',
+          actorTextColor: '#2d3142',
+          actorLineColor: '#4f5d75',
+          signalColor: '#2d3142',
+          signalTextColor: '#2d3142',
+          labelBoxBkgColor: '#f5f5f5',
+          labelBoxBorderColor: '#bfc0c0',
+          labelTextColor: '#2d3142',
+          loopTextColor: '#4f5d75',
+          noteBkgColor: '#fdf2ee',
+          noteBorderColor: '#bf4520',
+          noteTextColor: '#2d3142',
+          activationBkgColor: '#ececec',
+          activationBorderColor: '#4f5d75',
+          fontFamily: "'Geist', 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif",
+          fontSize: '13px'
+        },
+        flowchart: {
+          htmlLabels: true,
+          curve: 'basis',
+          padding: 16
+        },
+        sequence: {
+          boxMargin: 10,
+          messageMargin: 32,
+          mirrorActors: false
+        }
+      });
     }
   </script>
 
