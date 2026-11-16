@@ -21,11 +21,13 @@ window.addEventListener("click", (event) => {
     } else {
       mobileMenu.innerHTML = "";
     }
-  } else if (mobileMenu && event.target.parentNode === mobileMenu) {
+  } else if (mobileMenu && event.target.closest("#mobileMenu a")) {
     // 모바일 메뉴 항목 클릭 시 해당 카테고리/페이지로 이동
     event.preventDefault();
-    const menuName = event.target.innerText.trim() + ".md";
-    const nextUrl = new URL(origin);
+    const clickedLink = event.target.closest("#mobileMenu a");
+    const menuName =
+      clickedLink.dataset.menuName || `${clickedLink.textContent.trim()}.md`;
+    const nextUrl = new URL(siteBaseUrl);
     nextUrl.searchParams.set("menu", menuName);
     window.history.pushState({}, "", nextUrl);
     mobileMenu.innerHTML = "";

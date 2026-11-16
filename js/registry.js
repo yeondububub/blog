@@ -11,8 +11,10 @@ const registry = {
   // URL 및 라우팅 상태 (URLparsing.js)
   URLparsing_defaultTitle:
     typeof defaultTitle !== "undefined" ? defaultTitle : null,
-  URLparsing_url: typeof url !== "undefined" ? url : null,
-  URLparsing_origin: typeof origin !== "undefined" ? origin : null,
+  URLparsing_currentPageUrl:
+    typeof currentPageUrl !== "undefined" ? currentPageUrl : null,
+  URLparsing_siteBaseUrl:
+    typeof siteBaseUrl !== "undefined" ? siteBaseUrl : null,
   URLparsing_pathParts: typeof pathParts !== "undefined" ? pathParts : null,
   URLparsing_isLocal: typeof isLocal !== "undefined" ? isLocal : null,
 

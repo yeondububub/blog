@@ -81,6 +81,3 @@ function convertIpynbToHtml(fileContent) {
 
   return htmlContent;
 }
-
-// 하위 호환성을 위한 별칭 유지
-const convertIpynvToHtml = convertIpynbToHtml;

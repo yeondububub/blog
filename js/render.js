@@ -9,7 +9,7 @@ let currentFolder = "";
  * @param {string} [keyword=""] - 검색 키워드 또는 카테고리/폴더명
  * @param {string} [kinds=""] - 검색 필터 유형 ('category' | 'folder' | '')
  */
-function search(keyword, kinds) {
+function search(keyword, kinds, page = 1) {
   keyword = keyword ? keyword.normalize("NFC").toLowerCase().trim() : "";
 
   // 카테고리(폴더) 진입 시 상단 배너 노출/숨김 처리
@@ -35,7 +35,7 @@ function search(keyword, kinds) {
   if (blogList.length === 0) {
     if (isInitData === false) {
       initDataBlogList().then(() => {
-        search(keyword, kinds);
+        search(keyword, kinds, page);
       });
       return;
     }
@@ -52,7 +52,7 @@ function search(keyword, kinds) {
       const searchResult = blogList.filter((post) =>
         post.name.normalize("NFC").toLowerCase().includes(searchKeyword)
       );
-      renderBlogList(searchResult);
+      renderBlogList(searchResult, page);
     } else {
       if (kinds) {
         let searchResult = blogList.filter((post) => {
@@ -130,14 +130,14 @@ function search(keyword, kinds) {
           }
         }
 
-        renderBlogList(searchResult);
+        renderBlogList(searchResult, page);
       } else {
         // 일반 텍스트 키워드 검색
         const searchKeyword = keyword.toLowerCase();
         const searchResult = blogList.filter((post) =>
           post.name.normalize("NFC").toLowerCase().includes(searchKeyword)
         );
-        renderBlogList(searchResult);
+        renderBlogList(searchResult, page);
       }
     }
   }
@@ -156,10 +156,11 @@ async function renderMenu() {
     // 파일 확장자(.md)를 제외한 메뉴명 표시
     const menuName = menu.name.split(".")[0];
     link.innerText = menuName;
+    link.dataset.menuName = menu.name;
 
     link.onclick = (event) => {
       event.preventDefault();
-      const nextUrl = new URL(origin);
+      const nextUrl = new URL(siteBaseUrl);
       nextUrl.searchParams.set("menu", menu.name);
       window.history.pushState({}, "", nextUrl);
       handleRoute();
@@ -209,7 +210,7 @@ async function renderMenu() {
   const searchInput = document.getElementById("search-input");
   const executeSearch = () => {
     const keyword = searchInput ? searchInput.value.trim() : "";
-    const nextUrl = new URL(origin);
+    const nextUrl = new URL(siteBaseUrl);
     if (currentFolder && typeof folderMenuMap !== "undefined") {
       const menuFileName = folderMenuMap[currentFolder];
       if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
@@ -253,7 +254,7 @@ async function renderMenu() {
       event.stopPropagation();
       searchInput.value = "";
       resetInputButton.classList.add("hidden");
-      const nextUrl = new URL(origin);
+      const nextUrl = new URL(siteBaseUrl);
       if (currentFolder && typeof folderMenuMap !== "undefined") {
         const menuFileName = folderMenuMap[currentFolder];
         if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
@@ -308,7 +309,7 @@ function createCardElement(fileInfo, index) {
 
     category.onclick = (event) => {
       event.stopPropagation();
-      const nextUrl = new URL(origin);
+      const nextUrl = new URL(siteBaseUrl);
       if (typeof currentFolder !== "undefined" && currentFolder && typeof folderMenuMap !== "undefined") {
         const menuFileName = folderMenuMap[currentFolder];
         if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
@@ -375,12 +376,13 @@ function renderBlogList(searchResult = null, currentPage = 1) {
   document.getElementById("blog-posts").style.display = "grid";
   document.getElementById("blog-posts").innerHTML = "";
 
-  const totalPage = Math.ceil(targetList.length / pageUnit);
-  initPagination(totalPage);
-  renderPagination(totalPage, currentPage, targetList);
+  const totalPage = Math.max(1, Math.ceil(targetList.length / pageUnit));
+  const safePage = Math.min(Math.max(1, Number(currentPage) || 1), totalPage);
+  initPagination(Math.ceil(targetList.length / pageUnit));
+  renderPagination(Math.ceil(targetList.length / pageUnit), safePage, targetList);
 
-  const startIndex = (currentPage - 1) * pageUnit;
-  const endIndex = currentPage * pageUnit;
+  const startIndex = (safePage - 1) * pageUnit;
+  const endIndex = safePage * pageUnit;
 
   targetList.slice(startIndex, endIndex).forEach((post, index) => {
     const postInfo = extractFileInfo(post.name);
@@ -389,7 +391,7 @@ function renderBlogList(searchResult = null, currentPage = 1) {
 
       cardElement.onclick = (event) => {
         event.preventDefault();
-        const nextUrl = new URL(origin);
+        const nextUrl = new URL(siteBaseUrl);
         nextUrl.searchParams.set("post", post.name);
         window.history.pushState({}, "", nextUrl);
         handleRoute();
@@ -407,7 +409,7 @@ function renderBlogList(searchResult = null, currentPage = 1) {
  */
 function renderOtherContents(menu) {
   const menuName = typeof menu === "string" ? menu.split("/").pop() : menu.name;
-  const nextUrl = new URL(origin);
+  const nextUrl = new URL(siteBaseUrl);
   nextUrl.searchParams.set("menu", menuName);
   window.history.pushState({}, "", nextUrl);
   handleRoute();
@@ -467,7 +469,7 @@ function renderBlogCategory(targetList = blogList) {
   allItem.classList.add(...categoryItemStyle.split(" "));
   allItem.textContent = "All";
   allItem.onclick = () => {
-    const nextUrl = new URL(origin);
+    const nextUrl = new URL(siteBaseUrl);
     if (currentFolder && typeof folderMenuMap !== "undefined") {
       const menuFileName = folderMenuMap[currentFolder];
       if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
@@ -488,7 +490,7 @@ function renderBlogCategory(targetList = blogList) {
     categoryItem.classList.add(...categoryItemStyle.split(" "));
     categoryItem.textContent = item.displayName;
     categoryItem.onclick = () => {
-      const nextUrl = new URL(origin);
+      const nextUrl = new URL(siteBaseUrl);
       if (currentFolder && typeof folderMenuMap !== "undefined") {
         const menuFileName = folderMenuMap[currentFolder];
         if (menuFileName) nextUrl.searchParams.set("menu", menuFileName);
@@ -561,6 +563,18 @@ function initPagination(totalPage) {
   pageNav.appendChild(docFrag);
 }
 
+function navigateToPage(pageNum) {
+  const nextUrl = new URL(window.location.href);
+  if (pageNum > 1) {
+    nextUrl.searchParams.set("page", String(pageNum));
+  } else {
+    nextUrl.searchParams.delete("page");
+  }
+  window.history.pushState({}, "", nextUrl);
+  handleRoute();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 /**
  * 페이지네이션 번호 및 이동 버튼의 활성화 상태를 갱신합니다.
  * @param {number} totalPage - 전체 페이지 수
@@ -590,16 +604,14 @@ function renderPagination(totalPage, currentPage, targetList = null) {
   prevButton.onclick = (event) => {
     event.preventDefault();
     if (currentPage > 1) {
-      renderBlogList(targetList, currentPage - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      navigateToPage(currentPage - 1);
     }
   };
 
   nextButton.onclick = (event) => {
     event.preventDefault();
     if (currentPage < totalPage) {
-      renderBlogList(targetList, currentPage + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      navigateToPage(currentPage + 1);
     }
   };
 
@@ -623,8 +635,7 @@ function renderPagination(totalPage, currentPage, targetList = null) {
       page.setAttribute("aria-label", `${pageNum} 페이지로 이동`);
       page.onclick = (event) => {
         event.preventDefault();
-        renderBlogList(targetList, pageNum);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        navigateToPage(pageNum);
       };
     });
   } else {
@@ -685,9 +696,7 @@ function renderPagination(totalPage, currentPage, targetList = null) {
         page.setAttribute("aria-label", `${pageVal} 페이지로 이동`);
         page.onclick = (event) => {
           event.preventDefault();
-          const targetPage = Number(pageVal);
-          renderBlogList(listData, targetPage);
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          navigateToPage(Number(pageVal));
         };
       }
     });
@@ -704,6 +713,8 @@ async function handleRoute() {
   const postParam = searchParams.get("post");
   const menuParam = searchParams.get("menu");
   const searchParam = searchParams.get("search");
+  const rawPage = parseInt(searchParams.get("page") || "1", 10);
+  const currentPage = Number.isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
 
   await initDataBlogList();
 
@@ -755,13 +766,13 @@ async function handleRoute() {
         if (searchInput) searchInput.value = decodedSearch;
         const resetInputButton = document.querySelector(".reset-inp-btn");
         if (resetInputButton) resetInputButton.classList.remove("hidden");
-        search(decodedSearch.toLowerCase(), "category");
+        search(decodedSearch.toLowerCase(), "category", currentPage);
       } else {
         const searchInput = document.getElementById("search-input");
         if (searchInput) searchInput.value = "";
         const resetInputButton = document.querySelector(".reset-inp-btn");
         if (resetInputButton) resetInputButton.classList.add("hidden");
-        search(folder, "folder");
+        search(folder, "folder", currentPage);
       }
     } else {
       // 단독 마크다운 메뉴
@@ -799,7 +810,7 @@ async function handleRoute() {
     if (searchInput) searchInput.value = decodedSearch;
     const resetInputButton = document.querySelector(".reset-inp-btn");
     if (resetInputButton) resetInputButton.classList.remove("hidden");
-    search(decodedSearch.toLowerCase(), "category");
+    search(decodedSearch.toLowerCase(), "category", currentPage);
   } else {
     // 4. 메인 홈 (전체 포스트 목록)
     document.getElementById("contents").style.display = "none";
@@ -814,7 +825,7 @@ async function handleRoute() {
     if (categoryBanner) categoryBanner.classList.add("hidden");
 
     currentFolder = "";
-    search();
+    search(undefined, undefined, currentPage);
   }
 }
 
@@ -859,7 +870,7 @@ if (categoryWrapper && categoryButton) {
 const blogTitle = document.getElementById("blog-title");
 if (blogTitle) {
   blogTitle.addEventListener("click", () => {
-    const nextUrl = new URL(origin);
+    const nextUrl = new URL(siteBaseUrl);
     window.history.pushState({}, "", nextUrl);
     handleRoute();
   });
