@@ -20,6 +20,9 @@ MENU_FOLDER = "menu"
 # Linux ext4(GitHub Actions ubuntu-latest) 단일 파일명 최대 바이트 제한
 MAX_FILENAME_UTF8_BYTES = 255
 
+# URL 스킴 오인 및 크로스 플랫폼(Windows/Linux) 파일 시스템 오류를 유발하는 금지 문자 집합
+FORBIDDEN_FILENAME_CHARS = set(':\\*?"<>|')
+
 # 포스트 파일명 정규식 패턴: [YYYYMMDD]_[제목]_[카테고리]_[썸네일]_[설명](_[저자ID]).(md|ipynb)
 POST_FILENAME_REGEX = re.compile(
     r"^\[(\d{8})\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\]_\[(.*?)\](?:_\[(.*?)\])?\.(md|ipynb)$"
@@ -75,6 +78,7 @@ def generate_blog_list(post_folders: list[str]) -> list[dict[str, str]]:
     """카테고리 폴더를 순회하며 유효한 블로그 포스트 목록을 생성합니다."""
     posts: list[dict[str, str]] = []
     oversized_files: list[tuple[str, int]] = []
+    invalid_char_files: list[tuple[str, str]] = []
 
     for folder in post_folders:
         folder_path = BASE_DIR / folder
@@ -91,6 +95,10 @@ def generate_blog_list(post_folders: list[str]) -> list[dict[str, str]]:
             if byte_length > MAX_FILENAME_UTF8_BYTES:
                 oversized_files.append((relative_path, byte_length))
 
+            bad_chars = sorted(FORBIDDEN_FILENAME_CHARS.intersection(filename))
+            if bad_chars:
+                invalid_char_files.append((relative_path, ", ".join(bad_chars)))
+
             posts.append(
                 {
                     "name": filename,
@@ -99,11 +107,16 @@ def generate_blog_list(post_folders: list[str]) -> list[dict[str, str]]:
                 }
             )
 
-    if oversized_files:
+    if oversized_files or invalid_char_files:
         for path, byte_length in oversized_files:
             print(
                 f"ERROR: '{path}' 파일명이 UTF-8 기준 {byte_length} bytes로 "
                 f"Linux 제한({MAX_FILENAME_UTF8_BYTES} bytes)을 초과했습니다.",
+                file=sys.stderr,
+            )
+        for path, chars in invalid_char_files:
+            print(
+                f"ERROR: '{path}' 파일명에 허용되지 않는 특수문자({chars})가 포함되어 있습니다.",
                 file=sys.stderr,
             )
         sys.exit(1)

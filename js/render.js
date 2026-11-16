@@ -174,7 +174,7 @@ async function renderMenu() {
 
   window.addEventListener("click", (event) => {
     if (window.innerWidth <= 768) {
-      if (event.target == searchButton) {
+      if (searchButton && searchButton.contains(event.target)) {
         searchInputShow = !searchInputShow;
         if (searchInputShow) {
           searchButton.classList.add("active");
@@ -185,10 +185,10 @@ async function renderMenu() {
           searchCont.classList.add("hidden");
           searchInputShow = false;
         }
-      } else if (event.target == searchCont) {
+      } else if (searchCont && searchCont.contains(event.target)) {
       } else {
-        searchButton.classList.remove("active");
-        searchCont.classList.add("hidden");
+        if (searchButton) searchButton.classList.remove("active");
+        if (searchCont) searchCont.classList.add("hidden");
         searchInputShow = false;
       }
     }
@@ -719,9 +719,7 @@ async function handleRoute() {
     const banner = document.getElementById("category-banner");
     if (banner) banner.classList.add("hidden");
 
-    const postNameDecode = decodeURIComponent(postParam)
-      .normalize("NFC")
-      .replaceAll("+", " ");
+    const postNameDecode = postParam.normalize("NFC");
     const postInfo = extractFileInfo(postNameDecode);
     const targetPost = blogList.find(
       (p) => p.name.normalize("NFC") === postNameDecode
@@ -752,9 +750,7 @@ async function handleRoute() {
       const folder = categoryFolderMap[menuParam];
       if (searchParam) {
         currentFolder = folder;
-        const decodedSearch = decodeURIComponent(searchParam)
-          .normalize("NFC")
-          .replaceAll("+", " ");
+        const decodedSearch = searchParam.normalize("NFC");
         const searchInput = document.getElementById("search-input");
         if (searchInput) searchInput.value = decodedSearch;
         const resetInputButton = document.querySelector(".reset-inp-btn");
@@ -798,9 +794,7 @@ async function handleRoute() {
     if (banner) banner.classList.add("hidden");
 
     currentFolder = "";
-    const decodedSearch = decodeURIComponent(searchParam)
-      .normalize("NFC")
-      .replaceAll("+", " ");
+    const decodedSearch = searchParam.normalize("NFC");
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = decodedSearch;
     const resetInputButton = document.querySelector(".reset-inp-btn");
