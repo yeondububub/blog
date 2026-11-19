@@ -1,5 +1,10 @@
 [
   {
+    "name": "[20261119]_[Java4Shell(CVE-2026-114938) OpenJDK Base64 디코더 취약점 분석]_[Security]_[]_[AVX-512 Base64 Intrinsic 정수 언더플로와 힙 오버플로 원리 분석].md",
+    "path": "security/[20261119]_[Java4Shell(CVE-2026-114938) OpenJDK Base64 디코더 취약점 분석]_[Security]_[]_[AVX-512 Base64 Intrinsic 정수 언더플로와 힙 오버플로 원리 분석].md",
+    "download_url": "security/[20261119]_[Java4Shell(CVE-2026-114938) OpenJDK Base64 디코더 취약점 분석]_[Security]_[]_[AVX-512 Base64 Intrinsic 정수 언더플로와 힙 오버플로 원리 분석].md"
+  },
+  {
     "name": "[20261116]_[Addition calculator]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md",
     "path": "security/[20261116]_[Addition calculator]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md",
     "download_url": "security/[20261116]_[Addition calculator]_[wargame_web]_[dreamhack.png]_[드림핵 문제풀이].md"
