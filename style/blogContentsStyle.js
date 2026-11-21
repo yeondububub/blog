@@ -2,6 +2,36 @@
  * 마크다운 및 Jupyter Notebook 본문 스타일링, KaTeX 수식, Mermaid 다이어그램, TOC(목차) 렌더링 모듈
  */
 
+// CommonMark 명세상 문장부호(예: ')') 뒤 닫는 '**'에 한글 조사 등이 바로 붙으면
+// Right-flanking delimiter 조건을 만족하지 못해 볼드체가 파싱되지 않는 문제를 보완합니다.
+if (typeof marked !== "undefined" && typeof marked.use === "function") {
+  marked.use({
+    extensions: [
+      {
+        name: "strongKorean",
+        level: "inline",
+        start(src) {
+          return src.indexOf("**");
+        },
+        tokenizer(src) {
+          const match =
+            /^\*\*([^\s*](?:(?:[^*\n]|\\\*|\*(?!\*))*?[^\s*])?)\*\*(?=[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9])/.exec(
+              src
+            );
+          if (match) {
+            return {
+              type: "strong",
+              raw: match[0],
+              text: match[1],
+              tokens: this.lexer.inlineTokens(match[1]),
+            };
+          }
+        },
+      },
+    ],
+  });
+}
+
 /**
  * 다이어그램(.diagram-container, .diagram-card, .mermaid, svg) 내부 요소 여부를 판별합니다.
  * @param {Element} el
