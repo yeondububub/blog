@@ -1,5 +1,10 @@
 [
   {
+    "name": "[20261121]_[PyTorch 텐서 연산과 자동 미분(Autograd) 메커니즘]_[AI, PyTorch]_[]_[동적 계산 그래프와 backward 역전파 원리 및 경사 하강법 구현 분석].md",
+    "path": "ai/[20261121]_[PyTorch 텐서 연산과 자동 미분(Autograd) 메커니즘]_[AI, PyTorch]_[]_[동적 계산 그래프와 backward 역전파 원리 및 경사 하강법 구현 분석].md",
+    "download_url": "ai/[20261121]_[PyTorch 텐서 연산과 자동 미분(Autograd) 메커니즘]_[AI, PyTorch]_[]_[동적 계산 그래프와 backward 역전파 원리 및 경사 하강법 구현 분석].md"
+  },
+  {
     "name": "[20261119]_[Java4Shell(CVE-2026-114938) OpenJDK Base64 디코더 취약점 분석]_[Security]_[]_[AVX-512 Base64 Intrinsic 정수 언더플로와 힙 오버플로 원리 분석].md",
     "path": "security/[20261119]_[Java4Shell(CVE-2026-114938) OpenJDK Base64 디코더 취약점 분석]_[Security]_[]_[AVX-512 Base64 Intrinsic 정수 언더플로와 힙 오버플로 원리 분석].md",
     "download_url": "security/[20261119]_[Java4Shell(CVE-2026-114938) OpenJDK Base64 디코더 취약점 분석]_[Security]_[]_[AVX-512 Base64 Intrinsic 정수 언더플로와 힙 오버플로 원리 분석].md"
